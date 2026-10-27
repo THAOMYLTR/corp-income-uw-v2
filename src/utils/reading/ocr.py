@@ -93,14 +93,12 @@ def _ocr_config() -> dict[str, object]:
         # Speed is NOT the argument either way: once pages OCR concurrently the
         # extra Tesseract pass costs ~2.2s on a 43-page file (24.0s vs 21.8s).
         "auto_rotate": os.getenv("OCR_AUTO_ROTATE", "0") != "0",
-        # OCR is the pipeline's slowest step and Tesseract runs out-of-process,
-        # so threads scale it nearly linearly. Bounded rather than unbounded:
-        # each worker holds a 300dpi page (~25 MB) plus its own tesseract
-        # process.
-        "max_workers": max(
-            1,
-            int(os.getenv("OCR_MAX_WORKERS", "0")) or min(8, os.cpu_count() or 1),
-        ),
+        # Pages OCR'd at once. Each worker holds a 300dpi page (~25 MB) plus its
+        # own tesseract process. [Sửa 27/10] Default 2 (was min(8, CPU)): with
+        # FILE_WORKERS files read at once, 3 x 8 pages made the Databricks driver
+        # run out of memory ("Python kernel is unresponsive"). Raise OCR_MAX_WORKERS
+        # on a large driver for speed.
+        "max_workers": max(1, int(os.getenv("OCR_MAX_WORKERS") or 0) or 2),
     }
 
 

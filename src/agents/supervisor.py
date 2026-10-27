@@ -606,7 +606,9 @@ class Supervisor:
     # [Sửa 20/10] Files are read + classified, and extraction passes run, several at a
     # time instead of one by one (49 files took 34 min). OCR and LLM calls wait on other
     # processes / the network, so threads overlap them. Order of documents and of the step
-    # log is kept. FILE_WORKERS: files read at once (each file also OCRs its pages in
+    # log is kept. [Sửa 27/10] defaults lowered to FILE_WORKERS=1, LLM_WORKERS=2 (driver
+    # out of memory on Databricks); raise them in .env on a large driver.
+    # FILE_WORKERS: files read at once (each file also OCRs its pages in
     # parallel, so keep it small). LLM_WORKERS: LLM calls at once (raise only if the
     # serving endpoint does not answer 429 "rate limit").
     @staticmethod
@@ -631,7 +633,7 @@ class Supervisor:
                 continue
             seen_hashes.add(file_hash)
             unique.append((file_path, file_hash))
-        with ThreadPoolExecutor(max_workers=self._workers("FILE_WORKERS", 3)) as pool:
+        with ThreadPoolExecutor(max_workers=self._workers("FILE_WORKERS", 1)) as pool:
             results = list(pool.map(lambda item: self._prepare_one(*item, loan_program), unique))
         documents = []
         for document, file_steps in results:
@@ -886,7 +888,7 @@ class Supervisor:
                     f"{budget.limit_hit} reached."
                 )
                 return
-        with ThreadPoolExecutor(max_workers=self._workers("LLM_WORKERS", 4)) as pool:
+        with ThreadPoolExecutor(max_workers=self._workers("LLM_WORKERS", 2)) as pool:
             answers = list(pool.map(
                 lambda doc: pass_.extract(chain, doc.filename, doc.content, doc.path), targets))
         for doc, (result, error) in zip(targets, answers):
