@@ -271,9 +271,6 @@ python -m unittest testing.test_prompts testing.test_config testing.test_documen
 - **Bảng ngành TCB (PL1)**: only the first 13 rows (Recom) reached the repo — paste the rest into
   `src/templates/bang-nganh-tcb.csv`. Without the customer's industry in the table, the projection
   falls back to historical LNST and says so.
-- **Two BRD sheets disagree** — the code follows the Appendix (the output template) and keeps each
-  as a one-line constant in `financial_metrics.py`: Good finance growth **> 0%** (detail sheet:
-  > −20%), Good-corp growth factor **× 1,5** (detail sheet: × 2).
 - No web search (masothue, bocaodientu, dangkykinhdoanh): save the lookup page into
   `ho_so_noi_bo`, or pass it as `EXTERNAL_DATA`.
 - Photo content (products, machines, people) is not analysed — only text OCR reads from a photo.
