@@ -114,21 +114,26 @@ Step-by-step for the people filing the dossier (Vietnamese): [docs/HUONG-DAN-XEP
 
 ## The report (output template)
 
-[src/templates/corp-income-structure.md](src/templates/corp-income-structure.md) has the same
-sections, rows and columns as the BRD's **Appendix - Corp income** sheet:
+[src/templates/corp-income-structure.md](src/templates/corp-income-structure.md) writes out every
+table of the BRD's **Appendix - Corp income** sheet — headers, columns and row labels are in the
+file itself; code only fills cells and data rows:
 
-| Section | Content |
+| Section | Tables in the template |
 |---|---|
 | Header | Tên doanh nghiệp |
-| **1. Pháp lý doanh nghiệp** | a. ID T24, MST, năm thành lập ("Đăng ký lần đầu … thay đổi lần thứ …"), NĐDPL, tình trạng hoạt động (bold red when not operating) · b. họ tên, mối quan hệ, tỷ lệ góp vốn, thay đổi trong 12 tháng · Nhận xét về pháp lý Khách hàng |
-| **2. Hoạt động kinh doanh** | Sản phẩm/dịch vụ (loại hình, tên ngành TCB, diễn giải) · Địa chỉ TSC / nhà xưởng / kho (thuê hay sở hữu) · **Mô hình HĐKD**: sản phẩm đầu vào → ≤ 5 nhà cung cấp → doanh nghiệp → ≤ 5 khách mua → sản phẩm đầu ra · Nhận xét về HĐKD |
-| **3. Tài chính** | Nguồn · tóm tắt BCĐKT / KQKD năm N-2, N-1 (triệu đồng) + "Cập nhật các tháng năm N" theo tờ khai VAT · biến động DT, ROS, hệ số thanh toán hiện hành · Nhận xét · Phân nhóm tài chính (POC) |
-| **4. Dư nợ tại TCTD** | a. ngày tra cứu CIC · b. một dòng mỗi TCTD: dư nợ NH, TDH, khác, tổng; tên, giá trị, chủ sở hữu TSBĐ · c. nợ cần chú ý (12 tháng), nợ xấu (5 năm) · Phân nhóm bureau (POC) |
-| **5. Kết luận nguồn thu DN** | Bảng phương án kinh doanh (ẩn khi không có PAKD) · Phân nhóm doanh nghiệp (POC) · Nhận xét về nguồn thu + giá trị nguồn thu theo công thức BRD |
+| **1. Pháp lý doanh nghiệp** | a. ID T24 · MST · năm thành lập ("Đăng ký lần đầu … thay đổi lần thứ …") · NĐDPL · tình trạng hoạt động (bold red when not operating) |
+| | b. **Họ và tên \| Mối quan hệ \| Tỷ lệ góp vốn \| Thay đổi TV góp vốn & NĐDPL trong 12 tháng** — one row per member (`{{RowsThanhVien}}`) · Nhận xét về pháp lý Khách hàng |
+| **2. Hoạt động kinh doanh** | Sản phẩm/dịch vụ · Địa chỉ TSC / nhà xưởng / kho · **Mô hình HĐKD**: sản phẩm đầu vào → ≤ 5 nhà cung cấp → doanh nghiệp → ≤ 5 khách mua → sản phẩm đầu ra · Nhận xét về HĐKD |
+| **3. Tài chính** | Nguồn · **Bảng cân đối kế toán \| N-2 \| N-1 \| Báo cáo KQKD \| N-2 \| N-1 \| Cập nhật các tháng năm N** (triệu đồng) with the three ratios · Nhận xét · **Phân nhóm tài chính (POC) \| Phân loại \| Tiêu chí \| Kết quả** |
+| **4. Dư nợ tại TCTD** | a. Ngày tra cứu CIC · b. **TCTD \| Số dư cấp tín dụng [Dư nợ ngắn hạn \| Dư nợ TDH \| Dư nợ khác \| Tổng số dư CTD] \| Tên TSBĐ \| Giá trị TSBĐ \| Chủ sở hữu TSBĐ** — one row per TCTD + total (`{{RowsDuNoTCTD}}`) · c. nợ cần chú ý, nợ xấu · **Phân nhóm bureau (POC)** |
+| **5. Kết luận nguồn thu DN** | **Phương án kinh doanh (nếu có) \| N-2 \| N-1 \| Cập nhật năm T \| Năm kế hoạch \| Cơ sở của Khách hàng** × Doanh thu thuần / Biến động DTT / LNST / ROS · **Phân nhóm doanh nghiệp (POC)** · Nhận xét về nguồn thu + giá trị nguồn thu theo công thức BRD |
 
-"Phân nhóm … (POC)" cells: `CORP_INCOME_SHOW_GROUPS=0` leaves them empty (BRD: show only in POC).
-The template is plain Markdown/HTML with `{{placeholders}}` — replace it with your own layout
-without touching Python.
+"Hiển thị khi …" rules, applied after filling (`appendix_context.apply_output_conditions`): the
+business-plan table is removed when there is no plan; its "Cơ sở của Khách hàng" column when the
+plan states no basis; the three "Phân nhóm (POC)" tables when `CORP_INCOME_SHOW_GROUPS=0`. In a
+POC table the group that applies is marked ✔ in "Kết quả", with its basis.
+
+Edit the template to change the layout — no Python change, as long as the `{{placeholders}}` stay.
 
 ---
 

@@ -11,7 +11,7 @@ from pathlib import Path
 from src.agents.calculator import business_model, cic_metrics, industry
 from src.agents.calculator import financial_metrics as fm
 from src.agents.documents import document_matrix as dm
-from src.utils.report.appendix_context import plan_table
+from src.utils.report.appendix_context import apply_output_conditions, plan_cells
 from src.utils.report.report_template import template_placeholders, load_template
 
 AS_OF = date(2026, 10, 27)
@@ -162,14 +162,22 @@ class ProjectionTest(unittest.TestCase):
 
 
 class PlanTableTest(unittest.TestCase):
-    def test_basis_column_hidden_without_basis(self):
+    TABLE = ('<table id="pakd">\n<tr><th>Phương án kinh doanh (nếu có)</th><th class="coso">Cơ sở của Khách hàng</th>'
+             '</tr>\n<tr><td>Doanh thu thuần</td><td class="coso">x</td></tr>\n</table>\nsau')
+
+    def test_plan_cells(self):
         f = fm.compute([fin([Y2025, Y2024])], AS_OF)
-        with_basis = plan_table({"plan_revenue": 1200 * M, "plan_profit_after_tax": 60 * M, "basis": "HĐ mới"},
-                                f, "2025", "2024")
-        without = plan_table({"plan_revenue": 1200 * M, "plan_profit_after_tax": 60 * M}, f, "2025", "2024")
-        self.assertIn("Cơ sở của Khách hàng", with_basis)
-        self.assertNotIn("Cơ sở của Khách hàng", without)
-        self.assertIn("20,0%", with_basis)                       # 1200 / 1000 - 1
+        cells = plan_cells({"plan_year": 2026, "plan_revenue": 1200 * M, "plan_profit_after_tax": 60 * M,
+                            "basis": "HĐ mới"}, f, "2025")
+        self.assertEqual((cells["PAKD_TangTruong_KeHoach"], cells["PAKD_ROS_KeHoach"]), ("20,0%", "5,0%"))
+        self.assertEqual(cells["PAKD_NamKeHoach"], "2026")
+
+    def test_table_hidden_without_plan_and_basis_column_without_basis(self):
+        self.assertEqual(apply_output_conditions(self.TABLE, {"_has_plan": ""}), "sau")
+        out = apply_output_conditions(self.TABLE, {"_has_plan": "1", "_plan_basis": ""})
+        self.assertIn("Doanh thu thuần", out)
+        self.assertNotIn("Cơ sở của Khách hàng", out)
+        self.assertNotIn('class="coso"', out)
 
 
 class CicTableTest(unittest.TestCase):
@@ -196,16 +204,31 @@ class CicTableTest(unittest.TestCase):
 
 
 class TemplateTest(unittest.TestCase):
+    TEXT = load_template()[0]
+
     def test_template_has_the_appendix_sections(self):
-        text = load_template()[0]
         for heading in ("### 1. Pháp lý doanh nghiệp", "#### a. Thông tin cơ bản về pháp lý doanh nghiệp",
                         "#### b. Thành viên góp vốn & người đại diện theo pháp luật",
                         "### 2. Hoạt động kinh doanh", "Mô hình HĐKD (nếu có)", "### 3. Tài chính",
                         "Cập nhật các tháng năm", "### 4. Dư nợ tại TCTD", "#### c. Chất lượng tín dụng",
                         "### 5. Kết luận nguồn thu doanh nghiệp"):
-            self.assertIn(heading, text)
-        names = set(template_placeholders(text))
+            self.assertIn(heading, self.TEXT)
+        names = set(template_placeholders(self.TEXT))
         self.assertFalse({"NhanXetPhapLyDN", "NhanXetDuNo", "NhanXetPAKD", "Nguon", "DoanhNghiepA"} & names)
+
+    def test_tables_are_written_out_like_the_brd(self):
+        # Every column header of the BRD tables is in the template itself, not built by code.
+        for header in ("| Họ và tên | Mối quan hệ | Tỷ lệ góp vốn |",
+                       '<th rowspan="2">TCTD</th><th colspan="4">Số dư cấp tín dụng</th>',
+                       "<th>Dư nợ ngắn hạn</th><th>Dư nợ TDH</th><th>Dư nợ khác</th><th>Tổng số dư CTD</th>",
+                       '<th rowspan="2">Tên TSBĐ</th><th rowspan="2">Giá trị TSBĐ</th><th rowspan="2">Chủ sở hữu TSBĐ</th>',
+                       "<th>Phương án kinh doanh (nếu có)</th><th>{{Nam-2}}</th><th>{{Nam-1}}</th><th>Cập nhật năm T</th>",
+                       '<th class="coso">Cơ sở của Khách hàng</th>',
+                       "<th>Phân nhóm tài chính doanh nghiệp (POC)</th>", "<th>Phân nhóm bureau (POC)</th>",
+                       "<th>Phân nhóm doanh nghiệp (POC)</th>"):
+            self.assertIn(header, self.TEXT)
+        for row in ("Doanh thu thuần", "Biến động doanh thu thuần", "Lợi nhuận sau thuế", "ROS (LNST/DTT)"):
+            self.assertIn(f"<tr><td>{row}</td>", self.TEXT)
 
 
 if __name__ == "__main__":

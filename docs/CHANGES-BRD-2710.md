@@ -19,13 +19,13 @@ Each rule has a test in `testing/test_brd_2710.py`.
 
 | Change | File |
 |---|---|
-| Same sections / rows / columns as the Appendix: 1 a-b, 2, 3, 4 a-c, **5. Kết luận nguồn thu doanh nghiệp** (the business-plan table now sits in mục 5) | `src/templates/corp-income-structure.md` |
-| One legal comment ("Nhận xét về pháp lý Khách hàng") instead of two; the members table lists every member and a legal rep without capital | `appendix_context.py` |
+| Every BRD table is written out in the template (headers, columns, row labels): members (1b), financial summary (3), CIC table with the two-row header TCTD → Số dư cấp tín dụng [NH, TDH, khác, tổng] → Tên / Giá trị / Chủ sở hữu TSBĐ (4b), business-plan table N-2 / N-1 / Cập nhật năm T / Năm kế hoạch / Cơ sở (5), and the three "Phân nhóm (POC)" tables with their criteria | `src/templates/corp-income-structure.md` |
+| Code fills only cells and data rows: `{{RowsThanhVien}}` (one per member, + a legal rep without capital), `{{RowsDuNoTCTD}}` (one per TCTD + total), `PAKD_*`, `KQ_TaiChinh_*` / `KQ_Bureau_*` / `KQ_DoanhNghiep_*` (✔ on the group that applies) | `appendix_context.py` |
+| Sections: 1 a-b, 2, 3, 4 a-c, **5. Kết luận nguồn thu doanh nghiệp** (the business-plan table sits in mục 5); one legal comment instead of two; no "Nhận xét dư nợ" cell (the interest-vs-CIC warning moved to the finance comment) | template, `appendix_context.py` |
 | Mục 2: "Nguồn" row and the two partner tables removed → **Mô hình HĐKD** 5-tier diagram | `calculator/business_model.py` (new), pass **M9** `business_model_extraction` (new) |
 | Mục 3: year headers show the year (2024, 2025); "Cập nhật các tháng năm N" only on the revenue row, as the VAT sentence | `appendix_context.py` |
-| Mục 4: one row per TCTD with Tên / Giá trị / Chủ sở hữu TSBĐ; cam kết ngoại bảng in "Dư nợ khác"; no "Nhận xét dư nợ" cell (the interest-vs-CIC warning moved to the finance comment) | `cic_metrics.py`, `appendix_context.py` |
-| "Phân nhóm tài chính / bureau / doanh nghiệp (POC)" are their own cells (`CORP_INCOME_SHOW_GROUPS=0` empties them) | template, `appendix_context._group_line` |
-| Business-plan table: hidden without a plan; "Cơ sở của Khách hàng" column hidden when the plan gives none | `appendix_context.plan_table` |
+| Hide rules: no plan → plan table removed; no basis → "Cơ sở" column removed; `CORP_INCOME_SHOW_GROUPS=0` → POC tables removed | `appendix_context.apply_output_conditions` |
+| "Mối quan hệ" reads from each person's side ("vợ của …" / "… là vợ"); the prompt states the direction | `appendix_context._relations`, `shareholders_extraction.md` |
 
 ## Rules
 

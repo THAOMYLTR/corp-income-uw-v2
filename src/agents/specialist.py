@@ -38,6 +38,7 @@ from src.agents.calculator.borrowers import detect_borrowers
 from src.agents.calculator import business_model
 from src.agents.documents.document_matrix import get_type
 from src.utils.report.appendix_context import (
+    apply_output_conditions,
     borrower_ownership,
     build_appendix_context,
     business_type,
@@ -310,7 +311,8 @@ class CorpIncomeAnalysis:
             "unknown_placeholders": [],
         })
 
-        markdown = render_markdown(base, template_text, ctx)
+        # "hiển thị khi …": plan table, "Cơ sở" column, POC group tables.
+        markdown = apply_output_conditions(render_markdown(base, template_text, ctx), ctx)
         return {
             "response": markdown,
             "meta": meta,

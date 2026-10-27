@@ -28,7 +28,7 @@ frames of the LLM cells: `src/templates/corp-income-cell-specs.md`. What changed
 | 2. Mô hình HĐKD (5 tầng), ngành TCB | code, from M9 (`business_model_extraction`) | `calculator/business_model.py`, `calculator/industry.py` |
 | 3. Bảng tài chính, chỉ số, cảnh báo, phân nhóm tài chính | code, from M5 / M6 | `calculator/financial_metrics.py` |
 | 4. Bảng dư nợ theo TCTD, nợ cần chú ý / nợ xấu, phân nhóm bureau | code, from M7 | `calculator/cic_metrics.py` |
-| 5. Bảng PAKD, phân nhóm DN, giá trị nguồn thu (lịch sử hoặc dự phóng) | code, from M8 + groups | `appendix_context.plan_table`, `financial_metrics.income_estimate` |
+| 5. Bảng PAKD, phân nhóm DN, giá trị nguồn thu (lịch sử hoặc dự phóng) | code, from M8 + groups | `appendix_context.plan_cells`, `financial_metrics.income_estimate` |
 | Sản phẩm/dịch vụ, địa chỉ, nhận xét HĐKD, kết luận; rewrite of the legal and finance comments | one LLM call (`report_writer_llm`) with the guidance, every code value and document excerpts | `src/agents/report_writer.py`, `config/prompts/report_writer.md` |
 
 The LLM returns `{placeholder: text}` only for cells code left empty, so it can neither move
