@@ -75,6 +75,8 @@ ASSUMED_INTEREST_RATE = 0.10
 INTEREST_BAND = (0.5, 2.0)
 # [TT] Phân khúc KH theo doanh thu năm gần nhất (tỷ đồng).
 SEGMENTS = ((2000e9, "Large corp"), (600e9, "MM"), (200e9, "USME"), (0, "SME"))
+# [BRD 27/10] segment code of the TCB industry table (bang-nganh-tcb.csv)
+SEGMENT_CODES = {"Large corp": "LC", "MM": "MM", "USME": "USME", "SME": "SME"}
 # [BT] Optional list of excluded audit firms, one name per line (user-maintained).
 EXCLUDED_AUDITORS_FILE = PROJECT_ROOT / "src" / "templates" / "danh-sach-kiem-toan-loai-tru.txt"
 
@@ -391,6 +393,16 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
             "status_remarks": status, "group": group, "group_reason": reason}
 
 
+def segment_code(financials: dict[str, Any]) -> str:
+    """[BRD 27/10] SME / USME / MM / LC by net revenue of the latest year; "" when unknown."""
+
+    year = financials.get("latest_year")
+    revenue = (financials["years"].get(year) or {}).get("net_revenue") if year else None
+    if revenue is None:
+        return ""
+    return SEGMENT_CODES[next(name for floor, name in SEGMENTS if revenue >= floor)]
+
+
 def interest_vs_cic(financials: dict[str, Any], avg_balance_12m: float | None) -> str:
     """[BT] Chi phí lãi vay vs dư nợ BQ 12 tháng (CIC) x 10%/năm; '' when consistent or unknown."""
 
@@ -475,7 +487,8 @@ def income_estimate(financials: dict[str, Any], ownership_pct: float | None,
             feasible_ros = plan_ros if floor is None else min(plan_ros, floor)
             projection = {
                 "plan_year": plan.get("plan_year"), "plan_revenue": plan_rev, "plan_ros": plan_ros,
-                "industry": industry.get("name"), "industry_growth": industry["growth"],
+                "industry": industry.get("name"), "segment": industry.get("segment"),
+                "industry_growth": industry["growth"],
                 "industry_ros": industry.get("ros"), "growth_factor": k, "revenue_n": revenue,
                 "revenue_cap": cap, "feasible_revenue": feasible_rev, "ros_hist": ros_hist,
                 "feasible_ros": feasible_ros, "lnst": feasible_ros * feasible_rev,
@@ -501,4 +514,5 @@ def sources_text(financials: dict[str, Any]) -> str:
     return "<br>".join(parts)
 
 
-__all__ = ["compute", "income_estimate", "interest_vs_cic", "fmt", "pct", "sources_text", "SOURCE_LABELS"]
+__all__ = ["compute", "income_estimate", "interest_vs_cic", "fmt", "pct", "segment_code", "sources_text",
+           "SOURCE_LABELS"]

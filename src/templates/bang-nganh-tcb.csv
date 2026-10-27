@@ -1,5 +1,5 @@
-# BRD 27/10/2026 — sheet "PL1 - Bảng ngành tại TCB". ROS and Tăng trưởng ngành are fractions (0.12 = 12%).
-# "-" = no figure. Only the first rows reached this repo; paste the remaining rows of PL1 below, same columns.
+# BRD 27/10/2026 — sheet "PL1 - Bảng ngành tại TCB (2)", bảng chính: 4 phân khúc (SME, USME, MM, LC) × 110 ngành.
+# ROS và Tăng trưởng ngành là tỷ lệ (0.12 = 12%); "-" = không có số. Tra theo (phân khúc, ngành): calculator/industry.py.
 Phân khúc,Lĩnh vực kinh tế,Sub-segment_ENG,Bizline - Sub-segment,Ngành,ROS,Tăng trưởng ngành
 SME,Recom,Civil Construction,SME-Recom-Civil Construction,Xây dựng dân dụng,0.12,0.07
 SME,Recom,Industrial Park Construction,SME-Recom-Industrial Park Construction,Xây dựng công nghiệp,0.027092437994583506,0.06
@@ -13,3 +13,431 @@ SME,Recom,Others,SME-Recom-Others,Khác,-,0.03
 SME,Recom,Residential Developer,SME-Recom-Residential Developer,Nhà phát triển khu dân cư,0.19029640313683716,0.16
 SME,Recom,Services installation,SME-Recom-Services installation,"Dịch vụ Xây lắp, lắp đặt",0.1036,0.13
 SME,Recom,Trading cement,SME-Recom-Trading cement,Thương mại Xi măng,0.012994771635460686,0.05
+SME,Recom,Trading construction machinery,SME-Recom-Trading construction machinery,Thương mại Máy móc xây dựng,0.018659795323684284,0.21
+SME,Recom,"Trading construction materials (except for iron, steel, cement)","SME-Recom-Trading construction materials (except for iron, steel, cement)","Thương mại Vật liệu Xây dựng (trừ sắt, thép, xi măng)",0.009149124879605322,0.05
+SME,Recom,Trading iron and steel,SME-Recom-Trading iron and steel,Thương mại Sắt thép,0.005852821939265784,0.05
+SME,FMCG_Retails_Logistics,Manufacturing Cashew,SME-FMCG_Retails_Logistics-Manufacturing Cashew,Sản xuất Điều,-0.005285807606543049,0.14
+SME,FMCG_Retails_Logistics,Manufacturing Cassava and Corn,SME-FMCG_Retails_Logistics-Manufacturing Cassava and Corn,Sản xuất Sắn lát và ngô,0.030864129532162058,0.22
+SME,FMCG_Retails_Logistics,Manufacturing Chemicals and chemical products,SME-FMCG_Retails_Logistics-Manufacturing Chemicals and chemical products,Sản xuất Hóa chất và sản phẩm hóa chất,0.06319635680215453,0.05
+SME,FMCG_Retails_Logistics,Manufacturing Coffee,SME-FMCG_Retails_Logistics-Manufacturing Coffee,Sản xuất Cà phê,0.05508831328187741,0.05
+SME,FMCG_Retails_Logistics,Manufacturing Cosmetics,SME-FMCG_Retails_Logistics-Manufacturing Cosmetics,Sản xuất Mỹ phẩm,0.047318909589779884,0.07
+SME,FMCG_Retails_Logistics,"Manufacturing Cotton, fiber, yarns","SME-FMCG_Retails_Logistics-Manufacturing Cotton, fiber, yarns","Sản xuất Bông, vải, sợi",0.0373070182622972,0.08
+SME,FMCG_Retails_Logistics,"Manufacturing Farming, livestock","SME-FMCG_Retails_Logistics-Manufacturing Farming, livestock","Sản xuất Nông nghiệp, chăn nuôi",0.043302255664818066,0.09
+SME,FMCG_Retails_Logistics,Manufacturing Fertilizer,SME-FMCG_Retails_Logistics-Manufacturing Fertilizer,Sản xuất phân bón và hóa chất nông nghiệp,0.027086099604236965,0.09
+SME,FMCG_Retails_Logistics,Manufacturing Food and beverage,SME-FMCG_Retails_Logistics-Manufacturing Food and beverage,Sản xuất Thực phẩm và đồ uống,0.105,0.1
+SME,FMCG_Retails_Logistics,Manufacturing Leather and leather products,SME-FMCG_Retails_Logistics-Manufacturing Leather and leather products,Sản xuất Da và các sản phẩm từ Da,0.0389682271275506,0.07
+SME,FMCG_Retails_Logistics,Manufacturing Livestock food,SME-FMCG_Retails_Logistics-Manufacturing Livestock food,Sản xuất Thức ăn chăn nuôi,0.012705109487250968,0.09
+SME,FMCG_Retails_Logistics,"Manufacturing Medicine, medical equipment and supplies","SME-FMCG_Retails_Logistics-Manufacturing Medicine, medical equipment and supplies","Sản xuất Dược phẩm, vật tư và thiết bị y tế",0.07321471802212343,0.08
+SME,FMCG_Retails_Logistics,Manufacturing Paper products and stationery,SME-FMCG_Retails_Logistics-Manufacturing Paper products and stationery,Sản xuất Sản phẩm từ giấy và văn phòng phẩm,0.03260679940167787,0.1
+SME,FMCG_Retails_Logistics,Manufacturing Plastic products,SME-FMCG_Retails_Logistics-Manufacturing Plastic products,Sản xuất Sản phẩm từ nhựa,0.111,0.1
+SME,FMCG_Retails_Logistics,Manufacturing Rice,SME-FMCG_Retails_Logistics-Manufacturing Rice,Sản xuất Gạo,0.008362110960923173,0.1
+SME,FMCG_Retails_Logistics,Manufacturing Seafood,SME-FMCG_Retails_Logistics-Manufacturing Seafood,Sản xuất Hải sản,0.02094247786481721,0.1
+SME,FMCG_Retails_Logistics,Manufacturing Sewing products,SME-FMCG_Retails_Logistics-Manufacturing Sewing products,Sản xuất Sản phẩm từ may,0.032840988616044,0.15
+SME,FMCG_Retails_Logistics,"Manufacturing wood, furniture","SME-FMCG_Retails_Logistics-Manufacturing wood, furniture",Sản xuất Sản phẩm từ gỗ và đồ gỗ nội/ngoại thất,0.1,0.07
+SME,FMCG_Retails_Logistics,Others,SME-FMCG_Retails_Logistics-Others,Khác,-,0.03
+SME,FMCG_Retails_Logistics,Services Consumer goods,SME-FMCG_Retails_Logistics-Services Consumer goods,Tiêu dùng bán lẻ,0.007468570973750817,0.06
+SME,FMCG_Retails_Logistics,Services Dining,SME-FMCG_Retails_Logistics-Services Dining,Dich vụ ăn uống,0.01461748749768175,0.22
+SME,FMCG_Retails_Logistics,"Services Farming, livestock, fishing","SME-FMCG_Retails_Logistics-Services Farming, livestock, fishing","Dịch vụ Nông nghiệp, chăn nuôi, ngư nghiệp",0.018695119310638376,0.07
+SME,FMCG_Retails_Logistics,"Services Transportation of goods, loading and logistic","SME-FMCG_Retails_Logistics-Services Transportation of goods, loading and logistic",Dịch vụ vận chuyển hàng hóa,0.1,0.27
+SME,FMCG_Retails_Logistics,Services Warehousing,SME-FMCG_Retails_Logistics-Services Warehousing,Dịch vụ Kho bãi,0.1196077245150917,0.15
+SME,FMCG_Retails_Logistics,Trading Cashew,SME-FMCG_Retails_Logistics-Trading Cashew,Thương mại Điều ( Điều nhân xô được SX từ các nhà máy phục vụ cho XK),0.007354194570024682,0.07
+SME,FMCG_Retails_Logistics,Trading Cassava and Corn,SME-FMCG_Retails_Logistics-Trading Cassava and Corn,Thương mại Sắn lát và ngô,0.003021905268794691,0.06
+SME,FMCG_Retails_Logistics,Trading Chemicals,SME-FMCG_Retails_Logistics-Trading Chemicals,Thương mại Hóa chất,0.033958669230749534,0.26
+SME,FMCG_Retails_Logistics,Trading Coffee,SME-FMCG_Retails_Logistics-Trading Coffee,Thương mại Cà phê,0.0036767761933366705,0.07
+SME,FMCG_Retails_Logistics,Trading Cosmetics,SME-FMCG_Retails_Logistics-Trading Cosmetics,Thương mại Mỹ phẩm,0.01632898592830995,0.1
+SME,FMCG_Retails_Logistics,Trading Distribution of consumer goods,SME-FMCG_Retails_Logistics-Trading Distribution of consumer goods,Phân phối bán lẻ,0.01315400443511524,0.07
+SME,FMCG_Retails_Logistics,Trading Fertilizer,SME-FMCG_Retails_Logistics-Trading Fertilizer,Kinh doanh phân bón và hóa chất nông nghiệp,0.012572253258044416,0.05
+SME,FMCG_Retails_Logistics,Trading Food and beverage,SME-FMCG_Retails_Logistics-Trading Food and beverage,Thương mại Thực phẩm và đồ uống,0.0517,0.06
+SME,FMCG_Retails_Logistics,Trading Livestock food,SME-FMCG_Retails_Logistics-Trading Livestock food,Thương mại Thức ăn chăn nuôi,0.011556938212607884,0.1
+SME,FMCG_Retails_Logistics,"Trading Medicine, medical equipment and supplies","SME-FMCG_Retails_Logistics-Trading Medicine, medical equipment and supplies","Thương mại Dược, vật tư thiết bị Y tế",0.074,0.07
+SME,FMCG_Retails_Logistics,Trading Other agriculture product business,SME-FMCG_Retails_Logistics-Trading Other agriculture product business,Thương mại Sản phẩm nông nghiệp khác,0.00751906338345269,0.1
+SME,FMCG_Retails_Logistics,Trading Paper and stationery,SME-FMCG_Retails_Logistics-Trading Paper and stationery,Thương mại Giấy và văn phòng phẩm,0.0271358850954507,0.15
+SME,FMCG_Retails_Logistics,Trading Plastic,SME-FMCG_Retails_Logistics-Trading Plastic,Thương mại Nhựa,0.011431106967363769,0.15
+SME,FMCG_Retails_Logistics,Trading Rice,SME-FMCG_Retails_Logistics-Trading Rice,Thương mại Gạo,0.004286061302204179,0.15
+SME,FMCG_Retails_Logistics,Trading Seafood,SME-FMCG_Retails_Logistics-Trading Seafood,Thương mại Hải sản,0.007243882103325827,0.07
+SME,FMCG_Retails_Logistics,Trading Sewing products,SME-FMCG_Retails_Logistics-Trading Sewing products,Bán buôn sản phẩm may mặc,0.011501971185960353,0.1
+SME,FMCG_Retails_Logistics,Trading Wood and furniture,SME-FMCG_Retails_Logistics-Trading Wood and furniture,Thương mại Đồ gỗ và nội thất,0.004652124862337089,0.07
+SME,Auto and Parts,Manufacturing Automobiles and spare parts,SME-Auto and Parts-Manufacturing Automobiles and spare parts,Sản xuất ô tô và phụ tùng ô tô,0.026913617845729793,0.06
+SME,Auto and Parts,Others,SME-Auto and Parts-Others,Khác,-,0.03
+SME,Auto and Parts,Services Automobiles maintenance,SME-Auto and Parts-Services Automobiles maintenance,Dịch vụ Bảo dưỡng ô tô,0.005021457251075633,0.05
+SME,Auto and Parts,Trading Automobiles,SME-Auto and Parts-Trading Automobiles,Thương mại ô tô,0.009558011157517254,0.09
+SME,Financial Service and Public sector,Financial intermediation,SME-Financial Service and Public sector-Financial intermediation,Trung gian tài chính,0.03994625123900426,0.15
+SME,Financial Service and Public sector,Others,SME-Financial Service and Public sector-Others,Khác,-,0.03
+SME,Financial Service and Public sector,Services Finance,SME-Financial Service and Public sector-Services Finance,Dịch vụ Tài chính,0.10301281585472133,0.11
+SME,Financial Service and Public sector,Services Public,SME-Financial Service and Public sector-Services Public,Dịch vụ Công,0.04029136233724904,0.08
+SME,Travel and Leisure,Others,SME-Travel and Leisure-Others,Khác,-,0.03
+SME,Travel and Leisure,Services Entertainment,SME-Travel and Leisure-Services Entertainment,Dịch vụ Giải trí,0.0548692999213233,0.04
+SME,Travel and Leisure,Services Film and television publishing,SME-Travel and Leisure-Services Film and television publishing,Dịch vụ Xuất bản Điện ảnh và Truyền hình,0.032174539884980397,0.08
+SME,Travel and Leisure,Services hotel and accommodation,SME-Travel and Leisure-Services hotel and accommodation,Dịch vụ khách sạn và nhà ở,0.05529275490049046,0.13
+SME,Travel and Leisure,Services Passenger transportation,SME-Travel and Leisure-Services Passenger transportation,Dịch vụ Vận tải hành khách,0.018321740529863198,0.25
+SME,Travel and Leisure,Services Turism,SME-Travel and Leisure-Services Turism,Dịch vụ Du lịch,0.005911591070908919,0.07
+SME,Utility and Telecom,Construction of Electrical works,SME-Utility and Telecom-Construction of Electrical works,Xây dựng các công trình điện,0.02840474286414407,0.05
+SME,Utility and Telecom,Construction of Telecommunications and communication works,SME-Utility and Telecom-Construction of Telecommunications and communication works,Xây dựng công trình viễn thông và thông tin liên lạc,0.0588869482056239,0.08
+SME,Utility and Telecom,Construction of Water supply and drainage works,SME-Utility and Telecom-Construction of Water supply and drainage works,"Xây dựng công trình cấp, thoát nước",0.028824653181207967,0.04
+SME,Utility and Telecom,Manufacturing Crude oil and gas exploitation,SME-Utility and Telecom-Manufacturing Crude oil and gas exploitation,Khai thác dầu thô và khí đốt tự nhiên,0.11979635140677902,0.03
+SME,Utility and Telecom,"Manufacturing Distribution of civil electricity, water and gas","SME-Utility and Telecom-Manufacturing Distribution of civil electricity, water and gas","Sản xuất phân phối điện dân dụng, nước và khí đốt",0.5009464049967535,0.03
+SME,Utility and Telecom,Manufacturing Electric equipments,SME-Utility and Telecom-Manufacturing Electric equipments,Sản xuất thiết bị điện,0.03669687879106354,0.06
+SME,Utility and Telecom,Manufacturing Electronic equipment and components,SME-Utility and Telecom-Manufacturing Electronic equipment and components,Sản xuất sản phẩm điện tử và linh kiện điện tử,0.049428927902760524,0.06
+SME,Utility and Telecom,Manufacturing Fuel,SME-Utility and Telecom-Manufacturing Fuel,Sản xuất nhiên liệu,0.026567082040590998,0.1
+SME,Utility and Telecom,Manufacturing Telecommunication and IT equipments,SME-Utility and Telecom-Manufacturing Telecommunication and IT equipments,Sản xuất Thiết bị viễn thông và CNTT,0.13,0.09
+SME,Utility and Telecom,Others,SME-Utility and Telecom-Others,Khác,-,0.03
+SME,Utility and Telecom,Services Disposal waste,SME-Utility and Telecom-Services Disposal waste,Dịch vụ Xử lý và tiêu hủy rác thải,0.0716984661583347,0.06
+SME,Utility and Telecom,Services IT and telecommunication,SME-Utility and Telecom-Services IT and telecommunication,Dịch vụ CNTT và Viễn thông,0.12,0.06
+SME,Utility and Telecom,Services Professional consulting and operations support,SME-Utility and Telecom-Services Professional consulting and operations support,Dịch vụ Tư vấn chuyên môn và hỗ trợ vận hành,0.07702004391329369,0.19
+SME,Utility and Telecom,Trading Electric equipments,SME-Utility and Telecom-Trading Electric equipments,Kinh doanh thiết bị điện,0.065,0.06
+SME,Utility and Telecom,Trading Fuel,SME-Utility and Telecom-Trading Fuel,Kinh doanh nhiên liệu,0.011801937947585356,0.1
+SME,Utility and Telecom,"Trading Sales of petroleum gas, crude oil and related products","SME-Utility and Telecom-Trading Sales of petroleum gas, crude oil and related products","Bán buôn xăng dầu, dầu thô và các sản phẩm liên quan",0.015028832284854294,0.03
+SME,Utility and Telecom,Trading Telecommunication and IT equipments,SME-Utility and Telecom-Trading Telecommunication and IT equipments,Thương mại Thiết bị Viễn thông và CNTT,0.076,0.06
+SME,Others,Manufacturing Machinery of food and beverage processing,SME-Others-Manufacturing Machinery of food and beverage processing,Sản xuất Máy móc chế biến thực phẩm và đồ uống,0.09466139033889891,0.07
+SME,Others,Manufacturing Mining,SME-Others-Manufacturing Mining,Sản xuất Khai khoáng,0.041949557264888054,0.05
+SME,Others,Manufacturing motorbikes and other means of transportation,SME-Others-Manufacturing motorbikes and other means of transportation,Thương mại Xe máy và các phương tiện vận tải khác,0.03984177434599669,0.06
+SME,Others,Manufacturing Other,SME-Others-Manufacturing Other,Sản xuất khác,0.11,0.04
+SME,Others,"Manufacturing Other of Farming, fishing","SME-Others-Manufacturing Other of Farming, fishing","Sản xuất Nông nghiệp, ngư nghiệp khác",0.0816237007927231,0.04
+SME,Others,Manufacturing Other specialized machinery and equipment,SME-Others-Manufacturing Other specialized machinery and equipment,"Sản xuất Máy móc, thiết bị chuyên dụng khác",0.05334057832906167,0.07
+SME,Others,"Manufacturing other wood, furniture","SME-Others-Manufacturing other wood, furniture",Sản xuất đồ gỗ và nội thất khác,0.028365162314773994,0.07
+SME,Others,Manufacturing Rubber,SME-Others-Manufacturing Rubber,Sản xuất cao su,0.07668108531393251,0.05
+SME,Others,Others,SME-Others-Others,Khác,0.036684299020362736,0.03
+SME,Others,Services Education,SME-Others-Services Education,Dịch vụ Giáo dục,0.22367450577342599,0.23
+SME,Others,Services Medical and medical supporting activities,SME-Others-Services Medical and medical supporting activities,Dịch vụ Y tế và hoạt động hỗ trợ y tế,0.12746126441487257,0.08
+SME,Others,Services Other,SME-Others-Services Other,Dịch vụ Khác chưa được phân vào đâu,0.15,0.04
+SME,Others,Services Other Consumer goods,SME-Others-Services Other Consumer goods,Dịch vụ hàng hóa tiêu dùng khác,0.060390366415624064,0.06
+SME,Others,Services Other of IT and telecommunication,SME-Others-Services Other of IT and telecommunication,Dịch vụ CNTT và Viễn thông khác,0.0389693403884217,0.06
+SME,Others,Services Other of publishing (except Film and Television Publishing),SME-Others-Services Other of publishing (except Film and Television Publishing),Dịch vụ Xuất bản khác (trừ xuất bản Điện ảnh và Truyền hình),0.1024067138113849,0.07
+SME,Others,Services Production of motorbikes and other means of transportation,SME-Others-Services Production of motorbikes and other means of transportation,Dịch vụ Sản xuất Xe máy và các phương tiện vận tải khác,0.03196982920238564,0.06
+SME,Others,Trading Machinery and equipment and supplies,SME-Others-Trading Machinery and equipment and supplies,"Thương mại Máy móc, vật tư thiết bị",0.02429561749017431,0.11
+SME,Others,Trading motorbikes and other means of transportation,SME-Others-Trading motorbikes and other means of transportation,Thương mại Xe máy và các phương tiện vận tải khác,0.012237188800980974,0.06
+SME,Others,Trading Other construction materials,SME-Others-Trading Other construction materials,Thương mại Vật liệu Xây dựng khác chưa được phân vào đâu,0.012670506200039533,0.08
+SME,Others,Trading Other consumer goods,SME-Others-Trading Other consumer goods,Thương mại Hàng tiêu dùng khác chưa được phân vào đâu,0.013631512956383299,0.08
+SME,Others,Trading Other Mining,SME-Others-Trading Other Mining,Kinh doanh khai thác mỏ khác,0.006118130877390819,0.1
+SME,Others,Trading other Wood and furniture,SME-Others-Trading other Wood and furniture,Thương mại Đồ gỗ và nội thất khác,0.016878228912672672,0.07
+SME,Others,Trading Rubber,SME-Others-Trading Rubber,Thương mại cao su,0.01385233254723802,0.05
+USME,Recom,Civil Construction,USME-Recom-Civil Construction,Xây dựng dân dụng,0.032852739853860655,0.07
+USME,Recom,Industrial Park Construction,USME-Recom-Industrial Park Construction,Xây dựng công nghiệp,0.03815704945378089,0.06
+USME,Recom,Industrial Park Developers,USME-Recom-Industrial Park Developers,Chủ đầu tư Khu công nghiệp,0.38767499010188744,0.16
+USME,Recom,Infrastructure construction,USME-Recom-Infrastructure construction,Xây dựng cơ sở hạ tầng,0.04526277599426644,0.08
+USME,Recom,infrastructure real estate developer,USME-Recom-infrastructure real estate developer,Nhà phát triển BĐS xây dựng hạ tầng,0.4205659263734944,0.27
+USME,Recom,Manufacturing cement,USME-Recom-Manufacturing cement,Sản xuất Xi măng,0.05886285770139976,0.05
+USME,Recom,"Manufacturing construction materials (except for iron, steel, cement)","USME-Recom-Manufacturing construction materials (except for iron, steel, cement)","Sản xuất Vật liệu Xây dựng (trừ sắt, thép, xi măng)",0.06511577464045039,0.05
+USME,Recom,Manufacturing iron and steel,USME-Recom-Manufacturing iron and steel,Sản xuất Sắt thép,0.0316167717895523,0.05
+USME,Recom,Others,USME-Recom-Others,Khác,-,0.03
+USME,Recom,Residential Developer,USME-Recom-Residential Developer,Nhà phát triển khu dân cư,0.1058024903577956,0.16
+USME,Recom,Services installation,USME-Recom-Services installation,"Dịch vụ Xây lắp, lắp đặt",0.040117953950174284,0.04
+USME,Recom,Trading cement,USME-Recom-Trading cement,Thương mại Xi măng,0.03622510777736747,0.05
+USME,Recom,Trading construction machinery,USME-Recom-Trading construction machinery,Thương mại Máy móc xây dựng,0.03222806450513675,0.07
+USME,Recom,"Trading construction materials (except for iron, steel, cement)","USME-Recom-Trading construction materials (except for iron, steel, cement)","Thương mại Vật liệu Xây dựng (trừ sắt, thép, xi măng)",0.02880433268741339,0.05
+USME,Recom,Trading iron and steel,USME-Recom-Trading iron and steel,Thương mại Sắt thép,0.02558343020888315,0.05
+USME,FMCG_Retails_Logistics,Manufacturing Cashew,USME-FMCG_Retails_Logistics-Manufacturing Cashew,Sản xuất Điều,0.033987032311098044,0.07
+USME,FMCG_Retails_Logistics,Manufacturing Cassava and Corn,USME-FMCG_Retails_Logistics-Manufacturing Cassava and Corn,Sản xuất Sắn lát và ngô,0.05753908898461724,0.08
+USME,FMCG_Retails_Logistics,Manufacturing Chemicals and chemical products,USME-FMCG_Retails_Logistics-Manufacturing Chemicals and chemical products,Sản xuất Hóa chất và sản phẩm hóa chất,0.11324831974001831,0.05
+USME,FMCG_Retails_Logistics,Manufacturing Coffee,USME-FMCG_Retails_Logistics-Manufacturing Coffee,Sản xuất Cà phê,0.04097162507178197,0.05
+USME,FMCG_Retails_Logistics,Manufacturing Cosmetics,USME-FMCG_Retails_Logistics-Manufacturing Cosmetics,Sản xuất Mỹ phẩm,0.02,0.07
+USME,FMCG_Retails_Logistics,"Manufacturing Cotton, fiber, yarns","USME-FMCG_Retails_Logistics-Manufacturing Cotton, fiber, yarns","Sản xuất Bông, vải, sợi",0.055852625231726225,0.08
+USME,FMCG_Retails_Logistics,"Manufacturing Farming, livestock","USME-FMCG_Retails_Logistics-Manufacturing Farming, livestock","Sản xuất Nông nghiệp, chăn nuôi",0.049137321605451034,0.07
+USME,FMCG_Retails_Logistics,Manufacturing Fertilizer,USME-FMCG_Retails_Logistics-Manufacturing Fertilizer,Sản xuất phân bón và hóa chất nông nghiệp,0.0416971775926335,0.07
+USME,FMCG_Retails_Logistics,Manufacturing Food and beverage,USME-FMCG_Retails_Logistics-Manufacturing Food and beverage,Sản xuất Thực phẩm và đồ uống,0.037705177665939234,0.07
+USME,FMCG_Retails_Logistics,Manufacturing Leather and leather products,USME-FMCG_Retails_Logistics-Manufacturing Leather and leather products,Sản xuất Da và các sản phẩm từ Da,0.048895656066294035,0.07
+USME,FMCG_Retails_Logistics,Manufacturing Livestock food,USME-FMCG_Retails_Logistics-Manufacturing Livestock food,Sản xuất Thức ăn chăn nuôi,0.042507259450006184,0.09
+USME,FMCG_Retails_Logistics,"Manufacturing Medicine, medical equipment and supplies","USME-FMCG_Retails_Logistics-Manufacturing Medicine, medical equipment and supplies","Sản xuất Dược phẩm, vật tư và thiết bị y tế",0.1369064894924936,0.08
+USME,FMCG_Retails_Logistics,Manufacturing Paper products and stationery,USME-FMCG_Retails_Logistics-Manufacturing Paper products and stationery,Sản xuất Sản phẩm từ giấy và văn phòng phẩm,0.053351360607389,0.07
+USME,FMCG_Retails_Logistics,Manufacturing Plastic products,USME-FMCG_Retails_Logistics-Manufacturing Plastic products,Sản xuất Sản phẩm từ nhựa,0.08194586633423755,0.1
+USME,FMCG_Retails_Logistics,Manufacturing Rice,USME-FMCG_Retails_Logistics-Manufacturing Rice,Sản xuất Gạo,0.03174860298798752,0.18
+USME,FMCG_Retails_Logistics,Manufacturing Seafood,USME-FMCG_Retails_Logistics-Manufacturing Seafood,Sản xuất Hải sản,0.04701392237192573,0.1
+USME,FMCG_Retails_Logistics,Manufacturing Sewing products,USME-FMCG_Retails_Logistics-Manufacturing Sewing products,Sản xuất Sản phẩm từ may,0.060768980925701044,0.15
+USME,FMCG_Retails_Logistics,"Manufacturing wood, furniture","USME-FMCG_Retails_Logistics-Manufacturing wood, furniture",Sản xuất Sản phẩm từ gỗ và đồ gỗ nội/ngoại thất,0.04261210672342647,0.07
+USME,FMCG_Retails_Logistics,Others,USME-FMCG_Retails_Logistics-Others,Khác,-,0.03
+USME,FMCG_Retails_Logistics,Services Consumer goods,USME-FMCG_Retails_Logistics-Services Consumer goods,Tiêu dùng bán lẻ,0.026511834517434572,0.06
+USME,FMCG_Retails_Logistics,Services Dining,USME-FMCG_Retails_Logistics-Services Dining,Dich vụ ăn uống,0.026836716706685425,0.15
+USME,FMCG_Retails_Logistics,"Services Farming, livestock, fishing","USME-FMCG_Retails_Logistics-Services Farming, livestock, fishing","Dịch vụ Nông nghiệp, chăn nuôi, ngư nghiệp",0.030317448287381834,0.15
+USME,FMCG_Retails_Logistics,"Services Transportation of goods, loading and logistic","USME-FMCG_Retails_Logistics-Services Transportation of goods, loading and logistic",Dịch vụ vận chuyển hàng hóa,0.059915296070745666,0.15
+USME,FMCG_Retails_Logistics,Services Warehousing,USME-FMCG_Retails_Logistics-Services Warehousing,Dịch vụ Kho bãi,0.035657393098422384,0.15
+USME,FMCG_Retails_Logistics,Trading Cashew,USME-FMCG_Retails_Logistics-Trading Cashew,Thương mại Điều ( Điều nhân xô được SX từ các nhà máy phục vụ cho XK),0.026282918879163557,0.07
+USME,FMCG_Retails_Logistics,Trading Cassava and Corn,USME-FMCG_Retails_Logistics-Trading Cassava and Corn,Thương mại Sắn lát và ngô,0.022624299812287953,0.07
+USME,FMCG_Retails_Logistics,Trading Chemicals,USME-FMCG_Retails_Logistics-Trading Chemicals,Thương mại Hóa chất,0.03928225597170727,0.27
+USME,FMCG_Retails_Logistics,Trading Coffee,USME-FMCG_Retails_Logistics-Trading Coffee,Thương mại Cà phê,0.021950402083015123,0.07
+USME,FMCG_Retails_Logistics,Trading Cosmetics,USME-FMCG_Retails_Logistics-Trading Cosmetics,Thương mại Mỹ phẩm,0.03725441149531966,0.27
+USME,FMCG_Retails_Logistics,Trading Distribution of consumer goods,USME-FMCG_Retails_Logistics-Trading Distribution of consumer goods,Phân phối bán lẻ,0.03312841199413727,0.08
+USME,FMCG_Retails_Logistics,Trading Fertilizer,USME-FMCG_Retails_Logistics-Trading Fertilizer,Kinh doanh phân bón và hóa chất nông nghiệp,0.034898136893744186,0.05
+USME,FMCG_Retails_Logistics,Trading Food and beverage,USME-FMCG_Retails_Logistics-Trading Food and beverage,Thương mại Thực phẩm và đồ uống,0.0277987361463345,0.1
+USME,FMCG_Retails_Logistics,Trading Livestock food,USME-FMCG_Retails_Logistics-Trading Livestock food,Thương mại Thức ăn chăn nuôi,0.032421213361200026,0.09
+USME,FMCG_Retails_Logistics,"Trading Medicine, medical equipment and supplies","USME-FMCG_Retails_Logistics-Trading Medicine, medical equipment and supplies","Thương mại Dược, vật tư thiết bị Y tế",0.05375528681585265,0.07
+USME,FMCG_Retails_Logistics,Trading Other agriculture product business,USME-FMCG_Retails_Logistics-Trading Other agriculture product business,Thương mại Sản phẩm nông nghiệp khác,0.02253890710546267,0.07
+USME,FMCG_Retails_Logistics,Trading Paper and stationery,USME-FMCG_Retails_Logistics-Trading Paper and stationery,Thương mại Giấy và văn phòng phẩm,0.04187233307460018,0.07
+USME,FMCG_Retails_Logistics,Trading Plastic,USME-FMCG_Retails_Logistics-Trading Plastic,Thương mại Nhựa,0.028184965992857892,0.11
+USME,FMCG_Retails_Logistics,Trading Rice,USME-FMCG_Retails_Logistics-Trading Rice,Thương mại Gạo,0.024328747861369546,0.15
+USME,FMCG_Retails_Logistics,Trading Seafood,USME-FMCG_Retails_Logistics-Trading Seafood,Thương mại Hải sản,0.032020140342688935,0.07
+USME,FMCG_Retails_Logistics,Trading Sewing products,USME-FMCG_Retails_Logistics-Trading Sewing products,Bán buôn sản phẩm may mặc,0.024656087166864925,0.1
+USME,FMCG_Retails_Logistics,Trading Wood and furniture,USME-FMCG_Retails_Logistics-Trading Wood and furniture,Thương mại Đồ gỗ và nội thất,0.027099210996599798,0.07
+USME,Auto and Parts,Manufacturing Automobiles and spare parts,USME-Auto and Parts-Manufacturing Automobiles and spare parts,Sản xuất ô tô và phụ tùng ô tô,0.07874762281893637,0.07
+USME,Auto and Parts,Others,USME-Auto and Parts-Others,Khác,-,0.03
+USME,Auto and Parts,Services Automobiles maintenance,USME-Auto and Parts-Services Automobiles maintenance,Dịch vụ Bảo dưỡng ô tô,0.03482786947902167,0.07
+USME,Auto and Parts,Trading Automobiles,USME-Auto and Parts-Trading Automobiles,Thương mại ô tô,0.024919066910861397,0.1
+USME,Financial Service and Public sector,Financial intermediation,USME-Financial Service and Public sector-Financial intermediation,Trung gian tài chính,0.02,0.08
+USME,Financial Service and Public sector,Others,USME-Financial Service and Public sector-Others,Khác,-,0.03
+USME,Financial Service and Public sector,Services Finance,USME-Financial Service and Public sector-Services Finance,Dịch vụ Tài chính,0.02181865512984543,0.1
+USME,Financial Service and Public sector,Services Public,USME-Financial Service and Public sector-Services Public,Dịch vụ Công,0.02,0.08
+USME,Travel and Leisure,Others,USME-Travel and Leisure-Others,Khác,-,0.03
+USME,Travel and Leisure,Services Entertainment,USME-Travel and Leisure-Services Entertainment,Dịch vụ Giải trí,0.12837212862285752,0.13
+USME,Travel and Leisure,Services Film and television publishing,USME-Travel and Leisure-Services Film and television publishing,Dịch vụ Xuất bản Điện ảnh và Truyền hình,0.026406421731273208,0.08
+USME,Travel and Leisure,Services hotel and accommodation,USME-Travel and Leisure-Services hotel and accommodation,Dịch vụ khách sạn và nhà ở,0.02,0.18
+USME,Travel and Leisure,Services Passenger transportation,USME-Travel and Leisure-Services Passenger transportation,Dịch vụ Vận tải hành khách,0.04168306110127826,0.09
+USME,Travel and Leisure,Services Turism,USME-Travel and Leisure-Services Turism,Dịch vụ Du lịch,0.02007451109106846,0.53
+USME,Utility and Telecom,Construction of Electrical works,USME-Utility and Telecom-Construction of Electrical works,Xây dựng các công trình điện,0.04594706644406636,0.05
+USME,Utility and Telecom,Construction of Telecommunications and communication works,USME-Utility and Telecom-Construction of Telecommunications and communication works,Xây dựng công trình viễn thông và thông tin liên lạc,-,0.08
+USME,Utility and Telecom,Construction of Water supply and drainage works,USME-Utility and Telecom-Construction of Water supply and drainage works,"Xây dựng công trình cấp, thoát nước",0.04496384790692115,0.04
+USME,Utility and Telecom,Manufacturing Crude oil and gas exploitation,USME-Utility and Telecom-Manufacturing Crude oil and gas exploitation,Khai thác dầu thô và khí đốt tự nhiên,-,0.03
+USME,Utility and Telecom,"Manufacturing Distribution of civil electricity, water and gas","USME-Utility and Telecom-Manufacturing Distribution of civil electricity, water and gas","Sản xuất phân phối điện dân dụng, nước và khí đốt",0.5003851200930055,0.03
+USME,Utility and Telecom,Manufacturing Electric equipments,USME-Utility and Telecom-Manufacturing Electric equipments,Sản xuất thiết bị điện,0.07483347312518111,0.06
+USME,Utility and Telecom,Manufacturing Electronic equipment and components,USME-Utility and Telecom-Manufacturing Electronic equipment and components,Sản xuất sản phẩm điện tử và linh kiện điện tử,0.04405847368647788,0.06
+USME,Utility and Telecom,Manufacturing Fuel,USME-Utility and Telecom-Manufacturing Fuel,Sản xuất nhiên liệu,0.03247635710287322,0.1
+USME,Utility and Telecom,Manufacturing Telecommunication and IT equipments,USME-Utility and Telecom-Manufacturing Telecommunication and IT equipments,Sản xuất Thiết bị viễn thông và CNTT,0.022631619383237683,0.06
+USME,Utility and Telecom,Others,USME-Utility and Telecom-Others,Khác,-,0.03
+USME,Utility and Telecom,Services Disposal waste,USME-Utility and Telecom-Services Disposal waste,Dịch vụ Xử lý và tiêu hủy rác thải,0.37067536871288165,0.06
+USME,Utility and Telecom,Services IT and telecommunication,USME-Utility and Telecom-Services IT and telecommunication,Dịch vụ CNTT và Viễn thông,0.06610722026980266,0.06
+USME,Utility and Telecom,Services Professional consulting and operations support,USME-Utility and Telecom-Services Professional consulting and operations support,Dịch vụ Tư vấn chuyên môn và hỗ trợ vận hành,0.03781872169307053,0.23
+USME,Utility and Telecom,Trading Electric equipments,USME-Utility and Telecom-Trading Electric equipments,Kinh doanh thiết bị điện,0.03738926467624688,0.06
+USME,Utility and Telecom,Trading Fuel,USME-Utility and Telecom-Trading Fuel,Kinh doanh nhiên liệu,0.0333366924048664,0.1
+USME,Utility and Telecom,"Trading Sales of petroleum gas, crude oil and related products","USME-Utility and Telecom-Trading Sales of petroleum gas, crude oil and related products","Bán buôn xăng dầu, dầu thô và các sản phẩm liên quan",0.03253663461789571,0.03
+USME,Utility and Telecom,Trading Telecommunication and IT equipments,USME-Utility and Telecom-Trading Telecommunication and IT equipments,Thương mại Thiết bị Viễn thông và CNTT,0.031366898290589224,0.06
+USME,Others,Manufacturing Machinery of food and beverage processing,USME-Others-Manufacturing Machinery of food and beverage processing,Sản xuất Máy móc chế biến thực phẩm và đồ uống,0.03993499017643794,0.22
+USME,Others,Manufacturing Mining,USME-Others-Manufacturing Mining,Sản xuất Khai khoáng,0.0713994519117842,0.05
+USME,Others,Manufacturing motorbikes and other means of transportation,USME-Others-Manufacturing motorbikes and other means of transportation,Thương mại Xe máy và các phương tiện vận tải khác,0.09291389230074965,0.06
+USME,Others,Manufacturing Other,USME-Others-Manufacturing Other,Sản xuất khác,0.033949461443511214,0.04
+USME,Others,"Manufacturing Other of Farming, fishing","USME-Others-Manufacturing Other of Farming, fishing","Sản xuất Nông nghiệp, ngư nghiệp khác",0.18696419752498558,0.04
+USME,Others,Manufacturing Other specialized machinery and equipment,USME-Others-Manufacturing Other specialized machinery and equipment,"Sản xuất Máy móc, thiết bị chuyên dụng khác",0.06693411564887954,0.11
+USME,Others,"Manufacturing other wood, furniture","USME-Others-Manufacturing other wood, furniture",Sản xuất đồ gỗ và nội thất khác,0.021603034902720746,0.07
+USME,Others,Manufacturing Rubber,USME-Others-Manufacturing Rubber,Sản xuất cao su,0.11513248400324703,0.07
+USME,Others,Others,USME-Others-Others,Khác,0.02,0.03
+USME,Others,Services Education,USME-Others-Services Education,Dịch vụ Giáo dục,0.02679251519270146,0.24
+USME,Others,Services Medical and medical supporting activities,USME-Others-Services Medical and medical supporting activities,Dịch vụ Y tế và hoạt động hỗ trợ y tế,0.10883709369854033,0.08
+USME,Others,Services Other,USME-Others-Services Other,Dịch vụ Khác chưa được phân vào đâu,0.027755209248612772,0.16
+USME,Others,Services Other Consumer goods,USME-Others-Services Other Consumer goods,Dịch vụ hàng hóa tiêu dùng khác,0.030278129556364247,0.11
+USME,Others,Services Other of IT and telecommunication,USME-Others-Services Other of IT and telecommunication,Dịch vụ CNTT và Viễn thông khác,0.04220625654365193,0.06
+USME,Others,Services Other of publishing (except Film and Television Publishing),USME-Others-Services Other of publishing (except Film and Television Publishing),Dịch vụ Xuất bản khác (trừ xuất bản Điện ảnh và Truyền hình),0.08128705680662013,0.36
+USME,Others,Services Production of motorbikes and other means of transportation,USME-Others-Services Production of motorbikes and other means of transportation,Dịch vụ Sản xuất Xe máy và các phương tiện vận tải khác,0.034153080176427736,0.06
+USME,Others,Trading Machinery and equipment and supplies,USME-Others-Trading Machinery and equipment and supplies,"Thương mại Máy móc, vật tư thiết bị",0.04578377616568553,0.11
+USME,Others,Trading motorbikes and other means of transportation,USME-Others-Trading motorbikes and other means of transportation,Thương mại Xe máy và các phương tiện vận tải khác,0.03090735310850652,0.06
+USME,Others,Trading Other construction materials,USME-Others-Trading Other construction materials,Thương mại Vật liệu Xây dựng khác chưa được phân vào đâu,0.028101684460605694,0.12
+USME,Others,Trading Other consumer goods,USME-Others-Trading Other consumer goods,Thương mại Hàng tiêu dùng khác chưa được phân vào đâu,0.04038946312612467,0.07
+USME,Others,Trading Other Mining,USME-Others-Trading Other Mining,Kinh doanh khai thác mỏ khác,0.026936903168672352,0.1
+USME,Others,Trading other Wood and furniture,USME-Others-Trading other Wood and furniture,Thương mại Đồ gỗ và nội thất khác,0.0202182180248588,0.14
+USME,Others,Trading Rubber,USME-Others-Trading Rubber,Thương mại cao su,0.03875288810206923,0.08
+MM,Recom,Civil Construction,MM-Recom-Civil Construction,Xây dựng dân dụng,0.06454411954056964,0.05
+MM,Recom,Industrial Park Construction,MM-Recom-Industrial Park Construction,Xây dựng công nghiệp,0.03914093571974231,0.09
+MM,Recom,Industrial Park Developers,MM-Recom-Industrial Park Developers,Chủ đầu tư Khu công nghiệp,0.4648733476811306,0.38
+MM,Recom,Infrastructure construction,MM-Recom-Infrastructure construction,Xây dựng cơ sở hạ tầng,0.04970101421676893,0.08
+MM,Recom,infrastructure real estate developer,MM-Recom-infrastructure real estate developer,Nhà phát triển BĐS xây dựng hạ tầng,0.25626775519993333,0.27
+MM,Recom,Manufacturing cement,MM-Recom-Manufacturing cement,Sản xuất Xi măng,0.07768191020263894,0.05
+MM,Recom,"Manufacturing construction materials (except for iron, steel, cement)","MM-Recom-Manufacturing construction materials (except for iron, steel, cement)","Sản xuất Vật liệu Xây dựng (trừ sắt, thép, xi măng)",0.09221349944999242,0.05
+MM,Recom,Manufacturing iron and steel,MM-Recom-Manufacturing iron and steel,Sản xuất Sắt thép,0.026165365878385246,0.05
+MM,Recom,Others,MM-Recom-Others,Khác,-,0.03
+MM,Recom,Residential Developer,MM-Recom-Residential Developer,Nhà phát triển khu dân cư,0.33889892842148917,0.19
+MM,Recom,Services installation,MM-Recom-Services installation,"Dịch vụ Xây lắp, lắp đặt",0.046925937881664735,0.05
+MM,Recom,Trading cement,MM-Recom-Trading cement,Thương mại Xi măng,0.01707920018582795,0.05
+MM,Recom,Trading construction machinery,MM-Recom-Trading construction machinery,Thương mại Máy móc xây dựng,0.06858884806040146,0.05
+MM,Recom,"Trading construction materials (except for iron, steel, cement)","MM-Recom-Trading construction materials (except for iron, steel, cement)","Thương mại Vật liệu Xây dựng (trừ sắt, thép, xi măng)",0.01958788033720073,0.05
+MM,Recom,Trading iron and steel,MM-Recom-Trading iron and steel,Thương mại Sắt thép,0.006895820729981292,0.05
+MM,FMCG_Retails_Logistics,Manufacturing Cashew,MM-FMCG_Retails_Logistics-Manufacturing Cashew,Sản xuất Điều,0.010549373444886498,0.07
+MM,FMCG_Retails_Logistics,Manufacturing Cassava and Corn,MM-FMCG_Retails_Logistics-Manufacturing Cassava and Corn,Sản xuất Sắn lát và ngô,0.0647367460458693,0.08
+MM,FMCG_Retails_Logistics,Manufacturing Chemicals and chemical products,MM-FMCG_Retails_Logistics-Manufacturing Chemicals and chemical products,Sản xuất Hóa chất và sản phẩm hóa chất,0.15428273474945323,0.05
+MM,FMCG_Retails_Logistics,Manufacturing Coffee,MM-FMCG_Retails_Logistics-Manufacturing Coffee,Sản xuất Cà phê,0.021935585371152217,0.05
+MM,FMCG_Retails_Logistics,Manufacturing Cosmetics,MM-FMCG_Retails_Logistics-Manufacturing Cosmetics,Sản xuất Mỹ phẩm,0.1202120757561058,0.07
+MM,FMCG_Retails_Logistics,"Manufacturing Cotton, fiber, yarns","MM-FMCG_Retails_Logistics-Manufacturing Cotton, fiber, yarns","Sản xuất Bông, vải, sợi",0.07434157947124252,0.08
+MM,FMCG_Retails_Logistics,"Manufacturing Farming, livestock","MM-FMCG_Retails_Logistics-Manufacturing Farming, livestock","Sản xuất Nông nghiệp, chăn nuôi",0.12405101968797239,0.09
+MM,FMCG_Retails_Logistics,Manufacturing Fertilizer,MM-FMCG_Retails_Logistics-Manufacturing Fertilizer,Sản xuất phân bón và hóa chất nông nghiệp,0.05192381582479466,0.06
+MM,FMCG_Retails_Logistics,Manufacturing Food and beverage,MM-FMCG_Retails_Logistics-Manufacturing Food and beverage,Sản xuất Thực phẩm và đồ uống,0.08204591088485479,0.06
+MM,FMCG_Retails_Logistics,Manufacturing Leather and leather products,MM-FMCG_Retails_Logistics-Manufacturing Leather and leather products,Sản xuất Da và các sản phẩm từ Da,0.0657063935501457,0.11
+MM,FMCG_Retails_Logistics,Manufacturing Livestock food,MM-FMCG_Retails_Logistics-Manufacturing Livestock food,Sản xuất Thức ăn chăn nuôi,0.04625374009406938,0.09
+MM,FMCG_Retails_Logistics,"Manufacturing Medicine, medical equipment and supplies","MM-FMCG_Retails_Logistics-Manufacturing Medicine, medical equipment and supplies","Sản xuất Dược phẩm, vật tư và thiết bị y tế",0.151390606765172,0.08
+MM,FMCG_Retails_Logistics,Manufacturing Paper products and stationery,MM-FMCG_Retails_Logistics-Manufacturing Paper products and stationery,Sản xuất Sản phẩm từ giấy và văn phòng phẩm,0.09597145516979112,0.22
+MM,FMCG_Retails_Logistics,Manufacturing Plastic products,MM-FMCG_Retails_Logistics-Manufacturing Plastic products,Sản xuất Sản phẩm từ nhựa,0.07127656408190298,0.1
+MM,FMCG_Retails_Logistics,Manufacturing Rice,MM-FMCG_Retails_Logistics-Manufacturing Rice,Sản xuất Gạo,0.008674249123156038,0.19
+MM,FMCG_Retails_Logistics,Manufacturing Seafood,MM-FMCG_Retails_Logistics-Manufacturing Seafood,Sản xuất Hải sản,0.041759398003686,0.1
+MM,FMCG_Retails_Logistics,Manufacturing Sewing products,MM-FMCG_Retails_Logistics-Manufacturing Sewing products,Sản xuất Sản phẩm từ may,0.06819647541039806,0.15
+MM,FMCG_Retails_Logistics,"Manufacturing wood, furniture","MM-FMCG_Retails_Logistics-Manufacturing wood, furniture",Sản xuất Sản phẩm từ gỗ và đồ gỗ nội/ngoại thất,0.046284666961803105,0.07
+MM,FMCG_Retails_Logistics,Others,MM-FMCG_Retails_Logistics-Others,Khác,-,0.03
+MM,FMCG_Retails_Logistics,Services Consumer goods,MM-FMCG_Retails_Logistics-Services Consumer goods,Tiêu dùng bán lẻ,0.01599596531876162,0.11
+MM,FMCG_Retails_Logistics,Services Dining,MM-FMCG_Retails_Logistics-Services Dining,Dich vụ ăn uống,0.020825664936262322,0.09
+MM,FMCG_Retails_Logistics,"Services Farming, livestock, fishing","MM-FMCG_Retails_Logistics-Services Farming, livestock, fishing","Dịch vụ Nông nghiệp, chăn nuôi, ngư nghiệp",0.03302401291286287,0.09
+MM,FMCG_Retails_Logistics,"Services Transportation of goods, loading and logistic","MM-FMCG_Retails_Logistics-Services Transportation of goods, loading and logistic",Dịch vụ vận chuyển hàng hóa,0.0686422811085781,0.11499999999999999
+MM,FMCG_Retails_Logistics,Services Warehousing,MM-FMCG_Retails_Logistics-Services Warehousing,Dịch vụ Kho bãi,0.10159087310639885,0.09
+MM,FMCG_Retails_Logistics,Trading Cashew,MM-FMCG_Retails_Logistics-Trading Cashew,Thương mại Điều ( Điều nhân xô được SX từ các nhà máy phục vụ cho XK),0.00947259842988092,0.06
+MM,FMCG_Retails_Logistics,Trading Cassava and Corn,MM-FMCG_Retails_Logistics-Trading Cassava and Corn,Thương mại Sắn lát và ngô,0.0012967482808273634,0.1
+MM,FMCG_Retails_Logistics,Trading Chemicals,MM-FMCG_Retails_Logistics-Trading Chemicals,Thương mại Hóa chất,0.03887646988804224,0.07
+MM,FMCG_Retails_Logistics,Trading Coffee,MM-FMCG_Retails_Logistics-Trading Coffee,Thương mại Cà phê,0.003098836922200369,0.15
+MM,FMCG_Retails_Logistics,Trading Cosmetics,MM-FMCG_Retails_Logistics-Trading Cosmetics,Thương mại Mỹ phẩm,0.026752107970614367,0.07
+MM,FMCG_Retails_Logistics,Trading Distribution of consumer goods,MM-FMCG_Retails_Logistics-Trading Distribution of consumer goods,Phân phối bán lẻ,0.024821481743568418,0.1
+MM,FMCG_Retails_Logistics,Trading Fertilizer,MM-FMCG_Retails_Logistics-Trading Fertilizer,Kinh doanh phân bón và hóa chất nông nghiệp,0.020702237196730134,0.05
+MM,FMCG_Retails_Logistics,Trading Food and beverage,MM-FMCG_Retails_Logistics-Trading Food and beverage,Thương mại Thực phẩm và đồ uống,0.016938524061472324,0.06
+MM,FMCG_Retails_Logistics,Trading Livestock food,MM-FMCG_Retails_Logistics-Trading Livestock food,Thương mại Thức ăn chăn nuôi,0.012787402668437092,0.11
+MM,FMCG_Retails_Logistics,"Trading Medicine, medical equipment and supplies","MM-FMCG_Retails_Logistics-Trading Medicine, medical equipment and supplies","Thương mại Dược, vật tư thiết bị Y tế",0.059070889958073185,0.07
+MM,FMCG_Retails_Logistics,Trading Other agriculture product business,MM-FMCG_Retails_Logistics-Trading Other agriculture product business,Thương mại Sản phẩm nông nghiệp khác,0.006156808000946219,0.07
+MM,FMCG_Retails_Logistics,Trading Paper and stationery,MM-FMCG_Retails_Logistics-Trading Paper and stationery,Thương mại Giấy và văn phòng phẩm,0.021707534724834537,0.07
+MM,FMCG_Retails_Logistics,Trading Plastic,MM-FMCG_Retails_Logistics-Trading Plastic,Thương mại Nhựa,0.014926747213949924,0.07
+MM,FMCG_Retails_Logistics,Trading Rice,MM-FMCG_Retails_Logistics-Trading Rice,Thương mại Gạo,0.009689124386005875,0.18
+MM,FMCG_Retails_Logistics,Trading Seafood,MM-FMCG_Retails_Logistics-Trading Seafood,Thương mại Hải sản,0.009811250310166603,0.07
+MM,FMCG_Retails_Logistics,Trading Sewing products,MM-FMCG_Retails_Logistics-Trading Sewing products,Bán buôn sản phẩm may mặc,0.04526401711281783,0.07
+MM,FMCG_Retails_Logistics,Trading Wood and furniture,MM-FMCG_Retails_Logistics-Trading Wood and furniture,Thương mại Đồ gỗ và nội thất,0.00795644326958767,0.07
+MM,Auto and Parts,Manufacturing Automobiles and spare parts,MM-Auto and Parts-Manufacturing Automobiles and spare parts,Sản xuất ô tô và phụ tùng ô tô,0.10566404648191922,0.07
+MM,Auto and Parts,Others,MM-Auto and Parts-Others,Khác,-,0.03
+MM,Auto and Parts,Services Automobiles maintenance,MM-Auto and Parts-Services Automobiles maintenance,Dịch vụ Bảo dưỡng ô tô,0.017467875751798534,0.1
+MM,Auto and Parts,Trading Automobiles,MM-Auto and Parts-Trading Automobiles,Thương mại ô tô,0.01563686733929914,0.07
+MM,Financial Service and Public sector,Financial intermediation,MM-Financial Service and Public sector-Financial intermediation,Trung gian tài chính,0,0.07
+MM,Financial Service and Public sector,Others,MM-Financial Service and Public sector-Others,Khác,-,0.03
+MM,Financial Service and Public sector,Services Finance,MM-Financial Service and Public sector-Services Finance,Dịch vụ Tài chính,0.08631772363904305,0.08
+MM,Financial Service and Public sector,Services Public,MM-Financial Service and Public sector-Services Public,Dịch vụ Công,0.38532400988884136,0.08
+MM,Travel and Leisure,Others,MM-Travel and Leisure-Others,Khác,-,0.03
+MM,Travel and Leisure,Services Entertainment,MM-Travel and Leisure-Services Entertainment,Dịch vụ Giải trí,0.10041599513417025,0.14
+MM,Travel and Leisure,Services Film and television publishing,MM-Travel and Leisure-Services Film and television publishing,Dịch vụ Xuất bản Điện ảnh và Truyền hình,0,0.06
+MM,Travel and Leisure,Services hotel and accommodation,MM-Travel and Leisure-Services hotel and accommodation,Dịch vụ khách sạn và nhà ở,0.0656144891985504,0.18
+MM,Travel and Leisure,Services Passenger transportation,MM-Travel and Leisure-Services Passenger transportation,Dịch vụ Vận tải hành khách,0.011272985925030713,0.25
+MM,Travel and Leisure,Services Turism,MM-Travel and Leisure-Services Turism,Dịch vụ Du lịch,0.011940475940521028,0.27
+MM,Utility and Telecom,Construction of Electrical works,MM-Utility and Telecom-Construction of Electrical works,Xây dựng các công trình điện,0.07203361460297819,0.06
+MM,Utility and Telecom,Construction of Telecommunications and communication works,MM-Utility and Telecom-Construction of Telecommunications and communication works,Xây dựng công trình viễn thông và thông tin liên lạc,-,0.08
+MM,Utility and Telecom,Construction of Water supply and drainage works,MM-Utility and Telecom-Construction of Water supply and drainage works,"Xây dựng công trình cấp, thoát nước",0.030607564100651418,0.04
+MM,Utility and Telecom,Manufacturing Crude oil and gas exploitation,MM-Utility and Telecom-Manufacturing Crude oil and gas exploitation,Khai thác dầu thô và khí đốt tự nhiên,0.8099531414160411,0.03
+MM,Utility and Telecom,"Manufacturing Distribution of civil electricity, water and gas","MM-Utility and Telecom-Manufacturing Distribution of civil electricity, water and gas","Sản xuất phân phối điện dân dụng, nước và khí đốt",0.36569603416118496,0.03
+MM,Utility and Telecom,Manufacturing Electric equipments,MM-Utility and Telecom-Manufacturing Electric equipments,Sản xuất thiết bị điện,0.0649230857563428,0.06
+MM,Utility and Telecom,Manufacturing Electronic equipment and components,MM-Utility and Telecom-Manufacturing Electronic equipment and components,Sản xuất sản phẩm điện tử và linh kiện điện tử,0.057303108202762965,0.06
+MM,Utility and Telecom,Manufacturing Fuel,MM-Utility and Telecom-Manufacturing Fuel,Sản xuất nhiên liệu,0.07939011471592844,0.1
+MM,Utility and Telecom,Manufacturing Telecommunication and IT equipments,MM-Utility and Telecom-Manufacturing Telecommunication and IT equipments,Sản xuất Thiết bị viễn thông và CNTT,0.046988777461723565,0.06
+MM,Utility and Telecom,Others,MM-Utility and Telecom-Others,Khác,-,0.03
+MM,Utility and Telecom,Services Disposal waste,MM-Utility and Telecom-Services Disposal waste,Dịch vụ Xử lý và tiêu hủy rác thải,-,0.06
+MM,Utility and Telecom,Services IT and telecommunication,MM-Utility and Telecom-Services IT and telecommunication,Dịch vụ CNTT và Viễn thông,0.029387074776979365,0.06
+MM,Utility and Telecom,Services Professional consulting and operations support,MM-Utility and Telecom-Services Professional consulting and operations support,Dịch vụ Tư vấn chuyên môn và hỗ trợ vận hành,0.14893627530266487,0.16
+MM,Utility and Telecom,Trading Electric equipments,MM-Utility and Telecom-Trading Electric equipments,Kinh doanh thiết bị điện,0.028418358090148383,0.06
+MM,Utility and Telecom,Trading Fuel,MM-Utility and Telecom-Trading Fuel,Kinh doanh nhiên liệu,0.010197341606186846,0.1
+MM,Utility and Telecom,"Trading Sales of petroleum gas, crude oil and related products","MM-Utility and Telecom-Trading Sales of petroleum gas, crude oil and related products","Bán buôn xăng dầu, dầu thô và các sản phẩm liên quan",0.006181348053986971,0.03
+MM,Utility and Telecom,Trading Telecommunication and IT equipments,MM-Utility and Telecom-Trading Telecommunication and IT equipments,Thương mại Thiết bị Viễn thông và CNTT,0.016949086669588068,0.06
+MM,Others,Manufacturing Machinery of food and beverage processing,MM-Others-Manufacturing Machinery of food and beverage processing,Sản xuất Máy móc chế biến thực phẩm và đồ uống,0.030567580095119368,0.22
+MM,Others,Manufacturing Mining,MM-Others-Manufacturing Mining,Sản xuất Khai khoáng,0.0665255895438927,0.05
+MM,Others,Manufacturing motorbikes and other means of transportation,MM-Others-Manufacturing motorbikes and other means of transportation,Thương mại Xe máy và các phương tiện vận tải khác,0.09697076923277333,0.07
+MM,Others,Manufacturing Other,MM-Others-Manufacturing Other,Sản xuất khác,0.05394197370571524,0.04
+MM,Others,"Manufacturing Other of Farming, fishing","MM-Others-Manufacturing Other of Farming, fishing","Sản xuất Nông nghiệp, ngư nghiệp khác",0.31435979596581765,0.04
+MM,Others,Manufacturing Other specialized machinery and equipment,MM-Others-Manufacturing Other specialized machinery and equipment,"Sản xuất Máy móc, thiết bị chuyên dụng khác",0.08907368589663943,0.07
+MM,Others,"Manufacturing other wood, furniture","MM-Others-Manufacturing other wood, furniture",Sản xuất đồ gỗ và nội thất khác,0.053965168859352174,0.07
+MM,Others,Manufacturing Rubber,MM-Others-Manufacturing Rubber,Sản xuất cao su,0.03955821571407356,0.08
+MM,Others,Others,MM-Others-Others,Khác,0.00477881431666468,0.03
+MM,Others,Services Education,MM-Others-Services Education,Dịch vụ Giáo dục,0.2473965993275007,0.25
+MM,Others,Services Medical and medical supporting activities,MM-Others-Services Medical and medical supporting activities,Dịch vụ Y tế và hoạt động hỗ trợ y tế,0.19830386866420366,0.08
+MM,Others,Services Other,MM-Others-Services Other,Dịch vụ Khác chưa được phân vào đâu,0.031372957591602135,0.18
+MM,Others,Services Other Consumer goods,MM-Others-Services Other Consumer goods,Dịch vụ hàng hóa tiêu dùng khác,0.07205607586389741,0.1
+MM,Others,Services Other of IT and telecommunication,MM-Others-Services Other of IT and telecommunication,Dịch vụ CNTT và Viễn thông khác,0.11600279443972583,0.06
+MM,Others,Services Other of publishing (except Film and Television Publishing),MM-Others-Services Other of publishing (except Film and Television Publishing),Dịch vụ Xuất bản khác (trừ xuất bản Điện ảnh và Truyền hình),0.07722066245140254,0.06
+MM,Others,Services Production of motorbikes and other means of transportation,MM-Others-Services Production of motorbikes and other means of transportation,Dịch vụ Sản xuất Xe máy và các phương tiện vận tải khác,0.021075533390607398,0.06
+MM,Others,Trading Machinery and equipment and supplies,MM-Others-Trading Machinery and equipment and supplies,"Thương mại Máy móc, vật tư thiết bị",0.0021802242136602147,0.07
+MM,Others,Trading motorbikes and other means of transportation,MM-Others-Trading motorbikes and other means of transportation,Thương mại Xe máy và các phương tiện vận tải khác,0.01579135548280217,0.06
+MM,Others,Trading Other construction materials,MM-Others-Trading Other construction materials,Thương mại Vật liệu Xây dựng khác chưa được phân vào đâu,0.02336708578761627,0.07
+MM,Others,Trading Other consumer goods,MM-Others-Trading Other consumer goods,Thương mại Hàng tiêu dùng khác chưa được phân vào đâu,0.022431236521288492,0.11
+MM,Others,Trading Other Mining,MM-Others-Trading Other Mining,Kinh doanh khai thác mỏ khác,0.007777054909611954,0.1
+MM,Others,Trading other Wood and furniture,MM-Others-Trading other Wood and furniture,Thương mại Đồ gỗ và nội thất khác,-0.187023897252764,0.05
+MM,Others,Trading Rubber,MM-Others-Trading Rubber,Thương mại cao su,0.014098776900336472,0.07
+LC,Recom,Civil Construction,LC-Recom-Civil Construction,Xây dựng dân dụng,0.06773796195417427,0.05
+LC,Recom,Industrial Park Construction,LC-Recom-Industrial Park Construction,Xây dựng công nghiệp,0.1552052996264526,0.09
+LC,Recom,Industrial Park Developers,LC-Recom-Industrial Park Developers,Chủ đầu tư Khu công nghiệp,0.16864500364004895,0.16
+LC,Recom,Infrastructure construction,LC-Recom-Infrastructure construction,Xây dựng cơ sở hạ tầng,0.08176570095375274,0.08
+LC,Recom,infrastructure real estate developer,LC-Recom-infrastructure real estate developer,Nhà phát triển BĐS xây dựng hạ tầng,0.8908226641681883,0.16
+LC,Recom,Manufacturing cement,LC-Recom-Manufacturing cement,Sản xuất Xi măng,0.126052696909541,0.05
+LC,Recom,"Manufacturing construction materials (except for iron, steel, cement)","LC-Recom-Manufacturing construction materials (except for iron, steel, cement)","Sản xuất Vật liệu Xây dựng (trừ sắt, thép, xi măng)",0.16555136815630433,0.05
+LC,Recom,Manufacturing iron and steel,LC-Recom-Manufacturing iron and steel,Sản xuất Sắt thép,0.0453546341332324,0.05
+LC,Recom,Others,LC-Recom-Others,Khác,0,0.03
+LC,Recom,Residential Developer,LC-Recom-Residential Developer,Nhà phát triển khu dân cư,0.10839538237252344,0.38
+LC,Recom,Services installation,LC-Recom-Services installation,"Dịch vụ Xây lắp, lắp đặt",0.08773312242140867,0.1
+LC,Recom,Trading cement,LC-Recom-Trading cement,Thương mại Xi măng,0.011895910808646727,0.05
+LC,Recom,Trading construction machinery,LC-Recom-Trading construction machinery,Thương mại Máy móc xây dựng,0.052705762994231964,0.25
+LC,Recom,"Trading construction materials (except for iron, steel, cement)","LC-Recom-Trading construction materials (except for iron, steel, cement)","Thương mại Vật liệu Xây dựng (trừ sắt, thép, xi măng)",0.016921688569837622,0.05
+LC,Recom,Trading iron and steel,LC-Recom-Trading iron and steel,Thương mại Sắt thép,0.01704503467383658,0.05
+LC,FMCG_Retails_Logistics,Manufacturing Cashew,LC-FMCG_Retails_Logistics-Manufacturing Cashew,Sản xuất Điều,-,0.07
+LC,FMCG_Retails_Logistics,Manufacturing Cassava and Corn,LC-FMCG_Retails_Logistics-Manufacturing Cassava and Corn,Sản xuất Sắn lát và ngô,0.03770753135588443,0.08
+LC,FMCG_Retails_Logistics,Manufacturing Chemicals and chemical products,LC-FMCG_Retails_Logistics-Manufacturing Chemicals and chemical products,Sản xuất Hóa chất và sản phẩm hóa chất,0.2346218653335228,0.07
+LC,FMCG_Retails_Logistics,Manufacturing Coffee,LC-FMCG_Retails_Logistics-Manufacturing Coffee,Sản xuất Cà phê,0.06906169822825241,0.08
+LC,FMCG_Retails_Logistics,Manufacturing Cosmetics,LC-FMCG_Retails_Logistics-Manufacturing Cosmetics,Sản xuất Mỹ phẩm,0.05753807482881038,0.07
+LC,FMCG_Retails_Logistics,"Manufacturing Cotton, fiber, yarns","LC-FMCG_Retails_Logistics-Manufacturing Cotton, fiber, yarns","Sản xuất Bông, vải, sợi",0.11490561528597566,0.08
+LC,FMCG_Retails_Logistics,"Manufacturing Farming, livestock","LC-FMCG_Retails_Logistics-Manufacturing Farming, livestock","Sản xuất Nông nghiệp, chăn nuôi",0.18370922705537684,0.07
+LC,FMCG_Retails_Logistics,Manufacturing Fertilizer,LC-FMCG_Retails_Logistics-Manufacturing Fertilizer,Sản xuất phân bón và hóa chất nông nghiệp,0.1868203377128721,0.05
+LC,FMCG_Retails_Logistics,Manufacturing Food and beverage,LC-FMCG_Retails_Logistics-Manufacturing Food and beverage,Sản xuất Thực phẩm và đồ uống,0.09686885039531995,0.06
+LC,FMCG_Retails_Logistics,Manufacturing Leather and leather products,LC-FMCG_Retails_Logistics-Manufacturing Leather and leather products,Sản xuất Da và các sản phẩm từ Da,0.054413398005109435,0.05
+LC,FMCG_Retails_Logistics,Manufacturing Livestock food,LC-FMCG_Retails_Logistics-Manufacturing Livestock food,Sản xuất Thức ăn chăn nuôi,0.07912410646045616,0.09
+LC,FMCG_Retails_Logistics,"Manufacturing Medicine, medical equipment and supplies","LC-FMCG_Retails_Logistics-Manufacturing Medicine, medical equipment and supplies","Sản xuất Dược phẩm, vật tư và thiết bị y tế",0.105327912447372,0.08
+LC,FMCG_Retails_Logistics,Manufacturing Paper products and stationery,LC-FMCG_Retails_Logistics-Manufacturing Paper products and stationery,Sản xuất Sản phẩm từ giấy và văn phòng phẩm,0.12194495696734069,0.07
+LC,FMCG_Retails_Logistics,Manufacturing Plastic products,LC-FMCG_Retails_Logistics-Manufacturing Plastic products,Sản xuất Sản phẩm từ nhựa,0.062227672838815,0.11
+LC,FMCG_Retails_Logistics,Manufacturing Rice,LC-FMCG_Retails_Logistics-Manufacturing Rice,Sản xuất Gạo,0.01018543709975398,0.18
+LC,FMCG_Retails_Logistics,Manufacturing Seafood,LC-FMCG_Retails_Logistics-Manufacturing Seafood,Sản xuất Hải sản,0.08152817464816715,0.14
+LC,FMCG_Retails_Logistics,Manufacturing Sewing products,LC-FMCG_Retails_Logistics-Manufacturing Sewing products,Sản xuất Sản phẩm từ may,0.07445615819871397,0.15
+LC,FMCG_Retails_Logistics,"Manufacturing wood, furniture","LC-FMCG_Retails_Logistics-Manufacturing wood, furniture",Sản xuất Sản phẩm từ gỗ và đồ gỗ nội/ngoại thất,0.0672076109409802,0.07
+LC,FMCG_Retails_Logistics,Others,LC-FMCG_Retails_Logistics-Others,Khác,0,0.03
+LC,FMCG_Retails_Logistics,Services Consumer goods,LC-FMCG_Retails_Logistics-Services Consumer goods,Tiêu dùng bán lẻ,0.029436827650097083,0.11
+LC,FMCG_Retails_Logistics,Services Dining,LC-FMCG_Retails_Logistics-Services Dining,Dich vụ ăn uống,0,0.2
+LC,FMCG_Retails_Logistics,"Services Farming, livestock, fishing","LC-FMCG_Retails_Logistics-Services Farming, livestock, fishing","Dịch vụ Nông nghiệp, chăn nuôi, ngư nghiệp",0.004566226536759625,0.16
+LC,FMCG_Retails_Logistics,"Services Transportation of goods, loading and logistic","LC-FMCG_Retails_Logistics-Services Transportation of goods, loading and logistic",Dịch vụ vận chuyển hàng hóa,0.09187055189871045,0.09
+LC,FMCG_Retails_Logistics,Services Warehousing,LC-FMCG_Retails_Logistics-Services Warehousing,Dịch vụ Kho bãi,0.0031520807306753243,0.09
+LC,FMCG_Retails_Logistics,Trading Cashew,LC-FMCG_Retails_Logistics-Trading Cashew,Thương mại Điều ( Điều nhân xô được SX từ các nhà máy phục vụ cho XK),0.018285820353877533,0.14
+LC,FMCG_Retails_Logistics,Trading Cassava and Corn,LC-FMCG_Retails_Logistics-Trading Cassava and Corn,Thương mại Sắn lát và ngô,0.017266618174834252,0.08
+LC,FMCG_Retails_Logistics,Trading Chemicals,LC-FMCG_Retails_Logistics-Trading Chemicals,Thương mại Hóa chất,0.049006374138456064,0.07
+LC,FMCG_Retails_Logistics,Trading Coffee,LC-FMCG_Retails_Logistics-Trading Coffee,Thương mại Cà phê,0.017957456425135198,0.1
+LC,FMCG_Retails_Logistics,Trading Cosmetics,LC-FMCG_Retails_Logistics-Trading Cosmetics,Thương mại Mỹ phẩm,0.05731645388999528,0.14
+LC,FMCG_Retails_Logistics,Trading Distribution of consumer goods,LC-FMCG_Retails_Logistics-Trading Distribution of consumer goods,Phân phối bán lẻ,0.02636326241385345,0.07
+LC,FMCG_Retails_Logistics,Trading Fertilizer,LC-FMCG_Retails_Logistics-Trading Fertilizer,Kinh doanh phân bón và hóa chất nông nghiệp,0.014728379223501101,0.05
+LC,FMCG_Retails_Logistics,Trading Food and beverage,LC-FMCG_Retails_Logistics-Trading Food and beverage,Thương mại Thực phẩm và đồ uống,0.03431880565771367,0.06
+LC,FMCG_Retails_Logistics,Trading Livestock food,LC-FMCG_Retails_Logistics-Trading Livestock food,Thương mại Thức ăn chăn nuôi,0.017444482951805864,0.09
+LC,FMCG_Retails_Logistics,"Trading Medicine, medical equipment and supplies","LC-FMCG_Retails_Logistics-Trading Medicine, medical equipment and supplies","Thương mại Dược, vật tư thiết bị Y tế",0.04172228913260927,0.07
+LC,FMCG_Retails_Logistics,Trading Other agriculture product business,LC-FMCG_Retails_Logistics-Trading Other agriculture product business,Thương mại Sản phẩm nông nghiệp khác,0,0.07
+LC,FMCG_Retails_Logistics,Trading Paper and stationery,LC-FMCG_Retails_Logistics-Trading Paper and stationery,Thương mại Giấy và văn phòng phẩm,-,0.07
+LC,FMCG_Retails_Logistics,Trading Plastic,LC-FMCG_Retails_Logistics-Trading Plastic,Thương mại Nhựa,0.9381929618566169,0.07
+LC,FMCG_Retails_Logistics,Trading Rice,LC-FMCG_Retails_Logistics-Trading Rice,Thương mại Gạo,0.010292364903132041,0.2
+LC,FMCG_Retails_Logistics,Trading Seafood,LC-FMCG_Retails_Logistics-Trading Seafood,Thương mại Hải sản,0.00022516893852965098,0.07
+LC,FMCG_Retails_Logistics,Trading Sewing products,LC-FMCG_Retails_Logistics-Trading Sewing products,Bán buôn sản phẩm may mặc,0.17898591911657366,0.06
+LC,FMCG_Retails_Logistics,Trading Wood and furniture,LC-FMCG_Retails_Logistics-Trading Wood and furniture,Thương mại Đồ gỗ và nội thất,0.006510089165830582,0.1
+LC,Auto and Parts,Manufacturing Automobiles and spare parts,LC-Auto and Parts-Manufacturing Automobiles and spare parts,Sản xuất ô tô và phụ tùng ô tô,0.06387642298354634,0.07
+LC,Auto and Parts,Others,LC-Auto and Parts-Others,Khác,0,0.03
+LC,Auto and Parts,Services Automobiles maintenance,LC-Auto and Parts-Services Automobiles maintenance,Dịch vụ Bảo dưỡng ô tô,0.027098506484777324,0.1
+LC,Auto and Parts,Trading Automobiles,LC-Auto and Parts-Trading Automobiles,Thương mại ô tô,0.048617829861580815,0.07
+LC,Financial Service and Public sector,Financial intermediation,LC-Financial Service and Public sector-Financial intermediation,Trung gian tài chính,0,0.11
+LC,Financial Service and Public sector,Others,LC-Financial Service and Public sector-Others,Khác,0,0.03
+LC,Financial Service and Public sector,Services Finance,LC-Financial Service and Public sector-Services Finance,Dịch vụ Tài chính,0,0.08
+LC,Financial Service and Public sector,Services Public,LC-Financial Service and Public sector-Services Public,Dịch vụ Công,0,0.08
+LC,Travel and Leisure,Others,LC-Travel and Leisure-Others,Khác,0,0.03
+LC,Travel and Leisure,Services Entertainment,LC-Travel and Leisure-Services Entertainment,Dịch vụ Giải trí,0.16912561617692914,0.15
+LC,Travel and Leisure,Services Film and television publishing,LC-Travel and Leisure-Services Film and television publishing,Dịch vụ Xuất bản Điện ảnh và Truyền hình,0.05395948378722287,0.06
+LC,Travel and Leisure,Services hotel and accommodation,LC-Travel and Leisure-Services hotel and accommodation,Dịch vụ khách sạn và nhà ở,0,0.18
+LC,Travel and Leisure,Services Passenger transportation,LC-Travel and Leisure-Services Passenger transportation,Dịch vụ Vận tải hành khách,0.016265329194757098,0.25
+LC,Travel and Leisure,Services Turism,LC-Travel and Leisure-Services Turism,Dịch vụ Du lịch,0,0.42
+LC,Utility and Telecom,Construction of Electrical works,LC-Utility and Telecom-Construction of Electrical works,Xây dựng các công trình điện,0.043636386499729896,0.05
+LC,Utility and Telecom,Construction of Telecommunications and communication works,LC-Utility and Telecom-Construction of Telecommunications and communication works,Xây dựng công trình viễn thông và thông tin liên lạc,-,0.08
+LC,Utility and Telecom,Construction of Water supply and drainage works,LC-Utility and Telecom-Construction of Water supply and drainage works,"Xây dựng công trình cấp, thoát nước",0.00591678276771983,0.04
+LC,Utility and Telecom,Manufacturing Crude oil and gas exploitation,LC-Utility and Telecom-Manufacturing Crude oil and gas exploitation,Khai thác dầu thô và khí đốt tự nhiên,-,0.03
+LC,Utility and Telecom,"Manufacturing Distribution of civil electricity, water and gas","LC-Utility and Telecom-Manufacturing Distribution of civil electricity, water and gas","Sản xuất phân phối điện dân dụng, nước và khí đốt",0.1387504703988284,0.03
+LC,Utility and Telecom,Manufacturing Electric equipments,LC-Utility and Telecom-Manufacturing Electric equipments,Sản xuất thiết bị điện,0.08043317830408786,0.06
+LC,Utility and Telecom,Manufacturing Electronic equipment and components,LC-Utility and Telecom-Manufacturing Electronic equipment and components,Sản xuất sản phẩm điện tử và linh kiện điện tử,0.04712470643069563,0.06
+LC,Utility and Telecom,Manufacturing Fuel,LC-Utility and Telecom-Manufacturing Fuel,Sản xuất nhiên liệu,0.06220575848837668,0.1
+LC,Utility and Telecom,Manufacturing Telecommunication and IT equipments,LC-Utility and Telecom-Manufacturing Telecommunication and IT equipments,Sản xuất Thiết bị viễn thông và CNTT,0.0638118328936912,0.06
+LC,Utility and Telecom,Others,LC-Utility and Telecom-Others,Khác,0,0.03
+LC,Utility and Telecom,Services Disposal waste,LC-Utility and Telecom-Services Disposal waste,Dịch vụ Xử lý và tiêu hủy rác thải,-,0.06
+LC,Utility and Telecom,Services IT and telecommunication,LC-Utility and Telecom-Services IT and telecommunication,Dịch vụ CNTT và Viễn thông,0.114337718066442,0.06
+LC,Utility and Telecom,Services Professional consulting and operations support,LC-Utility and Telecom-Services Professional consulting and operations support,Dịch vụ Tư vấn chuyên môn và hỗ trợ vận hành,0,0.06
+LC,Utility and Telecom,Trading Electric equipments,LC-Utility and Telecom-Trading Electric equipments,Kinh doanh thiết bị điện,0.029453057679895565,0.06
+LC,Utility and Telecom,Trading Fuel,LC-Utility and Telecom-Trading Fuel,Kinh doanh nhiên liệu,0.011103210854456008,0.1
+LC,Utility and Telecom,"Trading Sales of petroleum gas, crude oil and related products","LC-Utility and Telecom-Trading Sales of petroleum gas, crude oil and related products","Bán buôn xăng dầu, dầu thô và các sản phẩm liên quan",0.006915945873031008,0.03
+LC,Utility and Telecom,Trading Telecommunication and IT equipments,LC-Utility and Telecom-Trading Telecommunication and IT equipments,Thương mại Thiết bị Viễn thông và CNTT,0.016499570833569004,0.06
+LC,Others,Manufacturing Machinery of food and beverage processing,LC-Others-Manufacturing Machinery of food and beverage processing,Sản xuất Máy móc chế biến thực phẩm và đồ uống,-,0.22
+LC,Others,Manufacturing Mining,LC-Others-Manufacturing Mining,Sản xuất Khai khoáng,0.0711706023576834,0.05
+LC,Others,Manufacturing motorbikes and other means of transportation,LC-Others-Manufacturing motorbikes and other means of transportation,Thương mại Xe máy và các phương tiện vận tải khác,0.07780402731518393,0.07
+LC,Others,Manufacturing Other,LC-Others-Manufacturing Other,Sản xuất khác,0.048726341246592086,0.04
+LC,Others,"Manufacturing Other of Farming, fishing","LC-Others-Manufacturing Other of Farming, fishing","Sản xuất Nông nghiệp, ngư nghiệp khác",0.0128669573876666,0.04
+LC,Others,Manufacturing Other specialized machinery and equipment,LC-Others-Manufacturing Other specialized machinery and equipment,"Sản xuất Máy móc, thiết bị chuyên dụng khác",0.07400215998091368,0.07
+LC,Others,"Manufacturing other wood, furniture","LC-Others-Manufacturing other wood, furniture",Sản xuất đồ gỗ và nội thất khác,0.0928409415724451,0.19
+LC,Others,Manufacturing Rubber,LC-Others-Manufacturing Rubber,Sản xuất cao su,0.010110498963841075,0.07
+LC,Others,Others,LC-Others-Others,Khác,0,0.03
+LC,Others,Services Education,LC-Others-Services Education,Dịch vụ Giáo dục,0.030039409588174498,0.08
+LC,Others,Services Medical and medical supporting activities,LC-Others-Services Medical and medical supporting activities,Dịch vụ Y tế và hoạt động hỗ trợ y tế,0,0.08
+LC,Others,Services Other,LC-Others-Services Other,Dịch vụ Khác chưa được phân vào đâu,0.008197883285121957,0.1
+LC,Others,Services Other Consumer goods,LC-Others-Services Other Consumer goods,Dịch vụ hàng hóa tiêu dùng khác,0.09202338336443457,0.1
+LC,Others,Services Other of IT and telecommunication,LC-Others-Services Other of IT and telecommunication,Dịch vụ CNTT và Viễn thông khác,0.025926691123505305,0.05
+LC,Others,Services Other of publishing (except Film and Television Publishing),LC-Others-Services Other of publishing (except Film and Television Publishing),Dịch vụ Xuất bản khác (trừ xuất bản Điện ảnh và Truyền hình),1.1028241722401801,0.06
+LC,Others,Services Production of motorbikes and other means of transportation,LC-Others-Services Production of motorbikes and other means of transportation,Dịch vụ Sản xuất Xe máy và các phương tiện vận tải khác,0,0.06
+LC,Others,Trading Machinery and equipment and supplies,LC-Others-Trading Machinery and equipment and supplies,"Thương mại Máy móc, vật tư thiết bị",0.3083674380230848,0.07
+LC,Others,Trading motorbikes and other means of transportation,LC-Others-Trading motorbikes and other means of transportation,Thương mại Xe máy và các phương tiện vận tải khác,0.017951812124846214,0.06
+LC,Others,Trading Other construction materials,LC-Others-Trading Other construction materials,Thương mại Vật liệu Xây dựng khác chưa được phân vào đâu,0.013177400008450501,0.15
+LC,Others,Trading Other consumer goods,LC-Others-Trading Other consumer goods,Thương mại Hàng tiêu dùng khác chưa được phân vào đâu,0.0451183971176596,0.11
+LC,Others,Trading Other Mining,LC-Others-Trading Other Mining,Kinh doanh khai thác mỏ khác,0.023023346734894506,0.16
+LC,Others,Trading other Wood and furniture,LC-Others-Trading other Wood and furniture,Thương mại Đồ gỗ và nội thất khác,0,0.05
+LC,Others,Trading Rubber,LC-Others-Trading Rubber,Thương mại cao su,0.004592049342312893,0.08

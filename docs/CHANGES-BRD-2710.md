@@ -51,7 +51,16 @@ Each rule has a test in `testing/test_brd_2710.py`.
 | Biến động DT per column = that year vs the year before (first column only when data exist) | — | unchanged |
 | Report title kept "PHỤ LỤC 01 - THẨM ĐỊNH NGUỒN THU DOANH NGHIỆP" so existing copies keep working | — | template first line |
 
-## Data still needed
+## Bảng ngành tại TCB (PL1)
 
-- **PL1 Bảng ngành tại TCB**: only 13 rows (SME / Recom) reached the repo. Paste the remaining rows
-  into `src/templates/bang-nganh-tcb.csv` (same columns).
+- `src/templates/bang-nganh-tcb.csv`: the full main table, 4 segments (SME, USME, MM, LC) × 110
+  industries. ROS and growth differ by segment, so `industry.lookup(name, segment, sector)` reads the
+  row of the company's segment — SME < 200 tỷ, USME < 600 tỷ, MM < 2000 tỷ, LC ≥ 2000 tỷ of net
+  revenue in the latest year (`financial_metrics.segment_code`). The LLM picks "Ngành — Lĩnh vực"
+  from the list ("Khác" exists in several sectors).
+- `src/templates/bang-nganh-tcb-b2b-b2c.csv`: the second PL1 table (MSME / SME by B2B / B2C,
+  30 groups each) — saved, **not used**: confirm with the business owner whether it replaces the
+  main table for SME. Note: SME "Thương mại khác (B2C)" has ROS 0.8 where MSME has 0.08.
+- Values to check in the main table: ROS > 50% (LC "Thương mại Nhựa" 0.94, LC "Dịch vụ Xuất bản
+  khác" 1.10, MM "Khai thác dầu thô" 0.81, LC "Nhà phát triển BĐS xây dựng hạ tầng" 0.89) — they
+  only raise the ROS floor max[ROS lịch sử; ROS ngành], the plan's ROS still caps it.

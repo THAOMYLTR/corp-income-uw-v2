@@ -202,7 +202,7 @@ class CorpIncomeAnalysis:
             business_type=btype)
         corp = corp_group(items, financials, cic, as_of)
         # [BRD 27/10] with a business plan and a TCB industry, the income is the projection.
-        nganh = business_model.industry(records)
+        nganh = business_model.industry(records, financial_metrics.segment_code(financials))
         income = financial_metrics.income_estimate(
             financials, borrower_ownership(items, borrower_names), reference_data.get("annual_lt_principal"),
             plan=pick_plan(records), industry=nganh, corp_group=corp["group"])

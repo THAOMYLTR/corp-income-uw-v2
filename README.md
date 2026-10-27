@@ -143,7 +143,7 @@ Edit the template to change the layout — no Python change, as long as the `{{p
 |---|---|---|
 | Field priority ĐKKD → Điều lệ / Sổ cổ đông → thực địa; mismatches; status; 12-month changes; borrower %, NĐDPL | code | `calculator/legal_checks.py`, `utils/report/appendix_context.py` |
 | Mô hình HĐKD: source priority, top 5 by value, suppliers left / buyers right, no invented rows, share only when given | code (LLM pass M9 only reads each document) | `calculator/business_model.py` |
-| Ngành theo bảng ngành TCB, ROS ngành, tăng trưởng ngành | LLM picks one name from the list (M9); code looks it up | `calculator/industry.py`, `src/templates/bang-nganh-tcb.csv` |
+| Ngành theo bảng ngành TCB, ROS ngành, tăng trưởng ngành | LLM picks one name from the list (M9); code looks it up in the company's segment (SME / USME / MM / LC by revenue) | `calculator/industry.py`, `src/templates/bang-nganh-tcb.csv` |
 | Nguyên tắc 1 (TT200 / TT133), 2 (tờ khai VAT), 3 (biến động DT, ROS, HSTT); dấu hiệu bất thường BCTC; trạng thái tài chính; Bad / Normal / Good finance | code | `calculator/financial_metrics.py` |
 | CIC ≤ 1 tháng; bảng theo TCTD; nợ cần chú ý / nợ xấu; Bad / Normal / Good bureau (incl. chậm thanh toán thẻ 3 năm) | code | `calculator/cic_metrics.py` |
 | Bad / Normal / Good corp | code | `appendix_context.corp_group` |
@@ -175,7 +175,8 @@ Edit the template to change the layout — no Python change, as long as the `{{p
 │   │   ├── corp-income-structure.md  # The report layout (Appendix - Corp income)
 │   │   ├── corp-income-guidance.md   # BRD guidance given to the LLM
 │   │   ├── corp-income-cell-specs.md # Frame of each LLM-written cell
-│   │   └── bang-nganh-tcb.csv        # PL1 — bảng ngành tại TCB (ROS, tăng trưởng)
+│   │   ├── bang-nganh-tcb.csv        # PL1 — bảng ngành TCB: 4 phân khúc × 110 ngành (ROS, tăng trưởng)
+│   │   └── bang-nganh-tcb-b2b-b2c.csv # PL1 — bảng phụ MSME/SME theo B2B/B2C (chưa dùng)
 │   └── utils/                        # reading (OCR, PDF, Word, Excel), report rendering, Excel export
 ├── samples/<testcase>/<folder>/      # The dossier, one sub-folder per matrix section (git-ignored)
 ├── logs/                             # Run outputs (git-ignored)
@@ -268,8 +269,10 @@ python -m unittest testing.test_prompts testing.test_config testing.test_documen
 
 ## Known limits and open points
 
-- **Bảng ngành TCB (PL1)**: only the first 13 rows (Recom) reached the repo — paste the rest into
-  `src/templates/bang-nganh-tcb.csv`. Without the customer's industry in the table, the projection
+- **Bảng ngành TCB (PL1)**: the full main table is in `src/templates/bang-nganh-tcb.csv` — 4 segments
+  (SME, USME, MM, LC) × 110 industries; ROS / growth are read for the company's segment (by revenue
+  of the latest year). The second PL1 table (MSME / SME by B2B / B2C) is saved in
+  `bang-nganh-tcb-b2b-b2c.csv` but not used yet. When the industry is not identified, the projection
   falls back to historical LNST and says so.
 - No web search (masothue, bocaodientu, dangkykinhdoanh): save the lookup page into
   `ho_so_noi_bo`, or pass it as `EXTERNAL_DATA`.

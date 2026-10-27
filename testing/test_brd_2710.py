@@ -102,11 +102,29 @@ class BusinessModelTest(unittest.TestCase):
 
 
 class IndustryTest(unittest.TestCase):
-    def test_lookup_ignores_accents(self):
-        row = industry.lookup("xay dung dan dung")
-        self.assertEqual((row["ros"], row["growth"]), (0.12, 0.07))
+    def test_full_table_four_segments(self):
+        rows = industry.industries()
+        self.assertEqual(len(rows), 440)
+        self.assertEqual({r["segment"] for r in rows}, {"SME", "USME", "MM", "LC"})
+
+    def test_lookup_by_segment_ignores_accents(self):
+        sme = industry.lookup("xay dung dan dung", "SME")
+        self.assertEqual((sme["ros"], sme["growth"]), (0.12, 0.07))
+        lc = industry.lookup("Xây dựng dân dụng", "LC")
+        self.assertAlmostEqual(lc["ros"], 0.06773796195417427)
+        self.assertEqual(industry.lookup("Xây dựng dân dụng")["segment"], "SME")   # unknown segment
         self.assertIsNone(industry.lookup("Ngành không có"))
-        self.assertIn("Xây dựng dân dụng", industry.prompt_list())
+
+    def test_sector_breaks_ties_and_prompt_lists_each_industry_once(self):
+        self.assertEqual(industry.lookup("Khác", "SME", "Recom")["bizline"], "SME-Recom-Others")
+        listed = industry.prompt_list().splitlines()
+        self.assertEqual(len(listed), len(set(listed)))
+        self.assertIn("- Xây dựng dân dụng — Recom", listed)
+
+    def test_segment_from_revenue(self):
+        for revenue, code in ((150e9, "SME"), (200e9, "USME"), (700e9, "MM"), (2500e9, "LC")):
+            f = fm.compute([fin([year(2025, net_revenue=revenue / M)])], AS_OF)
+            self.assertEqual(fm.segment_code(f), code)
 
 
 class FinanceGroupTest(unittest.TestCase):

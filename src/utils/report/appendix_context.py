@@ -461,7 +461,7 @@ def income_block(corp: dict[str, Any], income: dict[str, Any]) -> str:
         k = f" × {proj['growth_factor']:g}".replace(".", ",") if proj["growth_factor"] != 1 else ""
         lines += [
             "_Sử dụng phương án kinh doanh (ngành TCB: "
-            f"{proj['industry']}, tăng trưởng ngành {fm.pct(proj['industry_growth'])}, ROS ngành "
+            f"{proj['industry']} — phân khúc {proj.get('segment') or 'SME'}, tăng trưởng ngành {fm.pct(proj['industry_growth'])}, ROS ngành "
             f"{fm.pct(proj['industry_ros'])})_",
             f"- Doanh thu dự phóng khả thi = min[DT theo PAKD; DT {year} × (1 + tăng trưởng ngành{k})] = "
             f"min[{fm.fmt(proj['plan_revenue'])}; {fm.fmt(proj['revenue_n'])} × (1 + "

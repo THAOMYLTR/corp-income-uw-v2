@@ -68,11 +68,13 @@ def partners(records: list[dict[str, Any]], side: str) -> list[dict[str, Any]]:
     return rows[:MAX_PARTNERS]
 
 
-def industry(records: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """The TCB industry row named by the highest-priority document that names one."""
+def industry(records: list[dict[str, Any]], segment: str = "") -> dict[str, Any] | None:
+    """The TCB industry row named by the highest-priority document that names one,
+    in the company's segment (SME / USME / MM / LC — ROS and growth differ by segment)."""
 
     for record in _records(records):
-        row = industry_table.lookup(record["data"].get("industry"))
+        row = industry_table.lookup(record["data"].get("industry"), segment,
+                                    record["data"].get("industry_sector"))
         if row:
             return {**row, "document": record.get("document", "")}
     return None

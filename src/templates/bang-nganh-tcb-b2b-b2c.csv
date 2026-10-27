@@ -1,0 +1,63 @@
+# BRD 27/10/2026 — sheet PL1, bảng thứ hai (MSME / SME theo B2B, B2C), 30 nhóm mỗi phân khúc.
+# Lưu để tham chiếu, CODE CHƯA DÙNG. Lưu ý: SME "Thương mại khác (B2C)" ROS 0.8 trong khi MSME ghi 0.08 — cần xác nhận.
+Phân khúc,Lĩnh vực kinh tế,Sub-segment_ENG,Bizline - Sub-segment,Ngành,ROS,Tăng trưởng ngành
+MSME,Manufacturing-B2B,Manufacturing Plastic products,Sản xuất – B2B,Sản xuất Sản phẩm từ nhựa (B2B),0.2,0.111
+MSME,Manufacturing-B2B,"Manufacturing wood, furniture",Sản xuất – B2B,Sản xuất Đồ gỗ và nội thất (B2B),0.15,0.1
+MSME,Manufacturing-B2B,Manufacturing Food and beverage,Sản xuất – B2B,"Sản xuất đồ ăn, thức uống (B2B)",0.2,0.105
+MSME,Manufacturing-B2B,Manufacturing electrical equipment,Sản xuất – B2B,Sản xuất Thiết bị điện (B2B),0.2,0.13
+MSME,Manufacturing-B2B,Manufacturing Telecommunication and IT equipments,Sản xuất – B2B,Sản xuất thiết bị viễn thông và CNTT (B2B),0.22,0.13
+MSME,Manufacturing-B2B,Manufacturing Other,Sản xuất – B2B,Sản xuất khác (B2B),0.15,0.11
+MSME,Services-B2B,Services installation,Dịch vụ – B2B,Dịch vụ lắp đặt (B2B),0.2,0.1036
+MSME,Services-B2B,Industrial Construction,Dịch vụ – B2B,Xây dựng khu công nghiệp (B2B),0.2,0.12
+MSME,Services-B2B,Infrastructure construction,Dịch vụ – B2B,Xây dựng hạ tầng (B2B),0.2,0.12
+MSME,Services-B2B,Civil Construction,Dịch vụ – B2B,Xây dựng dân dụng (B2B),0.2,0.12
+MSME,Services-B2B,"Services Transportation of goods, loading and logistic",Dịch vụ – B2B,Dịch vụ logistic (B2B),0.14,0.1
+MSME,Services-B2B,Services IT and telecommunication,Dịch vụ – B2B,Dịch vụ CNTT và viễn thông (B2B),0.2,0.12
+MSME,Services-B2B,Services Other,Dịch vụ – B2B,Dịch vụ khác (B2B),0.15,0.15
+MSME,Services - B2C,Services IT and telecommunication,Dịch vụ -  B2C,Dịch vụ CNTT và viễn thông (B2C),0.2,0.14
+MSME,Services - B2C,Civil Construction,Dịch vụ -  B2C,Xây dựng dân dụng (B2C),0.2,0.09
+MSME,Services - B2C,Service Dining,Dịch vụ -  B2C,Dịch vụ ăn uống (B2C),0.17,0.16
+MSME,Services - B2C,Service Medical,Dịch vụ -  B2C,Dịch vụ Y tế & Hoạt động hỗ trợ Y tế (B2C),0.15,0.15
+MSME,Services - B2C,Accommodation and hotels,Dịch vụ -  B2C,Khách sạn và chỗ ở (B2C),0.15,0.126
+MSME,Services - B2C,Services Other,Dịch vụ -  B2C,Các ngành khác (B2C),0.1,0.108
+MSME,Wholesale-IMEX-B2B,Trading Food and beverage,Bán buôn – B2B,"Thương mại đồ ăn, thức uống (B2B)",0.11,0.0517
+MSME,Wholesale-IMEX-B2B,"Trading Medicine, medical equipment and supplies",Bán buôn – B2B,"Thương mại Dược, vật tư thiết bị Y tế (B2B)",0.07,0.074
+MSME,Wholesale-IMEX-B2B,Trading Electric equipments,Bán buôn – B2B,Thương mại thiết bị điện (B2B),0.12,0.065
+MSME,Wholesale-IMEX-B2B,Trading Telecommunication and IT equipments,Bán buôn – B2B,Thương mại thiết bị viễn thông và CNTT (B2B),0.11,0.076
+MSME,Wholesale-IMEX-B2B,Trading Other,Bán buôn – B2B,Thương mại khác (B2B),0.068,0.055
+MSME,Retail-B2C,Other,Bán lẻ – B2C,Thương mại khác (B2C),0.08,0.0322
+MSME,Retail-B2C,Trading distribution consumer goods,Bán lẻ – B2C,Thương mại phân phối hàng tiêu dùng (B2C),0.109,0.095
+MSME,Retail-B2C,Trading Food&Beverage,Bán lẻ – B2C,"Thương mại thực phẩm, đồ uống (B2C)",0.121,0.0401
+MSME,Retail-B2C,"Trading medicine, medical equiment",Bán lẻ – B2C,Thương mại thuốc và thiết bị y tế (B2C),0.085,0.1238
+MSME,Retail-B2C,Trading electric equirment,Bán lẻ – B2C,Thương mại thiết bị điện (B2C),0.2,0.1113
+MSME,Retail-B2C,Trading Telecommunication and IT equiments,Bán lẻ – B2C,Thương mại thiết bị viễn thông và CNTT (B2C),0.1,0.0969
+SME,Manufacturing-B2B,Manufacturing Plastic products,Sản xuất – B2B,Sản xuất Sản phẩm từ nhựa (B2B),0.2,0.111
+SME,Manufacturing-B2B,"Manufacturing wood, furniture",Sản xuất – B2B,Sản xuất Đồ gỗ và nội thất (B2B),0.15,0.1
+SME,Manufacturing-B2B,Manufacturing Food and beverage,Sản xuất – B2B,"Sản xuất đồ ăn, thức uống (B2B)",0.2,0.105
+SME,Manufacturing-B2B,Manufacturing electrical equipment,Sản xuất – B2B,Sản xuất Thiết bị điện (B2B),0.2,0.13
+SME,Manufacturing-B2B,Manufacturing Telecommunication and IT equipments,Sản xuất – B2B,Sản xuất thiết bị viễn thông và CNTT (B2B),0.22,0.13
+SME,Manufacturing-B2B,Manufacturing Other,Sản xuất – B2B,Sản xuất khác (B2B),0.15,0.11
+SME,Services-B2B,Services installation,Dịch vụ – B2B,Dịch vụ lắp đặt (B2B),0.2,0.1036
+SME,Services-B2B,Industrial Construction,Dịch vụ – B2B,Xây dựng khu công nghiệp (B2B),0.2,0.12
+SME,Services-B2B,Infrastructure construction,Dịch vụ – B2B,Xây dựng hạ tầng (B2B),0.2,0.12
+SME,Services-B2B,Civil Construction,Dịch vụ – B2B,Xây dựng dân dụng (B2B),0.2,0.12
+SME,Services-B2B,"Services Transportation of goods, loading and logistic",Dịch vụ – B2B,Dịch vụ logistic (B2B),0.14,0.1
+SME,Services-B2B,Services IT and telecommunication,Dịch vụ – B2B,Dịch vụ CNTT và viễn thông (B2B),0.2,0.12
+SME,Services-B2B,Services Other,Dịch vụ – B2B,Dịch vụ khác (B2B),0.15,0.15
+SME,Services - B2C,Services IT and telecommunication,Dịch vụ -  B2C,Dịch vụ CNTT và viễn thông (B2C),0.2,0.14
+SME,Services - B2C,Civil Construction,Dịch vụ -  B2C,Xây dựng dân dụng (B2C),0.2,0.09
+SME,Services - B2C,Service Dining,Dịch vụ -  B2C,Dịch vụ ăn uống (B2C),0.17,0.16
+SME,Services - B2C,Service Medical,Dịch vụ -  B2C,Dịch vụ Y tế & Hoạt động hỗ trợ Y tế (B2C),0.15,0.15
+SME,Services - B2C,Accommodation and hotels,Dịch vụ -  B2C,Khách sạn và chỗ ở (B2C),0.15,0.126
+SME,Services - B2C,Services Other,Dịch vụ -  B2C,Các ngành khác (B2C),0.1,0.108
+SME,Wholesale-IMEX-B2B,Trading Food and beverage,Bán buôn – B2B,"Thương mại đồ ăn, thức uống (B2B)",0.11,0.0517
+SME,Wholesale-IMEX-B2B,"Trading Medicine, medical equipment and supplies",Bán buôn – B2B,"Thương mại Dược, vật tư thiết bị Y tế (B2B)",0.07,0.074
+SME,Wholesale-IMEX-B2B,Trading Electric equipments,Bán buôn – B2B,Thương mại thiết bị điện (B2B),0.12,0.065
+SME,Wholesale-IMEX-B2B,Trading Telecommunication and IT equipments,Bán buôn – B2B,Thương mại thiết bị viễn thông và CNTT (B2B),0.11,0.076
+SME,Wholesale-IMEX-B2B,Trading Other,Bán buôn – B2B,Thương mại khác (B2B),0.068,0.055
+SME,Retail-B2C,Other,Bán lẻ – B2C,Thương mại khác (B2C),0.8,0.0322
+SME,Retail-B2C,Trading distribution consumer goods,Bán lẻ – B2C,Thương mại phân phối hàng tiêu dùng (B2C),0.109,0.095
+SME,Retail-B2C,Trading Food&Beverage,Bán lẻ – B2C,"Thương mại thực phẩm, đồ uống (B2C)",0.121,0.0401
+SME,Retail-B2C,"Trading medicine, medical equiment",Bán lẻ – B2C,Thương mại thuốc và thiết bị y tế (B2C),0.085,0.1238
+SME,Retail-B2C,Trading electric equirment,Bán lẻ – B2C,Thương mại thiết bị điện (B2C),0.2,0.1113
+SME,Retail-B2C,Trading Telecommunication and IT equiments,Bán lẻ – B2C,Thương mại thiết bị viễn thông và CNTT (B2C),0.1,0.0969

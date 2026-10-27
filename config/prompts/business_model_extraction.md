@@ -8,8 +8,9 @@ xuất thông tin để vẽ mô hình hoạt động kinh doanh.
 
 QUY TẮC BẮT BUỘC:
 - Chỉ ghi điều CÓ THẬT trong văn bản. Không bịa tên, không tự tính. Không thấy thì để trống / null.
-- "industry": chọn ĐÚNG MỘT tên ngành trong danh sách dưới đây, chép nguyên văn, khi văn bản
-  cho biết doanh nghiệp làm gì; không chắc thì để "".
+- "industry": chọn ĐÚNG MỘT tên ngành trong danh sách dưới đây (phần trước dấu "—"), chép
+  nguyên văn, khi văn bản cho biết doanh nghiệp làm gì; không chắc thì để "".
+  "industry_sector": lĩnh vực đi kèm ngành đó (phần sau dấu "—").
 - CHIỀU là lỗi hay gặp nhất — đọc kỹ:
   - "suppliers" = NHÀ CUNG CẤP: bên BÁN hàng / nguyên liệu CHO doanh nghiệp (hợp đồng mua vào,
     hóa đơn đầu vào, Ghi CÓ TK 331 phải trả người bán, khoản CHI trên sao kê).
@@ -29,6 +30,7 @@ DANH SÁCH NGÀNH (bảng ngành tại TCB):
 Trả về CHÍNH XÁC JSON sau, không thêm text:
 {
   "industry": "",
+  "industry_sector": "",
   "source_unit": "dong",
   "suppliers": [{"name": "", "product": "", "value": null, "share_pct": null}],
   "customers": [{"name": "", "product": "", "value": null, "share_pct": null}],
