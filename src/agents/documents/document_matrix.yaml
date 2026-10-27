@@ -1,47 +1,52 @@
 # =============================================================================
-# DOCUMENT CLASSIFICATION MATRIX — CORP INCOME (khách hàng doanh nghiệp, KHDN)
+# DOCUMENT MATRIX — CORP INCOME (khách hàng doanh nghiệp, KHDN)
 # =============================================================================
 #
-# THIS IS THE SOURCE OF TRUTH for document routing. Editing this file changes
-# which document is recognised and which BRD item is extracted from it — no
-# Python change required. Same format as the SME repo's matrix; the upload
-# boxes (groups) are the same seven folders.
+# SOURCE OF TRUTH for document routing — "BRD_documentmatrix" (27/10/2026).
+# Editing this file changes which document is recognised, which folder it
+# belongs to and what is extracted from it — no Python change required.
 #
-# BRD "Corp Income Assessment", sheet "Corp income (detail)", use case
-# "Pháp lý doanh nghiệp":
-#   mục 1  legal_basic_extraction   Thông tin cơ bản về pháp lý doanh nghiệp
-#   mục 2  shareholders_extraction  Cổ đông, thành viên góp vốn
-#   mục 3  legal_rep_extraction     Người đại diện pháp luật
-#   mục 4  liabilities_extraction   Nợ thuế, BHXH, phạt hành chính, tranh chấp
-#   EACH flag costs one LLM call per matching document.
+# --- Folders (upload boxes) — one per section of the document matrix ---------
+#   ho_so_phap_ly            I     Hồ sơ pháp lý
+#   ho_so_tai_chinh          II    Hồ sơ tài chính
+#   ho_so_vay_von            III   Hồ sơ vay vốn
+#   ho_so_tai_san_dam_bao    IV    Hồ sơ TSBĐ
+#   ho_so_noi_bo             V     Hồ sơ nội bộ (CIC, blacklist, internal / external data)
+#   ho_so_soan_thao_noi_bo   VII   Hồ sơ nội bộ soạn thảo
+#   ho_so_khac               VIII  Hồ sơ khác (overlay CIC, báo cáo adhoc, ngoài danh mục)
 #
-# --- How to read a `type` ----------------------------------------------------
-#   id        : technical key, never changed (it is written into logs/monitoring).
-#   label     : the document line as it appears on the checklist.
-#   short_label : a caption for the reader of the finished report.
-#   source    : where the facts come from — the BRD checks compare sources.
-#                 customer = KH cung cấp
-#                 field    = báo cáo thực địa / AI Site Visit / RBO
-#                 external = bản tra cứu Cổng ĐKDN, cơ quan thuế, BHXH
-#                 internal = bản in từ hệ thống nội bộ (BCDE, BEP, DBX)
-#   filename_keywords : scored against the FILENAME ONLY, whole word, at 3x.
-#               For abbreviations people put in filenames (gcn, dkkd, qd…).
-#   keywords  : scored against the FILENAME (3x) and the CONTENT. Unaccented,
-#               lowercase by convention; accents are stripped before comparing.
-#   agents    : CORP_INCOME_AGENT: R (required evidence) or O (optional).
-#               An empty mapping means the type is recognised but not used.
-#   requirement.cap_moi : "Bắt buộc" makes the evidence-gap check stop the run
-#               when no document of this type was uploaded.
+# --- Agents of the document matrix (matrix_agents) ----------------------------
+#   CIA Corp Income Agent   LA Legal Assessment     BA Business Activity
+#   FS  Financial Statement RA Risk Assessment      CP Credit Proposal
+#   CR  Credit Relationship
+# This repo runs CIA. A type whose matrix_agents has no CIA (TSBĐ, chứng thư
+# định giá) is recognised and listed but never read by CIA. Inside CIA the
+# sections of the report follow the other codes:
+#   LA → mục 1 Pháp lý · BA → mục 2 Hoạt động KD · FS → mục 3 Tài chính
+#   CR/RA → mục 4 Dư nợ tại TCTD, phân nhóm · CP → mục 5 Kết luận nguồn thu
 #
-# --- A group without types ---------------------------------------------------
-# `catch_all: true` and no `types` declares an upload box that classifies
-# nothing: the file is read and kept as general context. See `ho_so_khac`.
+# --- Fields of a `type` -------------------------------------------------------
+#   id          technical key, never changed (written into logs).
+#   code        number on the document matrix (100, 101, 200, 205, 208, 301,
+#               302, 400, 401, 701, 706, 708); "" = not numbered in the matrix.
+#   matrix_agents  agents of the document matrix that read this type.
+#   agents      CORP_INCOME_AGENT: R (required) or O (optional). Must be set
+#               exactly when matrix_agents contains CIA (the loader checks).
+#   validation  rules of the matrix, shown in the "Hồ sơ" sheet as a checklist.
+#   source      customer = KH cung cấp · field = thực địa / RBO
+#               external = tra cứu Cổng ĐKDN, thuế, BHXH · internal = TCB systems
+#   filename_keywords  scored against the FILENAME only, ×3.
+#   keywords    scored against filename (×3) and content; unaccented, lowercase.
+#   requirement.cap_moi "Bắt buộc" → the evidence-gap check stops without it.
+#   <pass>_extraction: true → that LLM pass runs on documents of this type
+#               (each flag = one LLM call per document):
+#     legal_basic (mục 1a) · shareholders (1b) · legal_rep (1a/1b) ·
+#     liabilities (nợ thuế, BHXH, tranh chấp) · financial (mục 3) ·
+#     vat (mục 3, nguyên tắc 2) · cic (mục 4) · plan (mục 5) ·
+#     business_model (mục 2: ngành TCB, đối tác đầu vào / đầu ra)
 
-version: 1
+version: 2
 
-# One programme for now; kept so the matrix and the notebook have the same
-# shape as the SME repo and a future split (e.g. by customer segment) is a
-# data change, not a code change.
 loan_programs:
   - id: KHDN
     label: "Khách hàng doanh nghiệp"
@@ -56,13 +61,19 @@ groups:
     types:
 
       - id: gcn_dkdn
-        stt: "I.1"
+        code: "100"
+        stt: "I.100"
         short_label: "Giấy chứng nhận đăng ký doanh nghiệp"
-        label: "Giấy chứng nhận đăng ký doanh nghiệp (GCN ĐKDN) — bản mới nhất"
+        label: "ĐKKD / Giấy CNĐKDN / Giấy CNĐT — bản mới nhất"
         requirement:
           cap_moi: "Bắt buộc"
+        matrix_agents: [CIA, LA, BA]
         agents:
           CORP_INCOME_AGENT: R
+        validation:
+          - "Hồ sơ mới nhất, đủ trang, đủ dấu"
+          - "Tên công ty khớp tất cả hồ sơ"
+          - "Trạng thái hoạt động hợp lệ (tracuunnt.gdt.gov.vn, masothue.com)"
         source: customer
         legal_basic_extraction: true
         shareholders_extraction: true
@@ -72,21 +83,27 @@ groups:
           - "dkdn"
           - "dkkd"
           - "gpkd"
+          - "cndt"
         keywords:
           - "giay chung nhan dang ky doanh nghiep"
           - "chung nhan dang ky doanh nghiep"
+          - "giay chung nhan dau tu"
           - "dang ky kinh doanh"
           - "ma so doanh nghiep"
           - "dang ky thay doi lan thu"
 
       - id: dieu_le
-        stt: "I.2"
+        code: "100"
+        stt: "I.100"
         short_label: "Điều lệ công ty"
         label: "Điều lệ công ty"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, BA]
         agents:
           CORP_INCOME_AGENT: R
+        validation:
+          - "Tên công ty khớp tất cả hồ sơ"
         source: customer
         legal_basic_extraction: true
         shareholders_extraction: true
@@ -97,13 +114,18 @@ groups:
           - "dieu le"
 
       - id: so_dang_ky_co_dong
-        stt: "I.3"
-        short_label: "Sổ đăng ký cổ đông / thành viên"
-        label: "Sổ đăng ký cổ đông (công ty CP) / Sổ đăng ký thành viên (công ty TNHH) / tài liệu thể hiện phần vốn góp"
+        code: "100"
+        stt: "I.100"
+        short_label: "Sổ cổ đông / Sổ đăng ký thành viên"
+        label: "Sổ cổ đông / Sổ chứng nhận lưu ký (CTCP) / Sổ đăng ký thành viên, danh sách thành viên góp vốn (TNHH)"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, BA]
         agents:
           CORP_INCOME_AGENT: R
+        validation:
+          - "Xác định tỷ lệ sở hữu của khách hàng"
+          - "Đánh giá cấu trúc sở hữu nhiều tầng"
         source: customer
         legal_basic_extraction: true
         shareholders_extraction: true
@@ -115,18 +137,21 @@ groups:
           - "danh sach thanh vien"
           - "giay chung nhan phan von gop"
           - "so co phan"
-          # [BRD 16/10] sổ chứng nhận lưu ký (CTCP) — same priority as the register
           - "so chung nhan luu ky"
           - "chung nhan luu ky"
 
       - id: chuyen_nhuong_von
-        stt: "I.4"
+        code: "100"
+        stt: "I.100"
         short_label: "Hồ sơ chuyển nhượng vốn góp, cổ phần"
         label: "Hợp đồng / biên bản chuyển nhượng phần vốn góp, cổ phần"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, BA]
         agents:
           CORP_INCOME_AGENT: O
+        validation:
+          - "Đánh giá chuyển nhượng vốn gần thời điểm vay"
         source: customer
         shareholders_extraction: true
         keywords:
@@ -135,12 +160,99 @@ groups:
           - "chuyen nhuong co phan"
           - "bien ban thanh ly chuyen nhuong"
 
-      - id: quyet_dinh_bo_nhiem
-        stt: "I.5"
-        short_label: "Quyết định bổ nhiệm / nghị quyết"
-        label: "Quyết định bổ nhiệm, miễn nhiệm; nghị quyết, biên bản họp HĐTV / ĐHĐCĐ / HĐQT"
+      - id: giay_phep_nganh_nghe
+        code: "101"
+        stt: "I.101"
+        short_label: "Giấy phép kinh doanh ngành nghề có điều kiện"
+        label: "Giấy phép / Giấy chứng nhận đủ điều kiện kinh doanh ngành nghề có điều kiện"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, BA, RA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Còn hiệu lực, đủ dấu, đủ trang"
+          - "Khớp pháp nhân (tên, MST)"
+          - "Đối chiếu dangkykinhdoanh.gov.vn"
+        source: customer
+        filename_keywords:
+          - "giay phep"
+        keywords:
+          - "giay chung nhan du dieu kien"
+          - "du dieu kien kinh doanh"
+          - "giay phep kinh doanh"
+          - "giay phep hoat dong"
+          - "phieu tiep nhan"
+
+      - id: quyen_su_dung_nha_xuong
+        code: ""
+        stt: "I"
+        short_label: "Hồ sơ quyền sử dụng nhà xưởng / địa điểm"
+        label: "Hồ sơ quyền sử dụng nhà xưởng, kho, trụ sở: GCN QSDĐ, hợp đồng thuê / mượn địa điểm"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, BA, RA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Xác minh quyền sở hữu / hợp đồng thuê"
+          - "Quan hệ giữa doanh nghiệp và chủ sở hữu địa điểm"
+        source: customer
+        filename_keywords:
+          - "hd thue"
+          - "hdt"
+        keywords:
+          - "hop dong thue nha xuong"
+          - "hop dong thue kho"
+          - "hop dong thue van phong"
+          - "hop dong thue mat bang"
+          - "hop dong thue nha"
+          - "hop dong muon"
+          - "hop dong thue"
+          - "quyen su dung dat"
+
+      - id: bao_cao_thuc_dia_phap_ly
+        code: ""
+        stt: "I"
+        short_label: "Báo cáo khảo sát thực địa"
+        label: "Báo cáo khảo sát thực địa (đặt trong hồ sơ pháp lý) — người vận hành, người quyết định kinh doanh, người hiểu tài chính công ty"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Người vận hành doanh nghiệp"
+          - "Người quyết định kinh doanh"
+          - "Người hiểu tài chính công ty"
+        source: field
+        legal_basic_extraction: true
+        shareholders_extraction: true
+        legal_rep_extraction: true
+        liabilities_extraction: true
+        business_model_extraction: true
+        filename_keywords:
+          - "bctd"
+          - "bcktd"
+          - "rbo"
+        keywords:
+          - "bao cao thuc dia"
+          - "bao cao khao sat"
+          - "khao sat thuc dia"
+          - "bien ban xac minh"
+          - "site visit"
+          - "tham dinh thuc te"
+
+      # Not numbered in the matrix ("hồ sơ bổ sung ngoài danh mục"); kept because the
+      # BRD detail sheet keeps the checks on appointments, penalties and disputes.
+      - id: quyet_dinh_bo_nhiem
+        code: ""
+        stt: "I"
+        short_label: "Quyết định bổ nhiệm / nghị quyết"
+        label: "Quyết định bổ nhiệm, miễn nhiệm; nghị quyết, biên bản họp HĐTV / ĐHĐCĐ / HĐQT (gồm nghị quyết chia cổ tức, trích quỹ)"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA]
         agents:
           CORP_INCOME_AGENT: O
         source: customer
@@ -157,11 +269,13 @@ groups:
           - "bo nhiem tong giam doc"
 
       - id: quyet_dinh_xu_phat
-        stt: "I.6"
+        code: ""
+        stt: "I"
         short_label: "Quyết định xử phạt / cưỡng chế"
         label: "Quyết định xử phạt vi phạm hành chính, quyết định cưỡng chế (thuế, môi trường, PCCC, lao động…)"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, RA]
         agents:
           CORP_INCOME_AGENT: O
         source: customer
@@ -177,11 +291,13 @@ groups:
           - "cuong che thi hanh"
 
       - id: bien_ban_kiem_tra
-        stt: "I.7"
+        code: ""
+        stt: "I"
         short_label: "Biên bản kiểm tra / kết luận thanh tra"
         label: "Biên bản kiểm tra, kết luận thanh tra (thuế, môi trường, PCCC)"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, RA]
         agents:
           CORP_INCOME_AGENT: O
         source: customer
@@ -194,11 +310,13 @@ groups:
           - "kiem tra moi truong"
 
       - id: ho_so_tranh_chap
-        stt: "I.8"
+        code: ""
+        stt: "I"
         short_label: "Hồ sơ tranh chấp, tòa án, trọng tài"
         label: "Văn bản tranh chấp; hồ sơ tòa án / trọng tài (thông báo thụ lý, bản án, quyết định)"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, RA]
         agents:
           CORP_INCOME_AGENT: O
         source: customer
@@ -219,14 +337,153 @@ groups:
     primary_agent: CORP_INCOME_AGENT
     types:
 
+      - id: bao_cao_tai_chinh
+        code: "200"
+        stt: "II.200"
+        short_label: "Báo cáo tài chính"
+        label: "Báo cáo tài chính 2 năm gần nhất (bảng cân đối kế toán, báo cáo KQKD)"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, FS, RA]
+        agents:
+          CORP_INCOME_AGENT: R
+        validation:
+          - "Có chữ ký, có dấu, đúng kỳ 12 tháng"
+          - "Đối chiếu doanh thu BCTC với VAT / sao kê / phần mềm bán hàng"
+          - "Đối chiếu chi phí lãi vay với dư nợ CIC"
+          - "Thuế TNDN / LNTT ≠ 20% → cảnh báo"
+        source: customer
+        liabilities_extraction: true
+        financial_extraction: true
+        filename_keywords:
+          - "bctc"
+        keywords:
+          - "bao cao tai chinh"
+          - "bang can doi ke toan"
+          - "ket qua hoat dong kinh doanh"
+
+      - id: thuyet_minh_bctc
+        code: "200"
+        stt: "II.200"
+        short_label: "Thuyết minh BCTC kiểm toán"
+        label: "Thuyết minh báo cáo tài chính, báo cáo kiểm toán độc lập"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, FS, RA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Công ty kiểm toán không thuộc danh sách loại trừ"
+        source: customer
+        liabilities_extraction: true
+        financial_extraction: true
+        keywords:
+          - "thuyet minh bao cao tai chinh"
+          - "ban thuyet minh"
+          - "bao cao kiem toan doc lap"
+          - "no tiem tang"
+
+      - id: to_khai_vat
+        code: "205"
+        stt: "II.205"
+        short_label: "Tờ khai thuế GTGT"
+        label: "Tờ khai thuế giá trị gia tăng (tháng / quý)"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, FS, BA, RA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Đủ 12 tháng"
+          - "Có chữ ký điện tử / xác nhận của cơ quan thuế"
+        source: customer
+        vat_extraction: true
+        filename_keywords:
+          - "vat"
+          - "gtgt"
+        keywords:
+          - "to khai thue gia tri gia tang"
+          - "thue gia tri gia tang"
+
+      - id: sao_ke_tai_khoan
+        code: "205"
+        stt: "II.205"
+        short_label: "Sao kê tài khoản thanh toán doanh nghiệp"
+        label: "Sao kê tài khoản thanh toán doanh nghiệp (nguồn thay thế tờ khai VAT, ưu tiên 2)"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, FS, BA, RA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "06 tháng gần nhất"
+          - "TCTD giao dịch chính"
+        source: customer
+        business_model_extraction: true
+        filename_keywords:
+          - "sao ke"
+        keywords:
+          - "sao ke tai khoan"
+          - "so phu tai khoan"
+          - "lich su giao dich"
+
+      - id: phan_mem_ban_hang
+        code: "205"
+        stt: "II.205"
+        short_label: "Doanh thu phần mềm bán hàng"
+        label: "Ảnh chụp / xuất dữ liệu phần mềm bán hàng (nguồn thay thế tờ khai VAT, ưu tiên 3)"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, FS, BA, RA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Doanh thu 12 tháng"
+          - "Ảnh chụp màn hình hợp lệ"
+        source: customer
+        filename_keywords:
+          - "pmbh"
+        keywords:
+          - "phan mem ban hang"
+          - "bao cao ban hang"
+          - "doanh so ban hang"
+
+      - id: so_chi_tiet_cong_no
+        code: ""
+        stt: "II"
+        short_label: "Chi tiết tồn kho / phải thu / phải trả"
+        label: "Chi tiết tồn kho, công nợ phải thu (TK 131), phải trả (TK 331)"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, FS, RA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Đánh giá hàng tồn kho, công nợ phải thu / phải trả, vòng quay vốn"
+        source: customer
+        business_model_extraction: true
+        filename_keywords:
+          - "131"
+          - "331"
+          - "156"
+        keywords:
+          - "so chi tiet"
+          - "phai thu khach hang"
+          - "phai tra nguoi ban"
+          - "chi tiet ton kho"
+          - "bao cao nhap xuat ton"
+
+      # Not in the matrix; kept for the tax / social-insurance debt checks.
       - id: thong_bao_no_thue
-        stt: "II.1"
+        code: ""
+        stt: "II"
         short_label: "Thông báo nợ thuế / xác nhận nghĩa vụ thuế"
         label: "Thông báo tiền thuế nợ; xác nhận tình hình thực hiện nghĩa vụ thuế"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, RA]
         agents:
-          CORP_INCOME_AGENT: R
+          CORP_INCOME_AGENT: O
         source: customer
         liabilities_extraction: true
         keywords:
@@ -238,13 +495,15 @@ groups:
           - "tinh hinh thuc hien nghia vu"
 
       - id: xac_nhan_bhxh
-        stt: "II.2"
+        code: ""
+        stt: "II"
         short_label: "Thông báo / xác nhận đóng BHXH"
         label: "Thông báo kết quả đóng BHXH, BHYT, BHTN; xác nhận không nợ BHXH"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, RA]
         agents:
-          CORP_INCOME_AGENT: R
+          CORP_INCOME_AGENT: O
         source: customer
         liabilities_extraction: true
         filename_keywords:
@@ -255,87 +514,6 @@ groups:
           - "thong bao ket qua dong"
           - "xac nhan dong bao hiem"
 
-      - id: thuyet_minh_bctc
-        stt: "II.3"
-        short_label: "Thuyết minh BCTC kiểm toán"
-        label: "Thuyết minh báo cáo tài chính kiểm toán (nợ thuế quá hạn, nợ tiềm tàng, vụ kiện)"
-        requirement:
-          cap_moi: "Nếu có"
-        agents:
-          CORP_INCOME_AGENT: O
-        source: customer
-        liabilities_extraction: true
-        financial_extraction: true
-        keywords:
-          - "thuyet minh bao cao tai chinh"
-          - "ban thuyet minh"
-          - "bao cao kiem toan doc lap"
-          - "no tiem tang"
-
-      - id: bao_cao_tai_chinh
-        stt: "II.4"
-        short_label: "Báo cáo tài chính"
-        label: "Báo cáo tài chính năm (bảng cân đối kế toán, kết quả kinh doanh)"
-        requirement:
-          cap_moi: ""
-        # Mục 4 reads it only for taxes/social insurance payable; a full audited
-        # BCTC with notes still matches thuyet_minh_bctc first (content keywords).
-        agents:
-          CORP_INCOME_AGENT: O
-        source: customer
-        liabilities_extraction: true
-        financial_extraction: true
-        filename_keywords:
-          - "bctc"
-        keywords:
-          - "bao cao tai chinh"
-          - "bang can doi ke toan"
-          - "ket qua hoat dong kinh doanh"
-
-      - id: to_khai_vat
-        stt: "II.5"
-        short_label: "Tờ khai thuế GTGT"
-        label: "Tờ khai thuế giá trị gia tăng (tháng / quý)"
-        requirement:
-          cap_moi: ""
-        # [BRD 16/10] Nguyên tắc 2: doanh thu theo tờ khai (pass M6).
-        agents: {}
-        source: customer
-        vat_extraction: true
-        filename_keywords:
-          - "vat"
-          - "gtgt"
-        keywords:
-          - "to khai thue gia tri gia tang"
-          - "thue gia tri gia tang"
-
-      - id: chung_tu_kinh_doanh
-        stt: "II.6"
-        short_label: "Hợp đồng / hóa đơn / sao kê"
-        label: "Hợp đồng kinh tế, hóa đơn VAT, sao kê tài khoản doanh nghiệp"
-        requirement:
-          cap_moi: ""
-        # Read by the report writer for Phụ lục 01 mục 2 (đầu vào / đầu ra).
-        # [BRD 16/10] + sổ chi tiết TK 131/331, hợp đồng thuê (đi thuê / sở hữu).
-        agents: {}
-        source: customer
-        filename_keywords:
-          - "131"
-          - "331"
-          - "hop dong"
-          - "hdkt"
-          - "hoa don"
-          - "sao ke"
-        keywords:
-          - "hop dong kinh te"
-          - "hop dong mua ban"
-          - "hoa don gia tri gia tang"
-          - "sao ke tai khoan"
-          - "so chi tiet"
-          - "phai thu khach hang"
-          - "phai tra nguoi ban"
-          - "hop dong thue"
-
   # ===========================================================================
   - id: ho_so_vay_von
     stt: "III"
@@ -344,13 +522,17 @@ groups:
     types:
 
       - id: de_nghi_cap_tin_dung
-        stt: "III.1"
-        short_label: "Đề nghị cấp tín dụng"
-        label: "Giấy đề nghị cấp tín dụng / phương án vay vốn"
+        code: "302"
+        stt: "III.302"
+        short_label: "Phương án kinh doanh / đề nghị cấp tín dụng"
+        label: "Đề nghị cấp tín dụng, kế hoạch kinh doanh, kế hoạch sử dụng vốn, đề nghị phát hành bảo lãnh"
         requirement:
-          cap_moi: ""
-        # [BRD 16/10] Phụ lục 01 mục 5: số kế hoạch + cơ sở của KH (pass M8).
-        agents: {}
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, BA, FS, RA, CP, CR]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Đủ chữ ký, đủ dấu"
         source: customer
         plan_extraction: true
         filename_keywords:
@@ -358,30 +540,98 @@ groups:
           - "phuong an"
         keywords:
           - "ke hoach kinh doanh"
+          - "ke hoach su dung von"
           - "giay de nghi vay von"
           - "de nghi cap tin dung"
+          - "de nghi phat hanh bao lanh"
           - "phuong an vay von"
           - "phuong an kinh doanh"
 
+      - id: hop_dong_dau_vao_dau_ra
+        code: "301"
+        stt: "III.301"
+        short_label: "Hợp đồng / hóa đơn đầu vào, đầu ra"
+        label: "Hợp đồng kinh tế đầu vào, đầu ra; hóa đơn VAT đầu vào, đầu ra"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, BA, FS]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Tối thiểu 3 hợp đồng đầu vào và 3 hợp đồng đầu ra, hoặc các hợp đồng chiếm > 50% doanh thu / giá vốn"
+          - "Đối tác tiêu biểu, ký trong vòng 1 năm"
+          - "Có dấu và chữ ký"
+        source: customer
+        business_model_extraction: true
+        filename_keywords:
+          - "hdkt"
+          - "hop dong"
+          - "hoa don"
+        keywords:
+          - "hop dong kinh te"
+          - "hop dong mua ban"
+          - "hop dong nguyen tac"
+          - "hop dong cung cap"
+          - "hoa don gia tri gia tang"
+          - "hoa don dien tu"
+
+      - id: tien_do_hop_dong
+        code: ""
+        stt: "III"
+        short_label: "Hồ sơ tiến độ thực hiện hợp đồng"
+        label: "Hồ sơ tiến độ thực hiện hợp đồng: biên bản nghiệm thu, bàn giao, báo cáo tiến độ"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, BA, FS, RA]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Năng lực và tiến độ thực hiện, khả năng tạo doanh thu tương lai"
+        source: customer
+        keywords:
+          - "bien ban nghiem thu"
+          - "bien ban ban giao"
+          - "tien do thuc hien hop dong"
+          - "bao cao tien do"
+          - "thanh ly hop dong"
+
   # ===========================================================================
+  # Not read by CIA (matrix agents RA, CP): recognised and listed only.
   - id: ho_so_tai_san_dam_bao
     stt: "IV"
-    label: "Hồ sơ tài sản đảm bảo"
+    label: "Hồ sơ TSBĐ"
     types:
 
       - id: ho_so_tsbd
-        stt: "IV.1"
+        code: "400"
+        stt: "IV.400"
         short_label: "Hồ sơ tài sản bảo đảm"
-        label: "Giấy tờ tài sản bảo đảm; chứng thư định giá"
+        label: "Hồ sơ tài sản bảo đảm (quyền sở hữu, quyền sử dụng hợp pháp)"
         requirement:
           cap_moi: ""
+        matrix_agents: [RA, CP]
         agents: {}
         source: customer
         keywords:
           - "tai san bao dam"
           - "tai san dam bao"
-          - "chung thu dinh gia"
           - "giay chung nhan quyen su dung dat"
+          - "dang ky xe"
+
+      - id: chung_thu_dinh_gia
+        code: "401"
+        stt: "IV.401"
+        short_label: "Chứng thư định giá"
+        label: "Chứng thư định giá tài sản bảo đảm"
+        requirement:
+          cap_moi: ""
+        matrix_agents: [RA, CP]
+        agents: {}
+        source: customer
+        keywords:
+          - "chung thu dinh gia"
+          - "chung thu tham dinh gia"
+          - "bao cao dinh gia"
 
   # ===========================================================================
   - id: ho_so_noi_bo
@@ -390,12 +640,86 @@ groups:
     primary_agent: CORP_INCOME_AGENT
     types:
 
-      - id: tra_cuu_dkdn
-        stt: "V.1"
-        short_label: "Tra cứu Cổng ĐKDN / cơ quan thuế"
-        label: "Bản tra cứu Cổng thông tin quốc gia về ĐKDN, cơ quan thuế, masothue.com, bocaodientu.com.vn"
+      - id: bao_cao_cic
+        code: "208"
+        stt: "V.208"
+        short_label: "CIC khách hàng doanh nghiệp"
+        label: "Bản tin CIC của doanh nghiệp (S10A, R20)"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, RA, CP, CR]
+        agents:
+          CORP_INCOME_AGENT: R
+        validation:
+          - "CIC hiệu lực 30 ngày"
+        source: external
+        cic_extraction: true
+        filename_keywords:
+          - "cic"
+          - "s10a"
+          - "r20"
+        keywords:
+          - "trung tam thong tin tin dung"
+          - "bao cao thong tin tin dung"
+          - "du no tai cac to chuc tin dung"
+
+      - id: cic_lien_quan
+        code: ""
+        stt: "V"
+        short_label: "CIC pháp nhân / cá nhân liên quan"
+        label: "CIC của người đại diện pháp luật, cổ đông / thành viên góp vốn >= 30%"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, RA, CR]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Đối tượng: ĐDPL, cổ đông / thành viên góp vốn >= 30%"
+        source: external
+        filename_keywords:
+          - "cic ca nhan"
+          - "cic ddpl"
+          - "cic co dong"
+          - "cic lien quan"
+        keywords:
+          - "khach hang ca nhan"
+          - "so cmnd"
+          - "so cccd"
+          - "can cuoc cong dan"
+
+      - id: blacklist_fraud
+        code: "708"
+        stt: "V.708"
+        short_label: "Blacklist / Fraud check"
+        label: "Kết quả tra cứu Blacklist / Watchlist / Fraud của DN, ĐDPL, cổ đông >= 30%, chủ TSBĐ"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, RA, CR]
+        agents:
+          CORP_INCOME_AGENT: O
+        validation:
+          - "Đối tượng: DN, ĐDPL, cổ đông >= 30%, chủ TSBĐ"
+        source: internal
+        filename_keywords:
+          - "blacklist"
+          - "watchlist"
+          - "fraud"
+          - "bl"
+          - "wl"
+        keywords:
+          - "danh sach den"
+          - "danh sach theo doi"
+          - "danh sach canh bao"
+          - "gian lan"
+
+      - id: tra_cuu_dkdn
+        code: ""
+        stt: "V"
+        short_label: "External data — tra cứu ĐKDN / thuế"
+        label: "Bản tra cứu tracuunnt.gdt.gov.vn, masothue.com, bocaodientu.dkkd.gov.vn, Cổng ĐKDN"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, BA]
         agents:
           CORP_INCOME_AGENT: R
         source: external
@@ -406,6 +730,7 @@ groups:
           - "masothue"
           - "bocaodientu"
           - "dangkykinhdoanh"
+          - "tracuunnt"
         keywords:
           - "cong thong tin quoc gia ve dang ky doanh nghiep"
           - "tra cuu ma so thue"
@@ -414,11 +739,13 @@ groups:
           - "trang thai nnt"
 
       - id: tra_cuu_no_thue_bhxh
-        stt: "V.2"
-        short_label: "Tra cứu nợ thuế / nợ BHXH"
-        label: "Bản tra cứu công khai nợ thuế, nợ BHXH (cổng thuế, BHXH tỉnh thành)"
+        code: ""
+        stt: "V"
+        short_label: "External data — tra cứu nợ thuế / BHXH"
+        label: "Bản tra cứu công khai nợ thuế, nợ BHXH (cổng thuế, hải quan, BHXH tỉnh thành)"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, RA]
         agents:
           CORP_INCOME_AGENT: O
         source: external
@@ -431,68 +758,60 @@ groups:
           - "tra cuu no bhxh"
 
       - id: du_lieu_noi_bo
-        stt: "V.3"
-        short_label: "Dữ liệu hệ thống nội bộ"
-        label: "Bản in / xuất dữ liệu KHDN từ hệ thống nội bộ (BCDE, BEP, DBX, T24) — với KHDN là ETC TCB"
+        code: ""
+        stt: "V"
+        short_label: "Internal data — hệ thống nội bộ"
+        label: "Bản in / xuất dữ liệu nội bộ (T24, BCDE, BEP, DBX; VIRAC: lịch sử thay đổi ĐKKD 3 năm gần nhất)"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, LA, BA, FS]
         agents:
           CORP_INCOME_AGENT: O
         source: internal
         legal_basic_extraction: true
         shareholders_extraction: true
         legal_rep_extraction: true
+        business_model_extraction: true
         filename_keywords:
           - "bcde"
           - "bep"
           - "dbx"
           - "t24"
+          - "virac"
         keywords:
           - "thong tin khach hang doanh nghiep"
           - "ma khach hang"
           - "tinh trang quan he"
           - "bao cao tham dinh khdn"
-
-      - id: bao_cao_cic
-        stt: "V.4"
-        short_label: "Báo cáo CIC"
-        label: "Báo cáo thông tin tín dụng CIC của doanh nghiệp"
-        requirement:
-          cap_moi: ""
-        # Read by the report writer for Phụ lục 01 mục 4 (dư nợ tại TCTD).
-        # [BRD 16/10] S10A / R20 parsed by pass M7; figures computed in code.
-        agents: {}
-        source: external
-        cic_extraction: true
-        filename_keywords:
-          - "cic"
-          - "s10a"
-          - "r20"
-        keywords:
-          - "trung tam thong tin tin dung"
-          - "bao cao thong tin tin dung"
-          - "du no tai cac to chuc tin dung"
+          - "lich su thay doi dang ky kinh doanh"
 
   # ===========================================================================
   - id: ho_so_soan_thao_noi_bo
-    stt: "VI"
-    label: "Hồ sơ soạn thảo nội bộ"
+    stt: "VII"
+    label: "Hồ sơ nội bộ soạn thảo"
     primary_agent: CORP_INCOME_AGENT
     types:
 
       - id: bao_cao_thuc_dia
-        stt: "VI.1"
-        short_label: "Báo cáo khảo sát thực địa"
-        label: "Báo cáo khảo sát thực địa của ĐVKD / AI Site Visit / phỏng vấn RBO"
+        code: "701"
+        stt: "VII.701"
+        short_label: "Báo cáo khảo sát và đề xuất tín dụng"
+        label: "Báo cáo khảo sát thực địa và đề xuất tín dụng của ĐVKD / AI Site Visit / RBO"
         requirement:
           cap_moi: "Nếu có"
+        matrix_agents: [CIA, BA, FS, RA, CP, CR]
         agents:
           CORP_INCOME_AGENT: R
+        validation:
+          - "Khảo sát trong vòng 1 tháng"
+          - "Có ảnh khảo sát"
+          - "Có chữ ký RM và lãnh đạo ĐVKD"
         source: field
         legal_basic_extraction: true
         shareholders_extraction: true
         legal_rep_extraction: true
         liabilities_extraction: true
+        business_model_extraction: true
         filename_keywords:
           - "bctd"
           - "bcktd"
@@ -505,16 +824,18 @@ groups:
           - "bien ban lam viec"
           - "site visit"
           - "tham dinh thuc te"
+          - "de xuat tin dung"
 
       - id: hinh_anh_thuc_dia
-        stt: "VI.2"
-        short_label: "Hình ảnh thực địa"
-        label: "Hình ảnh trụ sở / nhà xưởng / biển hiệu chụp khi đi thực địa"
+        code: "701"
+        stt: "VII.701"
+        short_label: "Hình ảnh khảo sát thực địa"
+        label: "Hình ảnh trụ sở / nhà xưởng / kho / biển hiệu chụp khi khảo sát"
         requirement:
-          cap_moi: ""
-        # Recognised so it is named correctly; photos alone do not confirm
-        # operation, so no BRD item reads them (the field report does).
-        agents: {}
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, BA]
+        agents:
+          CORP_INCOME_AGENT: O
         source: field
         filename_keywords:
           - "hinh anh"
@@ -525,8 +846,25 @@ groups:
           - "hinh anh thuc te"
           - "anh chup thuc dia"
 
+      - id: bao_cao_gioi_han_tin_dung
+        code: "706"
+        stt: "VII.706"
+        short_label: "Báo cáo giới hạn tín dụng"
+        label: "Báo cáo giới hạn tín dụng (KH có người liên quan / quan hệ tín dụng tại TCB)"
+        requirement:
+          cap_moi: "Nếu có"
+        matrix_agents: [CIA, RA, CP, CR]
+        agents:
+          CORP_INCOME_AGENT: O
+        source: internal
+        keywords:
+          - "gioi han tin dung"
+          - "bao cao gioi han"
+          - "nguoi co lien quan"
+
   # ===========================================================================
+  # Overlay CIC, báo cáo adhoc, hồ sơ bổ sung ngoài danh mục — all agents read it.
   - id: ho_so_khac
-    stt: "VII"
+    stt: "VIII"
     label: "Hồ sơ khác"
     catch_all: true

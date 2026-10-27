@@ -56,6 +56,7 @@ from src.agents.documents.document_matrix import (
     is_cic_type,
     is_financial_type,
     is_plan_type,
+    is_business_model_type,
     is_vat_type,
     is_legal_basic_type,
     is_legal_rep_type,
@@ -89,6 +90,10 @@ from src.agents.extraction.financial_extraction import (
 from src.agents.extraction.vat_extraction import build_vat_extraction_chain, extract_vat_structured_data
 from src.agents.extraction.cic_extraction import build_cic_extraction_chain, extract_cic_structured_data
 from src.agents.extraction.plan_extraction import build_plan_extraction_chain, extract_plan_structured_data
+from src.agents.extraction.business_model_extraction import (
+    build_business_model_extraction_chain,
+    extract_business_model_structured_data,
+)
 from src.agents.specialist import SPECIALIST_BY_AGENT
 
 DEFAULT_ROUTE: AgentName = "CORP_INCOME_AGENT"
@@ -198,6 +203,13 @@ EXTRACTION_PASSES: tuple[ExtractionPass, ...] = (
         result_attr="plan_extraction", error_attr="plan_extraction_error",
         llm_attr="plan_extraction_llm", fallback_llm_attr="financial_extraction_llm",
         build_chain=build_plan_extraction_chain, extract=extract_plan_structured_data,
+    ),
+    # [BRD 27/10] M9 — ngành TCB, đối tác đầu vào / đầu ra (mô hình HĐKD, mục 2).
+    ExtractionPass(
+        label="Mô hình HĐKD", tag="M9", flag_attr="is_business_model",
+        result_attr="business_model_extraction", error_attr="business_model_extraction_error",
+        llm_attr="business_model_extraction_llm", fallback_llm_attr="financial_extraction_llm",
+        build_chain=build_business_model_extraction_chain, extract=extract_business_model_structured_data,
     ),
 )
 
@@ -675,6 +687,7 @@ class Supervisor:
             "is_vat": is_vat_type(document_type),
             "is_cic": is_cic_type(document_type),
             "is_plan": is_plan_type(document_type),
+            "is_business_model": is_business_model_type(document_type),
         }
         tags = [p.tag for p in EXTRACTION_PASSES if flags[p.flag_attr]]
         steps.append(

@@ -1,8 +1,9 @@
 """Write the result as an Excel workbook laid out like the BRD.
 
 Sheets: Tóm tắt · 1. Pháp lý cơ bản · 2. Cổ đông · 3. Người đại diện ·
-4. Nợ thuế - tranh chấp · 5. Tài chính (BCTC, chỉ số, cảnh báo, thu nhập ghi nhận) · Kiểm tra (all findings) · Hồ sơ (files and how each
-was read). Amounts are numbers in đồng with a thousands format, so they can be
+4. Nợ thuế - tranh chấp · 5. Tài chính (BCTC, chỉ số, cảnh báo, thu nhập ghi nhận) ·
+Mô hình HĐKD [BRD 27/10] · Kiểm tra (all findings) · Hồ sơ (files, how each was read, its
+document-matrix code, agents and validation rules). Amounts are numbers in đồng with a thousands format, so they can be
 summed and filtered.
 """
 
@@ -137,10 +138,27 @@ def write_excel(result: dict[str, Any], path: str | Path) -> Path:
         rows5 += [["Cảnh báo", w] for w in fin.get("warnings") or []]
         income = result.get("income_estimate") or {}
         if income:
-            rows5 += [[], ["Thu nhập DN ghi nhận (đồng)", income.get("value")],
+            proj = income.get("projection") or {}
+            rows5 += [[], ["Cách tính", "Dự phóng theo PAKD" if proj else "Số liệu lịch sử"],
+                      ["LNST hợp lý (đồng)", income.get("reasonable_lnst")]]
+            if proj:   # [BRD 27/10]
+                rows5 += [["Ngành TCB", proj.get("industry")],
+                          ["DT dự phóng khả thi (đồng)", proj.get("feasible_revenue")],
+                          ["ROS dự phóng khả thi", proj.get("feasible_ros")]]
+            rows5 += [["Thu nhập DN ghi nhận (đồng)", income.get("value")],
                       ["Thành phần còn thiếu", "; ".join(income.get("missing") or []) or "—"]]
+            rows5 += [["Cảnh báo", w] for w in income.get("warnings") or []]
         _sheet(wb, "5. Tài chính", ["Chỉ tiêu (đồng)"] + list(periods), rows5,
                [32] + [20] * max(1, len(periods)), money_cols=set(range(2, len(periods) + 2)))
+
+    model = result.get("business_model") or {}
+    if model:   # [BRD 27/10] mục 2 — partners of the diagram, largest first
+        rows_m = [["Ngành TCB", (model.get("industry") or {}).get("name") or "Chưa xác định", None, None, None, ""]]
+        for side, label in (("suppliers", "Đầu vào (nhà cung cấp)"), ("customers", "Đầu ra (khách mua)")):
+            rows_m += [[label, p["name"], p["product"], p["value"], p["share_pct"], p.get("source")]
+                       for p in model.get(side) or []]
+        _sheet(wb, "Mô hình HĐKD", ["Bên", "Đối tác", "Mặt hàng", "Giá trị (đồng)", "Tỷ trọng (%)", "Nguồn"],
+               rows_m, [24, 40, 26, 18, 12, 40], money_cols={4})
 
     findings = [[n, SEVERITY_LABELS[f["severity"]], f["message"], "\n".join(f.get("evidence") or [])]
                 for n, item in items.items() for f in item["findings"]]
@@ -149,11 +167,14 @@ def write_excel(result: dict[str, Any], path: str | Path) -> Path:
     for row in ws.iter_rows(min_row=2):
         row[1].fill = SEVERITY_FILL[severity_by_label[row[1].value]]
 
-    _sheet(wb, "Hồ sơ", ["File", "Thư mục", "Loại", "Nguồn", "Đọc bằng", "Số ký tự", "Mục đã trích xuất", "Lỗi"],
-           [[d["filename"], d.get("box") or "—", d["label"], SOURCE_LABELS.get(d["source"], d["source"]),
+    _sheet(wb, "Hồ sơ", ["File", "Thư mục", "Mã (ma trận)", "Loại", "Agent (ma trận)", "Nguồn", "Đọc bằng",
+                         "Số ký tự", "Mục đã trích xuất", "Kiểm tra theo ma trận (người dùng xác nhận)", "Lỗi"],
+           [[d["filename"], d.get("box") or "—", d.get("matrix_code") or "", d["label"],
+             ", ".join(d.get("matrix_agents") or []), SOURCE_LABELS.get(d["source"], d["source"]),
              d.get("read_method", ""), d.get("chars", 0), ", ".join(d["passes_done"]),
+             "\n".join(d.get("matrix_validation") or []),
              "; ".join(f"{k}: {v}" for k, v in d["errors"].items())] for d in result["documents"]],
-           [34, 24, 40, 20, 16, 10, 34, 50])
+           [34, 24, 10, 40, 22, 20, 16, 10, 34, 50, 50])
 
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

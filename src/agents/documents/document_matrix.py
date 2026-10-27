@@ -27,6 +27,20 @@ PRIMARY_AGENT_PRECEDENCE = (
 # bank's own system), so every type declares one.
 SOURCES = ("customer", "field", "external", "internal")
 
+# [BRD 27/10] Agents of the document matrix. CIA (Corp Income Agent) is the one
+# this repo runs, as CORP_INCOME_AGENT; the others name the report section that
+# uses a document (LA mục 1, BA mục 2, FS mục 3, CR/RA mục 4, CP mục 5).
+MATRIX_AGENTS = {
+    "CIA": "Corp Income Agent",
+    "LA": "Legal Assessment",
+    "BA": "Business Activity",
+    "FS": "Financial Statement",
+    "RA": "Risk Assessment",
+    "CP": "Credit Proposal",
+    "CR": "Credit Relationship",
+}
+CIA_AGENT = "CORP_INCOME_AGENT"
+
 _LEVEL_RANK = {"O": 1, "R": 2}
 
 class DocumentMatrixError(RuntimeError):
@@ -50,6 +64,10 @@ class DocumentType:
     primary_agent: str
     requirement: dict[str, str] = field(default_factory=dict)
     source: str = "customer"
+    # [BRD 27/10] number on the document matrix, its agents, its validation rules.
+    code: str = ""
+    matrix_agents: tuple[str, ...] = ()
+    validation: tuple[str, ...] = ()
     # BRD Corp Income items 1-4: which extraction passes run on this type.
     legal_basic_extraction: bool = False
     shareholders_extraction: bool = False
@@ -61,6 +79,8 @@ class DocumentType:
     vat_extraction: bool = False
     cic_extraction: bool = False
     plan_extraction: bool = False
+    # [BRD 27/10] mục 2 — ngành TCB, đối tác đầu vào / đầu ra (mô hình HĐKD).
+    business_model_extraction: bool = False
 
     @property
     def routing_signature(self) -> frozenset[str]:
@@ -314,6 +334,13 @@ def _load(path: Path) -> DocumentMatrix:
             requirement = entry.get("requirement") or {}
             if not isinstance(requirement, dict):
                 _fail(f"{where}: 'requirement' must be a mapping")
+            # [BRD 27/10] matrix agents; CIA reads the type exactly when it is listed.
+            matrix_agents = tuple(str(a) for a in entry.get("matrix_agents") or [])
+            unknown = [a for a in matrix_agents if a not in MATRIX_AGENTS]
+            if unknown:
+                _fail(f"{where}: unknown matrix_agents {unknown}; expected {list(MATRIX_AGENTS)}")
+            if ("CIA" in matrix_agents) != (CIA_AGENT in agents):
+                _fail(f"{where}: 'agents' must list {CIA_AGENT} exactly when matrix_agents has CIA")
 
             types[type_id] = DocumentType(
                 id=type_id,
@@ -336,6 +363,9 @@ def _load(path: Path) -> DocumentMatrix:
                     for key, value in requirement.items()
                 },
                 source=source,
+                code=str(entry.get("code") or ""),
+                matrix_agents=matrix_agents,
+                validation=tuple(str(v) for v in entry.get("validation") or []),
                 legal_basic_extraction=bool(entry.get("legal_basic_extraction", False)),
                 shareholders_extraction=bool(entry.get("shareholders_extraction", False)),
                 legal_rep_extraction=bool(entry.get("legal_rep_extraction", False)),
@@ -344,6 +374,7 @@ def _load(path: Path) -> DocumentMatrix:
                 vat_extraction=bool(entry.get("vat_extraction", False)),
                 cic_extraction=bool(entry.get("cic_extraction", False)),
                 plan_extraction=bool(entry.get("plan_extraction", False)),
+                business_model_extraction=bool(entry.get("business_model_extraction", False)),
             )
 
     if not types:
@@ -489,6 +520,12 @@ def is_cic_type(type_id: str) -> bool:
 def is_plan_type(type_id: str) -> bool:
     doc = get_type(type_id)
     return bool(doc and doc.plan_extraction)
+
+
+# [BRD 27/10]
+def is_business_model_type(type_id: str) -> bool:
+    doc = get_type(type_id)
+    return bool(doc and doc.business_model_extraction)
 
 
 def describe_types_for_prompt(group_id: str = "") -> str:

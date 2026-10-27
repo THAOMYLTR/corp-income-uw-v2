@@ -174,6 +174,7 @@ class Config:
     vat_extraction_llm: Any = None
     cic_extraction_llm: Any = None
     plan_extraction_llm: Any = None
+    business_model_extraction_llm: Any = None      # [BRD 27/10]
     max_files: int = 50
     max_chars_per_document: int = 120_000
     max_extraction_calls: int = 60

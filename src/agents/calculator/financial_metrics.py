@@ -11,7 +11,8 @@ Sections (search for the tag to find the code):
   [BT]  Cảnh báo dấu hiệu bất thường của BCTC (→ Bad finance when "trọng yếu").
   [TT]  Nhận xét trạng thái tài chính: phân khúc, suy giảm, hiệu quả, thanh khoản.
   [NF]  Phân nhóm tài chính: Bad / Normal / Good finance.
-  [TN]  Giá trị nguồn thu doanh nghiệp (mục 6).
+  [TN]  Giá trị nguồn thu doanh nghiệp (mục 5 "Kết luận nguồn thu").
+  [DP]  [BRD 27/10] Dự phóng theo phương án kinh doanh (ngành TCB, Good corp × 1,5).
 
 Every threshold is a named constant just below, so a BRD change is a one-line edit.
 """
@@ -49,7 +50,15 @@ LABELS = {
 }
 
 # ---- thresholds (BRD 16/10) ------------------------------------------------- #
-REVENUE_DROP_ALERT = -0.20          # [TT][NF] biến động DT năm N < -20%
+REVENUE_DROP_ALERT = -0.20          # [TT] biến động DT năm N < -20% → HĐKD suy giảm
+# [BRD 27/10][NF] Good finance: "Biến động doanh thu năm N > 0%" (Appendix). The detail sheet
+# still writes "> -20%"; the Appendix is the output template, so 0% — change here if needed.
+GOOD_FINANCE_MIN_GROWTH = 0.0
+# [BRD 27/10][DP] Good corp: doanh thu dự phóng khả thi dùng tăng trưởng ngành × 1,5
+# (Appendix; the detail sheet writes × 2).
+GOOD_CORP_GROWTH_FACTOR = 1.5
+# [BRD 27/10][DP] doanh thu kế hoạch > 20% doanh thu năm gần nhất mà không ghi cơ sở → cảnh báo.
+PLAN_GROWTH_NEEDS_BASIS = 0.20
 # [Sửa 16/10] Biến động DT ngoài khoảng này → nghi đọc sai số / sai cột, cảnh báo kiểm tra lại.
 REVENUE_GROWTH_CHECK = (-0.80, 2.00)
 BALANCE_TOLERANCE = 0.005           # [BT] 0,5% — rounding in printed statements
@@ -220,7 +229,7 @@ def vat_summary(records: list[dict[str, Any]], as_of: date, years: dict[str, Any
         entry["months"].update(info["months"])
         entry["files"].add(info["file"])
     if not by_year:
-        return {"by_year": {}, "current_year": None, "text": "", "coverage": ""}
+        return {"by_year": {}, "current_year": None, "text": "", "coverage": "", "monthly_growth": None}
     latest_bctc = max((int(y) for y in years), default=0)
     current = as_of.year if as_of.year in by_year else max(by_year)
     if current <= latest_bctc:
@@ -228,6 +237,7 @@ def vat_summary(records: list[dict[str, Any]], as_of: date, years: dict[str, Any
     coverage = "; ".join(
         f"{min(e['months']):02d}/{y}–{max(e['months']):02d}/{y}" for y, e in sorted(by_year.items()))
     text = ""
+    monthly_growth = None
     if current:
         cur = by_year[current]
         prev_revenue = _num((years.get(str(current - 1)) or {}).get("net_revenue"))
@@ -235,8 +245,11 @@ def vat_summary(records: list[dict[str, Any]], as_of: date, years: dict[str, Any
         text = (f"Doanh thu theo tờ khai VAT đến tháng {max(cur['months']):02d}/{current} là "
                 f"{fmt(cur['revenue'])} triệu đồng"
                 + (f", bằng {pct(share)} doanh thu năm {current - 1}" if share is not None else ""))
+        # [BRD 27/10] biến động DT năm N = DT BQ tháng năm N (tờ khai) / DT BQ tháng năm N-1 − 1
+        if prev_revenue:
+            monthly_growth = (cur["revenue"] / len(cur["months"])) / (prev_revenue / 12) - 1
     return {"by_year": {y: {"revenue": e["revenue"], "months": sorted(e["months"])} for y, e in by_year.items()},
-            "current_year": current, "text": text, "coverage": coverage}
+            "current_year": current, "text": text, "coverage": coverage, "monthly_growth": monthly_growth}
 
 
 def _excluded_auditors() -> list[str]:
@@ -338,6 +351,12 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
         if r["revenue_growth"] is not None:
             status.append(f"Biến động doanh thu năm {latest}: {pct(r['revenue_growth'])}"
                           + (" — HĐKD của KH suy giảm" if r["revenue_growth"] < REVENUE_DROP_ALERT else ""))
+        if vat.get("monthly_growth") is not None:
+            # [BRD 27/10] DT BQ tháng năm N (tờ khai VAT) so với năm N-1
+            status.append(f"Doanh thu BQ tháng năm {vat['current_year']} (tờ khai VAT) so với năm {latest}: "
+                          f"{pct(vat['monthly_growth'])}"
+                          + (" — doanh thu suy giảm, đề nghị đánh giá lại nguyên nhân"
+                             if vat["monthly_growth"] < REVENUE_DROP_ALERT else ""))
         lntt = fig.get("profit_before_tax")
         non_core = sum(v for v in (fig.get("other_income"), fig.get("financial_income")) if v is not None)
         if lntt and lntt > 0 and non_core and non_core / lntt > NON_CORE_PROFIT_ALERT:
@@ -352,18 +371,21 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
             status.append(f"Hệ số thanh toán hiện hành năm {latest} = {r['current_ratio']:.2f}".replace(".", ",")
                           + " < 1 — tài sản ngắn hạn không đủ chi trả nợ ngắn hạn, bố trí nguồn vốn chưa cân đối")
 
-    # [NF] Phân nhóm tài chính
+    # [NF] Phân nhóm tài chính. "Năm N" = cột năm gần nhất của bảng tài chính (năm BCTC gần
+    # nhất): biến động DT, ROS và HSTT của năm đó.
     r = ratios.get(latest) or {}
+    growth_n = r.get("revenue_growth")
     if material:
         group, reason = "Bad finance", "BCTC mâu thuẫn trọng yếu theo dấu hiệu bất thường"
-    elif (r.get("revenue_growth") is not None and r["revenue_growth"] > REVENUE_DROP_ALERT
+    elif (growth_n is not None and growth_n > GOOD_FINANCE_MIN_GROWTH
           and r.get("ros") is not None and r["ros"] > 0
           and r.get("current_ratio") is not None and r["current_ratio"] >= 1):
-        group, reason = "Good finance", f"Năm {latest}: biến động DT > -20%, ROS > 0%, HSTT ≥ 1"
+        group, reason = "Good finance", (f"Năm {latest}: biến động DT {pct(growth_n)} > "
+                                         f"{pct(GOOD_FINANCE_MIN_GROWTH)}, ROS > 0%, HSTT ≥ 1")
     else:
         group, reason = "Normal finance", ("Không thuộc Bad/Good finance" if latest else "Chưa có BCTC để đánh giá")
 
-    return {**merged, "ratios": ratios, "vat": vat, "latest_year": latest,
+    return {**merged, "ratios": ratios, "vat": vat, "latest_year": latest, "growth_n": growth_n,
             "material_warnings": material, "other_warnings": other,
             "warnings": material + other,               # kept for older callers (step log, Excel)
             "status_remarks": status, "group": group, "group_reason": reason}
@@ -388,22 +410,31 @@ def interest_vs_cic(financials: dict[str, Any], avg_balance_12m: float | None) -
 # [TN] Giá trị nguồn thu doanh nghiệp (mục 6)
 # --------------------------------------------------------------------------- #
 def income_estimate(financials: dict[str, Any], ownership_pct: float | None,
-                    annual_lt_principal: float | None = None) -> dict[str, Any]:
-    """BRD 16/10 (TH không sử dụng phương án kinh doanh):
+                    annual_lt_principal: float | None = None,
+                    plan: dict[str, Any] | None = None,
+                    industry: dict[str, Any] | None = None,
+                    corp_group: str = "") -> dict[str, Any]:
+    """Giá trị nguồn thu doanh nghiệp để đánh giá năng lực trả nợ.
 
+    [TN] Không sử dụng phương án kinh doanh:
         LNST hợp lý          = LNST N-1 - DT tài chính N-1 - Thu nhập khác N-1
-        LNST trả nợ TDH      = Nghĩa vụ trả gốc TDH hằng năm - Khấu hao trong năm
-        Lợi tức tối đa KHCN  = (LNST hợp lý - LNST trả nợ TDH) x Tỷ lệ góp vốn
+    [DP] [BRD 27/10] Sử dụng phương án kinh doanh (có PAKD, có ngành TCB, không Bad corp):
+        DT dự phóng khả thi  = min[DT theo PAKD, DT năm N × (1 + tăng trưởng ngành × k)],
+                               k = 1,5 với Good corp, 1 với nhóm còn lại
+        ROS dự phóng khả thi = min{ROS theo PAKD, max[ROS lịch sử năm N, ROS ngành]}
+        LNST dự phóng        = ROS dự phóng khả thi × DT dự phóng khả thi
+    Then, in both cases:
+        LNST trả nợ TDH      = Nghĩa vụ trả gốc TDH hằng năm - Khấu hao trong năm (≥ 0)
+        Lợi tức tối đa KHCN  = (LNST hợp lý - LNST trả nợ TDH) × Tỷ lệ góp vốn
 
-    "LNST trả nợ TDH" is floored at 0: when khấu hao covers the principal, the
-    surplus is not added to the borrower's income (conservative reading).
+    "Năm N" = the latest full year with a BCTC in the dossier.
     """
 
     year = financials.get("latest_year")
     fig = financials["years"].get(year, {}) if year else {}
     lnst = fig.get("profit_after_tax")
     fin_income, other_income, dep = fig.get("financial_income"), fig.get("other_income"), fig.get("depreciation")
-    missing = []
+    missing, warnings = [], []
     if lnst is None:
         missing.append(f"LNST năm {year or 'N-1'}")
     if ownership_pct is None:
@@ -416,14 +447,49 @@ def income_estimate(financials: dict[str, Any], ownership_pct: float | None,
         missing.append("khấu hao (tính = 0)")
     if annual_lt_principal is None:
         missing.append("nghĩa vụ trả gốc TDH hằng năm của DN (tính = 0)")
-    reasonable = None if lnst is None else lnst - (fin_income or 0) - (other_income or 0)
+    historical = None if lnst is None else lnst - (fin_income or 0) - (other_income or 0)
+
+    # [DP] projection from the business plan
+    projection = None
+    revenue = fig.get("net_revenue")
+    ros_hist = (financials["ratios"].get(year) or {}).get("ros") if year else None
+    if plan and plan.get("plan_revenue"):
+        plan_rev, plan_lnst = plan.get("plan_revenue"), plan.get("plan_profit_after_tax")
+        plan_ros = plan_lnst / plan_rev if plan_lnst is not None and plan_rev else None
+        if revenue and plan_rev > revenue * (1 + PLAN_GROWTH_NEEDS_BASIS) and not (plan.get("basis") or "").strip():
+            warnings.append(f"Doanh thu kế hoạch {fmt(plan_rev)} cao hơn {pct(plan_rev / revenue - 1)} so với năm "
+                            f"{year} nhưng PAKD không ghi cơ sở tăng doanh thu — đề nghị bổ sung")
+        if corp_group == "Bad corp":
+            warnings.append("Bad corp — không thực hiện đánh giá dự phóng")
+        elif not industry or industry.get("growth") is None:
+            warnings.append("Chưa xác định ngành theo bảng ngành TCB (hoặc ngành chưa có tăng trưởng) — "
+                            "chưa dự phóng được, dùng LNST hợp lý theo số liệu lịch sử")
+        elif not revenue or plan_ros is None:
+            warnings.append("Thiếu doanh thu năm gần nhất hoặc LNST kế hoạch — chưa dự phóng được")
+        else:
+            k = GOOD_CORP_GROWTH_FACTOR if corp_group == "Good corp" else 1.0
+            cap = revenue * (1 + industry["growth"] * k)
+            feasible_rev = min(plan_rev, cap)
+            floor = max(x for x in (ros_hist, industry.get("ros")) if x is not None) \
+                if any(x is not None for x in (ros_hist, industry.get("ros"))) else None
+            feasible_ros = plan_ros if floor is None else min(plan_ros, floor)
+            projection = {
+                "plan_year": plan.get("plan_year"), "plan_revenue": plan_rev, "plan_ros": plan_ros,
+                "industry": industry.get("name"), "industry_growth": industry["growth"],
+                "industry_ros": industry.get("ros"), "growth_factor": k, "revenue_n": revenue,
+                "revenue_cap": cap, "feasible_revenue": feasible_rev, "ros_hist": ros_hist,
+                "feasible_ros": feasible_ros, "lnst": feasible_ros * feasible_rev,
+            }
+    reasonable = projection["lnst"] if projection else historical
     lt_use = max(0.0, (annual_lt_principal or 0) - (dep or 0))
     value = None
     if reasonable is not None and ownership_pct is not None:
         value = (reasonable - lt_use) * ownership_pct / 100
-    return {"year": year, "lnst": lnst, "reasonable_lnst": reasonable, "financial_income": fin_income,
-            "other_income": other_income, "depreciation": dep, "annual_lt_principal": annual_lt_principal,
-            "lnst_for_lt_debt": lt_use, "ownership_pct": ownership_pct, "value": value, "missing": missing}
+    return {"year": year, "lnst": lnst, "historical_lnst": historical, "reasonable_lnst": reasonable,
+            "method": "du_phong" if projection else "lich_su", "projection": projection,
+            "financial_income": fin_income, "other_income": other_income, "depreciation": dep,
+            "annual_lt_principal": annual_lt_principal, "lnst_for_lt_debt": lt_use,
+            "ownership_pct": ownership_pct, "value": value, "missing": missing, "warnings": warnings}
 
 
 def sources_text(financials: dict[str, Any]) -> str:

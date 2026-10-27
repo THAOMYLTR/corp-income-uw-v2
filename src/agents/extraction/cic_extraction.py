@@ -22,6 +22,7 @@ def normalize_amounts(result: dict[str, Any]) -> dict[str, Any]:
     multiplier = resolve_money_multiplier(result.get("source_unit"))
     for key, fields in (("lenders", _LENDER_FIELDS), ("collaterals", ("value",)),
                         ("special_mention_12m", ("amount",)), ("bad_debt_5y", ("amount",)),
+                        ("card_late_payment_3y", ("amount",)),  # [BRD 27/10]
                         ("monthly_balances_12m", ("balance",))):
         rows = [r for r in result.get(key) or [] if isinstance(r, dict)]
         for row in rows:

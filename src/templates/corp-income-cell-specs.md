@@ -8,18 +8,10 @@ Nội dung bên dưới là khung LLM PHẢI theo — thứ tự các phần, s�
 Ghi chú trong khối này không gửi cho LLM.
 -->
 
-## NhanXetPhapLyDN
-Viết đúng khung (mỗi phần một dòng, bỏ phần không có nội dung):
-**Kết luận:** <Phù hợp / Cần làm rõ / Rủi ro cao> — 1 câu tóm tắt tình trạng pháp lý của DN.
-**Căn cứ:** 2–3 gạch đầu dòng: MST, năm thành lập, NĐDPL, tình trạng — mỗi dòng ghi nguồn đã đối chiếu.
-**Cảnh báo:** mỗi cảnh báo pháp lý một gạch đầu dòng, giữ nguyên số liệu, ngày, tên.
-**Đề xuất:** việc cần làm tiếp (tra cứu masothue.com, bổ sung hồ sơ…), nếu có.
-**Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.phap_ly" — làm quyết định mạnh lên hay yếu đi, vì sao.
-
 ## NhanXet
-Viết đúng khung:
-**Kết luận:** 1 câu về pháp lý của KH vay đối với DN (sở hữu bao nhiêu %, có là NĐDPL không).
-**Căn cứ:** số năm DN hoạt động; % vốn góp KH vay nắm giữ; vai trò NĐDPL — mỗi ý một gạch đầu dòng, có nguồn.
+[BRD 27/10] Ô nhận xét DUY NHẤT của mục 1 (pháp lý DN và pháp lý KH vay). Viết đúng khung:
+**Kết luận:** <Phù hợp / Cần làm rõ / Rủi ro cao> — 1 câu: DN hoạt động bao lâu, KH vay sở hữu bao nhiêu %, có là NĐDPL không.
+**Căn cứ:** số năm DN hoạt động; % vốn góp KH vay nắm giữ; vai trò NĐDPL; MST / tình trạng hoạt động đã đối chiếu — mỗi ý một gạch đầu dòng, có nguồn.
 **Cảnh báo pháp lý cần đánh giá lại:** liệt kê nguyên văn các cảnh báo (tên/TSC/NĐDPL/năm thành lập không khớp, DN không hoạt động/tạm ngưng, tổng tỷ lệ sở hữu ≠ 100%, thay đổi thành viên/NĐDPL trong 12 tháng).
 **Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.phap_ly" — làm quyết định mạnh lên hay yếu đi, vì sao.
 
@@ -34,6 +26,7 @@ Viết đúng khung:
 **Kết luận:** <Phù hợp / Cần làm rõ / Rủi ro cao> — 1 câu: DN làm gì, ở đâu, đã xác minh qua tài liệu nào.
 **Đối chiếu:** 2–4 gạch đầu dòng, mỗi dòng: <nguồn A> vs <nguồn B> → khớp / không khớp (ngành nghề, sản phẩm, địa chỉ, đối tác).
 **Cảnh báo:** các cảnh báo của mục 2 trong guidance (thiếu loại hình/ngành nghề, ảnh thiếu biển hiệu, sản phẩm/địa chỉ không khớp…).
+**Cảnh báo bắt buộc kiểm tra:** báo cáo thực địa thiếu loại hình / ngành nghề; ảnh thực địa thiếu biển hiệu hoặc biển hiệu không có tên DN; không có người làm việc / số người / máy móc không phù hợp ngành nghề, loại hình; sản phẩm dịch vụ, địa chỉ không khớp giữa báo cáo thực địa và tài liệu đối chiếu.
 **Đề xuất:** tài liệu cần bổ sung (hợp đồng đầu ra/đầu vào, hóa đơn, sổ TK 131/331, hợp đồng thuê…).
 **Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.hoat_dong_kinh_doanh" — làm quyết định mạnh lên hay yếu đi, vì sao.
 
@@ -46,22 +39,10 @@ Giữ NGUYÊN mọi con số, tỷ lệ, năm trong bản nháp của hệ thố
 Dòng "Phân nhóm tài chính (POC)" giữ nguyên ở cuối nếu bản nháp có.
 **Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.tai_chinh" — làm quyết định mạnh lên hay yếu đi, vì sao.
 
-## NhanXetDuNo
-Giữ NGUYÊN mọi con số trong bản nháp. Viết đúng khung:
-**Kết luận:** 1 câu về lịch sử tín dụng (tốt / có nợ cần chú ý / có nợ xấu / chưa có CIC).
-**Căn cứ:** ngày bản tin CIC; tổng dư nợ, tại TCB / TCTD khác; dư nợ BQ 12 tháng / doanh thu BQ tháng so với ngưỡng.
-**Cảnh báo:** bản tin quá hạn, thiếu R20, chi phí lãi vay không tương quan dư nợ…
-Dòng "Phân nhóm bureau (POC)" giữ nguyên ở cuối nếu bản nháp có.
-**Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.tin_dung" — làm quyết định mạnh lên hay yếu đi, vì sao.
-
-## NhanXetPAKD
-Viết đúng khung:
-**Kết luận:** 1 câu: phương án có / không có cơ sở so với lịch sử và thực địa.
-**So sánh:** doanh thu, LNST kế hoạch vs năm gần nhất (dùng số trong bảng, nêu tăng trưởng).
-**Cảnh báo:** tăng mạnh không có cơ sở; mâu thuẫn với thực địa hoặc kết quả kinh doanh lịch sử.
-**Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.phuong_an_kinh_doanh" — làm quyết định mạnh lên hay yếu đi, vì sao.
-
 ## KetLuanNguonThuDoanhNghiep
+[BRD 27/10] Mục 5 không còn ô nhận xét riêng cho phương án kinh doanh: nếu có PAKD, nêu trong
+"Lý do chính" / "Rủi ro còn lại" việc doanh thu kế hoạch có cơ sở hay không (so với số lịch sử
+và báo cáo thực địa) — KHÔNG tự đánh giá khả thi ngoài quy tắc (giá trị dự phóng hệ thống in bên dưới).
 Viết đúng khung, theo "danh_gia_tin_dung" (quyết định đã chốt, KHÔNG đổi):
 **Đề xuất: <Sử dụng / Sử dụng có điều kiện / Không sử dụng> nguồn thu doanh nghiệp để đánh giá năng lực trả nợ lần này.**
 **Lý do chính:** 2–3 gạch đầu dòng mạnh nhất (rủi ro hoặc điểm mạnh), mỗi dòng có số liệu + nguồn.

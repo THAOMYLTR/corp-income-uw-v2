@@ -200,7 +200,7 @@ x Tỷ lệ góp vốn
 **2. Hoạt động kinh doanh** [LLM viết — áp dụng nghiêm]
 - Sản phẩm / dịch vụ, viết đúng 3 dòng:
   - "Loại hình: sản xuất / thương mại / dịch vụ" — ưu tiên báo cáo khảo sát thực địa (ĐVKD phỏng vấn KH). Đa loại hình: nêu loại hình có tỷ trọng lớn nhất và giá trị. Không có thông tin: ghi "Đề nghị người dùng đánh giá bổ sung".
-  - "Tên ngành: …" theo bảng ngành TCB ("bang_nganh_tcb"); chưa có bảng thì ghi tên ngành như hồ sơ và ghi chú "chưa đối chiếu bảng ngành TCB".
+  - "Tên ngành: …" theo bảng ngành TCB ("nganh_tcb"); chưa xác định thì ghi tên ngành như hồ sơ và ghi chú "chưa đối chiếu bảng ngành TCB".
   - "Diễn giải chi tiết: …" nếu báo cáo thực địa có thông tin.
 - Đối chiếu, mỗi chỗ không tương đồng phải cảnh báo "yêu cầu người dùng đánh giá lại":
   - Hình ảnh thực địa (chữ đọc được từ ảnh: biển hiệu, nhãn hàng) với sản phẩm / dịch vụ trong báo cáo thực địa. Ảnh chỉ có văn phòng / địa điểm không có sản phẩm thì bỏ qua đối chiếu này.
@@ -284,3 +284,40 @@ Mục tiêu: người phê duyệt đọc 30 giây là biết NÊN hay KHÔNG N�
   - DTT năm N-1 đạt X tr.đ (+Y% so với năm N-2 — <tên file BCTC>), nhưng doanh thu theo tờ khai VAT các tháng năm N mới bằng Z% năm N-1 (<tên file VAT>).
   - Hệ số thanh toán hiện hành < 1 — tài sản ngắn hạn không đủ trả nợ ngắn hạn.
   - **Ảnh hưởng tới quyết định:** làm yếu khả năng chia lợi nhuận cho KH cá nhân → chỉ nên sử dụng có điều kiện, bổ sung sao kê tài khoản 12 tháng để xác nhận dòng tiền."
+
+---
+
+##### BỔ SUNG THEO BRD 27/10/2026
+
+> Bố cục báo cáo theo sheet "Appendix - Corp income": 1. Pháp lý (a, b, một ô nhận xét) ·
+> 2. Hoạt động kinh doanh (sản phẩm/dịch vụ, địa chỉ, mô hình HĐKD, nhận xét) · 3. Tài chính ·
+> 4. Dư nợ tại TCTD (không có ô nhận xét riêng) · 5. Kết luận nguồn thu doanh nghiệp.
+> Các mục ghi "[code]" đã có sẵn kết quả — LLM không tính lại.
+
+**1. Pháp lý** — một ô "Nhận xét về pháp lý Khách hàng": số năm hoạt động; % vốn góp KH vay nắm giữ, có là NĐDPL không; cảnh báo (tên, TSC, NĐDPL, năm thành lập không phù hợp; DN không hoạt động / tạm ngưng; tổng tỷ lệ sở hữu ≠ 100%; KH mới góp vốn / NĐDPL thay đổi trong 12 tháng).
+
+**2. Mô hình HĐKD** [code vẽ sơ đồ]
+- Thứ tự nguồn: báo cáo khảo sát thực địa → hợp đồng / hóa đơn đầu vào, đầu ra → sổ chi tiết TK 131 / 331.
+- Sơ đồ 5 tầng: sản phẩm đầu vào → (tối đa 5) đối tác đầu vào → doanh nghiệp → (tối đa 5) đối tác đầu ra → sản phẩm đầu ra.
+- Nhà cung cấp luôn bên TRÁI (mũi tên đi vào DN), khách mua luôn bên PHẢI (mũi tên đi ra). Ít hơn 5 đối tác thì chỉ ghi số có thật; không bịa tên, không gộp "khác"; không có tỷ trọng thì bỏ tỷ trọng.
+- LLM chỉ nhận xét trong "NhanXetHDKD" (đối tác khớp báo cáo thực địa không; đối tác chính cùng NĐDPL / cùng địa chỉ TSC với DN → cảnh báo mua đi bán lại, đề nghị người dùng đánh giá).
+
+**3. Tài chính** [code]
+- Bảng tóm tắt: cột năm hiển thị tên năm (vd 2024, 2025); "Cập nhật các tháng năm N" chỉ ở dòng doanh thu: "Doanh thu theo tờ khai VAT đến tháng … là … triệu đồng, …% doanh thu năm N-1".
+- Biến động doanh thu mỗi cột = doanh thu năm đó / doanh thu năm trước − 1 (cột đầu chỉ khi có dữ liệu).
+- Doanh thu BQ tháng năm N (tờ khai VAT) / doanh thu BQ tháng năm N-1 − 1 < −20% → cảnh báo doanh thu suy giảm.
+- Phân nhóm tài chính (POC): Good finance — biến động DT năm N > 0%, ROS năm N > 0%, HSTT ≥ 1.
+
+**4. Dư nợ tại TCTD** [code] — bảng theo từng TCTD: dư nợ ngắn hạn, TDH, khác (gồm cam kết ngoại bảng), tổng; tên, giá trị, chủ sở hữu TSBĐ (R20). Good bureau thêm điều kiện: không chậm thanh toán thẻ trong 03 năm.
+
+**5. Kết luận nguồn thu doanh nghiệp** [code tính; LLM viết nhận xét]
+- Bảng phương án kinh doanh chỉ hiện khi KH có PAKD; cột "Cơ sở của Khách hàng" ẩn khi PAKD không ghi cơ sở.
+- Bad corp → không sử dụng nguồn thu doanh nghiệp, không dự phóng. Nhóm còn lại → khuyến nghị sử dụng.
+- Không dùng PAKD: LNST hợp lý = LNST năm N-1 − doanh thu tài chính năm N-1 − thu nhập khác năm N-1.
+- Dùng PAKD (có PAKD và xác định được ngành TCB):
+  - Doanh thu dự phóng khả thi = min[DT theo PAKD, DT năm N × (1 + tăng trưởng ngành)]; Good corp: tăng trưởng ngành × 1,5.
+  - Tỷ suất lợi nhuận dự phóng khả thi = min{ROS theo PAKD, max[ROS lịch sử năm N, ROS ngành]}.
+  - Lợi nhuận dự phóng khả thi = tỷ suất × doanh thu dự phóng khả thi.
+  - DT kế hoạch > 20% DT năm gần nhất mà PAKD không ghi cơ sở → cảnh báo bổ sung.
+- LNST sử dụng để trả nghĩa vụ TDH = nghĩa vụ trả gốc TDH hằng năm − khấu hao trong năm.
+- Lợi tức / cổ tức tối đa chia được cho KHCN = (LNST hợp lý − LNST trả nghĩa vụ TDH) × tỷ lệ góp vốn.

@@ -1,4 +1,4 @@
-"""The corp-income agent: "Phụ lục 01 - Thẩm định nguồn thu doanh nghiệp".
+"""The corp-income agent (CIA): "Thẩm định nguồn thu doanh nghiệp" (Appendix - Corp income).
 
 Same place and shape as the SME repo's specialists (``SPECIALIST_BY_AGENT``).
 Two layers, so a figure in the report can only come from a document:
@@ -21,6 +21,7 @@ from typing import Any
 from src.agents.calculator.legal_checks import parse_date, run_all_checks
 from src.agents.calculator import financial_metrics
 from src.agents.extraction import (
+    business_model_extraction,
     cic_extraction,
     financial_extraction,
     plan_extraction,
@@ -34,14 +35,15 @@ from src.agents.report_writer import NO_INFO, assess_credit, keeps_every_number,
 from src.types import ClassifiedDocument
 from src.agents.calculator import cic_metrics
 from src.agents.calculator.borrowers import detect_borrowers
-from src.utils.paths import PROJECT_ROOT
+from src.agents.calculator import business_model
+from src.agents.documents.document_matrix import get_type
 from src.utils.report.appendix_context import (
-    apply_output_conditions,
     borrower_ownership,
     build_appendix_context,
     business_type,
     corp_group,
     fill_missing_financial_names,
+    pick_plan,
 )
 from src.utils.report.report_template import (
     HTML_COMMENT,
@@ -62,21 +64,24 @@ PASSES: dict[str, tuple[str, Any]] = {
     "vat": ("vat_extraction", vat_extraction.normalize_amounts),
     "cic": ("cic_extraction", cic_extraction.normalize_amounts),
     "plan": ("plan_extraction", plan_extraction.normalize_amounts),
+    # [BRD 27/10] mục 2 — ngành TCB, đối tác đầu vào / đầu ra
+    "business_model": ("business_model_extraction", business_model_extraction.normalize_amounts),
 }
 
 # Documents whose text the report writer reads first (business activity, CIC,
 # business plan); then everything else. Characters per document.
 # [BRD 16/10] + du_lieu_noi_bo (dữ liệu thẩm định KHDN nội bộ TCB, ngành nghề) and GCN
 # (address of the head office) — mục 2 compares them with the field report.
-EXCERPT_FIRST = ("bao_cao_thuc_dia", "du_lieu_noi_bo", "hinh_anh_thuc_dia", "chung_tu_kinh_doanh",
-                 "de_nghi_cap_tin_dung", "gcn_dkdn", "bao_cao_cic", "to_khai_vat", "")
-# [BRD 16/10] "Tên ngành: theo bảng ngành tại TCB (file đính kèm)". Optional: put the
-# TCB industry list here (Markdown/CSV text); the writer then names the industry from it.
-INDUSTRY_TABLE_FILE = PROJECT_ROOT / "src" / "templates" / "bang-nganh-tcb.md"
+# [BRD 27/10] ids of the new document matrix (contracts, permits, premises, statements…).
+EXCERPT_FIRST = ("bao_cao_thuc_dia", "bao_cao_thuc_dia_phap_ly", "du_lieu_noi_bo", "hinh_anh_thuc_dia",
+                 "hop_dong_dau_vao_dau_ra", "quyen_su_dung_nha_xuong", "giay_phep_nganh_nghe",
+                 "so_chi_tiet_cong_no", "sao_ke_tai_khoan", "phan_mem_ban_hang", "tien_do_hop_dong",
+                 "blacklist_fraud", "de_nghi_cap_tin_dung", "gcn_dkdn", "bao_cao_cic", "to_khai_vat", "")
 # [BRD 16/10] Comments code writes as a fact list; the LLM rewrites them into the frame of
 # corp-income-cell-specs.md. A rewrite that drops any number of the draft is rejected and
 # the code draft is kept. CORP_INCOME_POLISH_COMMENTS=0 keeps the code drafts as they are.
-POLISH_CELLS = ("NhanXetPhapLyDN", "NhanXet", "NhanXetTaiChinh", "NhanXetDuNo")
+# [BRD 27/10] the template has one legal comment and no CIC comment any more.
+POLISH_CELLS = ("NhanXet", "NhanXetTaiChinh")
 POLISH = os.getenv("CORP_INCOME_POLISH_COMMENTS", "1") != "0"
 EXCERPT_CHARS = {"first": 6_000, "other": 2_500}
 EXCERPT_TOTAL = 80_000
@@ -195,8 +200,11 @@ class CorpIncomeAnalysis:
             revenue_prev_year=(financials["years"].get(latest) or {}).get("net_revenue") if latest else None,
             business_type=btype)
         corp = corp_group(items, financials, cic, as_of)
+        # [BRD 27/10] with a business plan and a TCB industry, the income is the projection.
+        nganh = business_model.industry(records)
         income = financial_metrics.income_estimate(
-            financials, borrower_ownership(items, borrower_names), reference_data.get("annual_lt_principal"))
+            financials, borrower_ownership(items, borrower_names), reference_data.get("annual_lt_principal"),
+            plan=pick_plan(records), industry=nganh, corp_group=corp["group"])
 
         template_text, template_source = load_template(template_path)
         template_body = HTML_COMMENT.sub("", template_text)
@@ -212,6 +220,10 @@ class CorpIncomeAnalysis:
                 "label": doc.source_description or doc.document_type or "Chưa phân loại",
                 "source": doc.source,
                 "box": doc.declared_group,
+                # [BRD 27/10] document-matrix number and agents of the type
+                "matrix_code": getattr(get_type(doc.document_type), "code", "") if doc.document_type else "",
+                "matrix_agents": list(getattr(get_type(doc.document_type), "matrix_agents", ()) or ()),
+                "matrix_validation": list(getattr(get_type(doc.document_type), "validation", ()) or ()),
                 "read_method": doc.read_method,
                 "chars": len(doc.content or ""),
                 "passes_done": [
@@ -266,8 +278,10 @@ class CorpIncomeAnalysis:
             },
             "dia_chi_tsc_tren_dkkd": next((e["value"] for e in items[1]["summary"].values()
                                            if e.get("field") == "head_office_address"), None),
-            "bang_nganh_tcb": (INDUSTRY_TABLE_FILE.read_text(encoding="utf-8")
-                               if INDUSTRY_TABLE_FILE.is_file() else "Chưa có bảng ngành TCB trong repo"),
+            # [BRD 27/10] industry chosen in code from the TCB table, and the partners of the diagram
+            "nganh_tcb": nganh or "Chưa xác định ngành theo bảng ngành TCB",
+            "mo_hinh_hdkd": {"dau_vao": business_model.partners(records, "suppliers"),
+                             "dau_ra": business_model.partners(records, "customers")},
             "ho_so": [{"file": d["filename"], "loai": d["label"], "nguon": d["source"],
                        "doc_bang": d["read_method"]} for d in documents_view],
             "trich_doan_ho_so": _excerpts(documents),
@@ -296,8 +310,7 @@ class CorpIncomeAnalysis:
             "unknown_placeholders": [],
         })
 
-        # [BRD 16/10] "hiển thị khi …" rules (empty partner rows, no business plan).
-        markdown = apply_output_conditions(render_markdown(base, template_text, ctx), ctx)
+        markdown = render_markdown(base, template_text, ctx)
         return {
             "response": markdown,
             "meta": meta,
@@ -308,6 +321,10 @@ class CorpIncomeAnalysis:
                 "rows": {k: {f: (sorted(x) if isinstance(x, set) else x) for f, x in row.items()}
                          for k, row in cic.get("rows", {}).items()}},
             "corp_group": corp,
+            # [BRD 27/10] mục 2 — ngành TCB and the ranked partners of the diagram
+            "business_model": {"industry": nganh,
+                               "suppliers": business_model.partners(records, "suppliers"),
+                               "customers": business_model.partners(records, "customers")},
             "credit_assessment": assessment,
             "records": records,
             "documents": documents_view,

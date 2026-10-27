@@ -7,6 +7,7 @@ Everything here is arithmetic and date checks:
         thời điểm phân tích; cũ hơn → cảnh báo lấy lại.
   [DN]  Số dư cấp tín dụng: cộng các dòng S10A theo từng TCTD, tách TCB / TCTD khác.
         TSBĐ: tên, giá trị, chủ sở hữu từ R20.
+        [BRD 27/10] ``lenders``: one row per TCTD (the template's table), TSBĐ by TCTD.
   [CL]  Nợ cần chú ý 12 tháng (phần 2.9), nợ xấu 5 năm (phần 2.7).
   [NB]  Phân nhóm bureau: Bad / Normal / Good bureau.
 """
@@ -46,7 +47,7 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
     cic = [r for r in records if r.get("pass") == "cic" and isinstance(r.get("data"), dict)]
     if not cic:
         return {"available": False, "group": "Chưa có CIC", "group_reason": "Hồ sơ chưa có bản tin CIC S10A/R20",
-                "warnings": [], "rows": {}, "query_dates": "", "special_mention": [], "bad_debt": [],
+                "warnings": [], "rows": {}, "lenders": [], "card_late": [], "query_dates": "", "special_mention": [], "bad_debt": [],
                 "avg_balance_12m": None}
 
     warnings: list[str] = []
@@ -95,10 +96,35 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
         bucket["total"] = sum(bucket[f] for f in LENDER_FIELDS)
     rows["Total"] = total
 
+    # [BRD 27/10] one row per TCTD: dư nợ NH, TDH, khác (+ cam kết ngoại bảng), tổng; TSBĐ of that TCTD.
+    by_lender: dict[str, dict[str, Any]] = {}
+
+    def lender_row(name: Any) -> dict[str, Any]:
+        label = str(name or "TCTD không rõ tên").strip()
+        return by_lender.setdefault(normalize_text(label), {
+            "name": label, "short_term": 0.0, "long_term": 0.0, "other": 0.0, "total": 0.0,
+            "collaterals": [], "collateral_value": 0.0, "owners": []})
+
+    for lender in (latest["data"].get("lenders") if latest else []) or []:
+        row = lender_row(lender.get("name"))
+        row["short_term"] += _num(lender.get("short_term")) or 0.0
+        row["long_term"] += _num(lender.get("long_term")) or 0.0
+        row["other"] += (_num(lender.get("other")) or 0.0) + (_num(lender.get("off_balance")) or 0.0)
+        row["total"] = row["short_term"] + row["long_term"] + row["other"]
+    for record in r20:
+        for col in record["data"].get("collaterals") or []:
+            row = lender_row(col.get("lender"))
+            if col.get("name"):
+                row["collaterals"].append(str(col["name"]))
+            row["collateral_value"] += _num(col.get("value")) or 0.0
+            if col.get("owner") and str(col["owner"]) not in row["owners"]:
+                row["owners"].append(str(col["owner"]))
+
     # [CL] credit quality lists
     data = latest["data"] if latest else {}
     special = [s for s in data.get("special_mention_12m") or [] if isinstance(s, dict)]
     bad = [b for b in data.get("bad_debt_5y") or [] if isinstance(b, dict)]
+    card_late = [c for c in data.get("card_late_payment_3y") or [] if isinstance(c, dict)]  # [BRD 27/10]
     balances = [_num(m.get("balance")) for m in data.get("monthly_balances_12m") or [] if isinstance(m, dict)]
     balances = [b for b in balances if b is not None]
     avg_balance = sum(balances) / len(balances) if balances else None
@@ -120,9 +146,10 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
                   + "; ".join(x for x in (f"{len(bad_recent)} khoản nợ xấu trong 24 tháng" if bad_recent else "",
                                           f"{len(special_recent)} khoản nợ cần chú ý trong 12 tháng"
                                           if special_recent else "") if x))
-    elif not bad and leverage is not None and leverage <= limit:
+    elif not bad and not card_late and leverage is not None and leverage <= limit:
         group = "Good bureau"
-        reason = (f"Không nợ xấu 5 năm; dư nợ BQ 12 tháng / DT BQ tháng = {leverage:.1f} ≤ {limit}"
+        reason = (f"Không chậm thanh toán thẻ 3 năm, không nợ xấu 5 năm; dư nợ BQ 12 tháng / DT BQ tháng = "
+                  f"{leverage:.1f} ≤ {limit}"
                   + ("" if business_type else " (loại hình chưa xác định, dùng ngưỡng 6)")).replace(".", ",")
     else:
         group = "Normal bureau"
@@ -130,7 +157,8 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
             f" (dư nợ BQ 12 tháng / DT BQ tháng = {leverage:.1f}, ngưỡng {limit})".replace(".", ",")
             if leverage is not None else " (thiếu diễn biến dư nợ 12 tháng hoặc doanh thu năm N-1)")
     return {"available": True, "group": group, "group_reason": reason, "warnings": warnings,
-            "rows": rows, "query_dates": "; ".join(dates), "special_mention": special, "bad_debt": bad,
+            "rows": rows, "lenders": list(by_lender.values()), "card_late": card_late,
+            "query_dates": "; ".join(dates), "special_mention": special, "bad_debt": bad,
             "avg_balance_12m": avg_balance, "leverage": leverage, "limit": limit, "has_r20": bool(r20)}
 
 

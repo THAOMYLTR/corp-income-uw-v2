@@ -23,6 +23,8 @@ PROMPTS: dict[str, frozenset[str]] = {
     "vat_extraction": frozenset(),
     "cic_extraction": frozenset(),
     "plan_extraction": frozenset(),
+    # [BRD 27/10] mục 2: ngành TCB + đối tác đầu vào / đầu ra; the industry list is filled in.
+    "business_model_extraction": frozenset({"industry_list"}),
     "report_writer": frozenset(),
     "report_writer_user": frozenset(),
     # [BRD 16/10] overall credit view written before the cells

@@ -62,6 +62,8 @@ class ClassifiedDocument:
     is_vat: bool = False
     is_cic: bool = False
     is_plan: bool = False
+    # [BRD 27/10] pass M9 — mô hình HĐKD
+    is_business_model: bool = False
     legal_basic_extraction: dict[str, Any] | None = None
     legal_basic_extraction_error: str = ""
     shareholders_extraction: dict[str, Any] | None = None
@@ -78,6 +80,8 @@ class ClassifiedDocument:
     cic_extraction_error: str = ""
     plan_extraction: dict[str, Any] | None = None
     plan_extraction_error: str = ""
+    business_model_extraction: dict[str, Any] | None = None
+    business_model_extraction_error: str = ""
 
 
 class UnderwritingGraphState(TypedDict, total=False):

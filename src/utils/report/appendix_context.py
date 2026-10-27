@@ -1,20 +1,19 @@
-"""Placeholders of "Phụ lục 01 - Thẩm định nguồn thu doanh nghiệp" filled in code.
+"""Cells of "Thẩm định nguồn thu doanh nghiệp" (Appendix - Corp income) filled in code.
 
 Rule of thumb: a FACT read off a document, a NUMBER, a CHECK or a GROUP is filled
 here (same input → same report). Only what needs reading free text and judging
-it — business activity (mục 2), addresses, the business-plan comment and the
-wording of the final conclusion — is left to the report writer LLM, which sees
-every value below so its text cannot contradict them.
+it — products / services, addresses, the business-activity comment and the
+wording of the conclusion — is left to the report writer LLM, which sees every
+value below so its text cannot contradict them.
 
-Changes for the BRD of 16/10/2026 are tagged [BRD 16/10]:
-  - 1.1 source priority per field (ĐKKD → Điều lệ/Sổ cổ đông → báo cáo thực địa),
-    T24 ID, "Đăng ký lần đầu … thay đổi lần thứ …", status in bold red when the
-    company does not operate, and a "không khớp" mark.
-  - The two legal comments are written in code from the checks.
-  - 3. VAT column, TT133 note, the financial comment and the finance group.
-  - 4. CIC table, dates, credit quality and the bureau group (cic_metrics.py).
-  - 5. Plan columns computed from the plan; the table is hidden without a plan.
-  - 6. Corp group (Bad/Normal/Good) and the income value with its formula.
+Sections follow the BRD of 27/10/2026 (tag [BRD 27/10]; older rules [BRD 16/10]):
+  1. a: source priority per field (ĐKKD → Điều lệ / Sổ cổ đông → thực địa), T24 ID,
+        "Đăng ký lần đầu … thay đổi lần thứ …", status bold red when not operating.
+     b: members table; one legal comment (years operating, borrower %, NĐDPL, warnings).
+  2. Mô hình HĐKD — 5-tier diagram (calculator/business_model.py).
+  3. Tài chính: table in triệu đồng, VAT update, comment draft, finance group.
+  4. Dư nợ tại TCTD: one row per TCTD, credit quality, bureau group (cic_metrics.py).
+  5. Kết luận: business-plan table (hidden without a plan), corp group, income value.
 """
 
 from __future__ import annotations
@@ -24,7 +23,7 @@ import re
 from datetime import date
 from typing import Any
 
-from src.agents.calculator import cic_metrics
+from src.agents.calculator import business_model, cic_metrics
 from src.agents.calculator import financial_metrics as fm
 from src.agents.calculator.legal_checks import norm_person, parse_date, within_lookback
 
@@ -35,7 +34,8 @@ NO_INFO = "Chưa có thông tin"
 SHOW_GROUPS = os.getenv("CORP_INCOME_SHOW_GROUPS", "1") != "0"
 
 # [BRD 16/10] 1.1: "ưu tiên ĐKKD, sau đó Điều lệ / Sổ cổ đông / Báo cáo khảo sát thực địa".
-LEGAL_DOC_PRIORITY = ("gcn_dkdn", "dieu_le", "so_dang_ky_co_dong", "bao_cao_thuc_dia")
+LEGAL_DOC_PRIORITY = ("gcn_dkdn", "dieu_le", "so_dang_ky_co_dong", "bao_cao_thuc_dia",
+                      "bao_cao_thuc_dia_phap_ly")
 NOT_OPERATING = ("tam_ngung", "ngung_hoat_dong", "giai_the", "pha_san")
 NOT_OPERATING_LABELS = ("Tạm ngừng hoạt động", "Ngừng hoạt động", "Giải thể", "Phá sản")
 # Finding codes (legal_checks.py) that mean "thông tin pháp lý không phù hợp".
@@ -109,14 +109,6 @@ def _ratio_text(name: str, value: float | None) -> str:
     return f"{value:.2f}".replace(".", ",") if name == "current_ratio" else fm.pct(value)
 
 
-def _bullets(lines: list[str], empty: str) -> str:
-    """A Markdown list on its own lines (placed after an inline label in the template)."""
-
-    # Lines that already start with spaces are sub-items ("  + …") and keep their indent.
-    return ("\n\n" + "\n".join(line if line.startswith(" ") else f"- {line}" for line in lines)
-            if lines else empty)
-
-
 def _age(founded: date | None, as_of: date) -> str:
     if not founded:
         return ""
@@ -147,7 +139,7 @@ def business_type(records: list[dict]) -> tuple[str, str]:
 
 
 # --------------------------------------------------------------------------- #
-# [BRD 16/10] corp group — mục 6 "Phân nhóm doanh nghiệp"
+# corp group — mục 5 "Phân nhóm doanh nghiệp"
 # --------------------------------------------------------------------------- #
 def corp_group(items: dict, financials: dict, cic: dict, as_of: date) -> dict[str, Any]:
     """Bad corp if ANY criterion; Good corp if Good finance AND Good bureau; else Normal."""
@@ -180,6 +172,30 @@ def corp_group(items: dict, financials: dict, cic: dict, as_of: date) -> dict[st
 
 
 # --------------------------------------------------------------------------- #
+# small table builders
+# --------------------------------------------------------------------------- #
+def _md_table(header: list[str], rows: list[list[str]]) -> str:
+    def cell(value: Any) -> str:          # None → "—"; "" stays an empty cell (as in the BRD template)
+        return str("—" if value is None else value).replace("|", "/").replace("\n", "<br>")
+    lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
+    return "\n".join(lines + ["| " + " | ".join(cell(v) for v in row) + " |" for row in rows])
+
+
+def _group_line(label: str, group: str, reason: str) -> str:
+    """A "Phân nhóm …" cell — empty when CORP_INCOME_SHOW_GROUPS=0 (BRD: chỉ hiển thị khi POC)."""
+
+    return f"_{label} (POC):_ **{group}** — {reason}" if SHOW_GROUPS else ""
+
+
+def pick_plan(records: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """The customer's business plan: the first document with planned revenue."""
+
+    plans = [r["data"] for r in records if r.get("pass") == "plan" and r["data"].get("has_plan")]
+    plans.sort(key=lambda p: 0 if p.get("plan_revenue") else 1)
+    return plans[0] if plans else None
+
+
+# --------------------------------------------------------------------------- #
 # main builder
 # --------------------------------------------------------------------------- #
 def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]],
@@ -193,7 +209,7 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
     codes = _codes(items, 1, 2, 3)
     ctx: dict[str, str] = {}
 
-    # ---- 1.1 Thông tin cơ bản [BRD 16/10: field priority + mismatch mark] -----------
+    # ---- 1a. Thông tin cơ bản ----------------------------------------------------
     def legal_cell(field: str, mismatch_code: str = "") -> str:
         value, _ = _pick_by_document(records, field)
         value = value or _summary_value(items, field)
@@ -202,6 +218,8 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
         mark = " ⚠ không khớp giữa các nguồn" if mismatch_code in codes else ""
         return f"{value}{mark}"
 
+    company, _ = _pick_by_document(records, "company_name")
+    company = company or _summary_value(items, "company_name") or "Doanh nghiệp"
     ctx["TenDoanhNghiep"] = legal_cell("company_name", "name_mismatch")
     ctx["MST"] = legal_cell("tax_code", "tax_code_mismatch")
     ctx["NguoiDaiDien"] = legal_cell("legal_representatives", "rep_mismatch")
@@ -219,30 +237,24 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
         if number not in (None, "") or latest else "") if x)
     ctx["NamThanhLap"] = (f"{founded.year} ({note})" if founded else note or NO_INFO) + (
         " ⚠ không khớp giữa các nguồn" if "establishment_mismatch" in codes else "")
-    ctx["DKKD"] = note or NO_INFO
     status = _summary_value(items, "operating_status")
     if not status:
         ctx["TinhTrangHoatDong"] = "Chưa có kết quả tra cứu (masothue.com / Cổng ĐKDN)"
     elif status in NOT_OPERATING_LABELS or "status_not_active" in codes:
-        # [BRD 16/10] "Bôi đỏ, đậm nếu doanh nghiệp không hoạt động / tạm dừng hoạt động"
+        # "Bôi đỏ, đậm nếu doanh nghiệp không hoạt động / tạm dừng hoạt động"
         ctx["TinhTrangHoatDong"] = f'<b><span style="color:#C00000">{status}</span></b>'
     else:
         ctx["TinhTrangHoatDong"] = str(status)
 
-    # ---- 1.2 Thành viên góp vốn ---------------------------------------------------
+    # ---- 1b. Thành viên góp vốn & người đại diện theo pháp luật ---------------------
     reps = {norm_person(r.get("name")): r for r in items[3]["summary"].get("legal_representatives", [])}
     relations = _relations(records)
-    members = items[2]["summary"].get("members", [])
-    for index in range(max(3, len(members))):
-        n = index + 1
-        if index >= len(members):
-            ctx.update({f"ThanhVien{n}": "", f"MoiQuanHe{n}": "", f"TyLe{n}": "", f"ThayDoi{n}": ""})
-            continue
-        member = members[index]
+    member_rows = []
+    for member in items[2]["summary"].get("members", []):
         key = norm_person(member.get("name"))
         relation = ["Khách hàng vay vốn"] if key in borrowers else []
         if key in reps:
-            relation.append("Người đại diện theo pháp luật")   # [BRD 16/10] note if NĐDPL
+            relation.append("Người đại diện theo pháp luật")
         relation += relations.get(key, [])
         pct = member.get("ownership_pct")
         changes = []
@@ -251,15 +263,25 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
         rep = reps.get(key)
         if rep and within_lookback(rep.get("appointed_date"), as_of):
             changes.append(f"Có — bổ nhiệm NĐDPL ngày {rep['appointed_date']}")
-        ctx[f"ThanhVien{n}"] = member.get("name") or NO_INFO
-        ctx[f"MoiQuanHe{n}"] = "; ".join(relation) or "—"
-        ctx[f"TyLe{n}"] = "—" if pct is None else f"{float(pct):.2f}".rstrip("0").rstrip(".").replace(".", ",") + "%"
-        ctx[f"ThayDoi{n}"] = "; ".join(changes) or "Không"
+        member_rows.append([
+            member.get("name") or NO_INFO,
+            "; ".join(relation) or "—",
+            "—" if pct is None else f"{float(pct):.2f}".rstrip("0").rstrip(".").replace(".", ",") + "%",
+            "; ".join(changes) or "Không",
+        ])
+    # A legal representative who holds no capital is still listed (the table is "… & NĐDPL").
+    member_keys = {norm_person(row[0]) for row in member_rows}
+    for key, rep in reps.items():
+        if key and key not in member_keys:
+            changed = within_lookback(rep.get("appointed_date"), as_of)
+            member_rows.append([rep.get("name"), "Người đại diện theo pháp luật (không góp vốn)", "—",
+                                f"Có — bổ nhiệm NĐDPL ngày {rep['appointed_date']}" if changed else "Không"])
+    ctx["BangThanhVien"] = _md_table(
+        ["Họ và tên", "Mối quan hệ", "Tỷ lệ góp vốn",
+         "Thay đổi thành viên góp vốn / NĐDPL trong 12 tháng gần nhất (nếu có)"],
+        member_rows or [[NO_INFO, "—", "—", "—"]])
 
-    # ---- Nhận xét pháp lý [BRD 16/10: written in code from the checks] ------------
-    entity_warnings = [f["message"] for f in items[1]["findings"] if f["severity"] in ("alert", "warning")]
-    ctx["NhanXetPhapLyDN"] = _bullets([f"⚠ {w}" for w in entity_warnings],
-                                      "Thông tin pháp lý cơ bản khớp giữa các nguồn; không ghi nhận cảnh báo.")
+    # ---- Nhận xét về pháp lý Khách hàng (one cell in the BRD of 27/10) --------------
     lines = []
     age = _age(founded, as_of)
     if age:
@@ -272,42 +294,45 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
                      + f"; {'là' if is_rep else 'không phải là'} người đại diện theo pháp luật của doanh nghiệp"
                      + (f" ({result['meta']['borrower_source']})." if result["meta"].get("borrower_source") else "."))
     else:
-        # [Sửa 20/10] chỉ còn hiện khi hồ sơ vay vốn không nêu tên thành viên nào
         lines.append("Chưa xác định được KH cá nhân vay vốn: hồ sơ vay vốn (giấy đề nghị vay / tờ trình) không nêu tên "
                      "thành viên góp vốn hoặc người đại diện nào — kiểm tra lại hồ sơ, hoặc khai báo BORROWER_NAMES.")
     warn = [codes[c]["message"] for c in LEGAL_MISMATCH_CODES if c in codes]
     warn += [codes[c]["message"] for c in ("status_not_active", "status_unknown") if c in codes]
     warn += [f["message"] for f in items[2]["findings"]
              if f["code"] in ("ownership_not_100", "ownership_incomplete", "capital_sum_mismatch")]
-    warn += [f["message"] for n in (2, 3) for f in items[n]["findings"]
+    warn += [f["message"] for n in (1, 2, 3) for f in items[n]["findings"]
              if f["severity"] == "alert" and f["message"] not in warn]
     if warn:
         lines.append("Cảnh báo pháp lý cần đánh giá lại:")
         lines += [f"  + {w}" for w in warn]
-    ctx["NhanXet"] = _bullets(lines, NO_INFO)
+    ctx["NhanXet"] = "\n".join(line if line.startswith(" ") else f"- {line}" for line in lines) or NO_INFO
 
-    # ---- 3. Tài chính -------------------------------------------------------------
+    # ---- 2. Mô hình HĐKD [BRD 27/10] ------------------------------------------------
+    ctx["MoHinhHDKD"] = (business_model.diagram(str(company), records)
+                         or "Chưa có thông tin đối tác đầu vào / đầu ra trong hồ sơ")
+
+    # ---- 3. Tài chính ---------------------------------------------------------------
     ctx["NguonTaiChinh"] = fm.sources_text(financials)
     interim = financials.get("interim") or {}
     vat = financials.get("vat") or {}
-    ctx["NamHienTai"] = interim.get("period") or (
-        f"{vat['current_year']} (đến T{max(vat['by_year'][vat['current_year']]['months']):02d})"
-        if vat.get("current_year") else str(as_of.year))
-    periods = {**financials["years"], "Current": interim}
+    ctx["NamHienTai"] = (str(vat["current_year"]) if vat.get("current_year")
+                         else interim.get("period") or str(as_of.year))
     for name, field in FIGURE_PREFIXES.items():
-        for label, fig in periods.items():
+        for label, fig in financials["years"].items():
             ctx[f"{name}{label}"] = fm.fmt(fig.get(field))
-    if not interim.get("net_revenue") and vat.get("current_year"):
-        # [BRD 16/10] Nguyên tắc 2: "Cập nhật các tháng năm N" = doanh thu theo tờ khai VAT
-        ctx["DTTCurrent"] = f"{fm.fmt(vat['by_year'][vat['current_year']]['revenue'])} (tờ khai VAT)"
     for name, ratio in RATIO_PREFIXES.items():
         for label, values in financials["ratios"].items():
             ctx[f"{name}{label}"] = _ratio_text(ratio, values.get(ratio))
+    # "Cập nhật các tháng năm N": Nguyên tắc 2 — doanh thu theo tờ khai VAT, % doanh thu năm N-1.
+    if vat.get("text"):
+        ctx["DTTCurrent"] = vat["text"]
+    elif interim.get("net_revenue") is not None:
+        ctx["DTTCurrent"] = f"{fm.fmt(interim['net_revenue'])} (BCTC {interim.get('period') or 'giữa niên độ'})"
+    else:
+        ctx["DTTCurrent"] = "—"
 
-    # [BRD 16/10] Relative years, so the template does not hard-code 2024 / 2025:
-    #   N-1 = the latest full year with a BCTC in the dossier (else the year before the
-    #   loan date), N-2 = the year before it. Headers: {{Nam-1}}, {{Nam-2}};
-    #   cells: {{DTTN-1}}, {{TongTaiSanN-2}}, {{ROSN-1}} … ("N1"/"N2" also accepted).
+    # Relative years: N-1 = latest full year with a BCTC (else the year before the loan
+    # date), N-2 = the year before it. Cells: {{DTTN-1}}, {{TongTaiSanN-2}}, {{ROSN-1}} …
     n1 = financials.get("latest_year") or str(as_of.year - 1)
     n2 = str(int(n1) - 1)
     ctx["Nam-1"], ctx["Nam-2"] = n1, n2
@@ -315,111 +340,141 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
         for alias, year in (("N-1", n1), ("N-2", n2), ("N1", n1), ("N2", n2)):
             ctx[f"{prefix}{alias}"] = ctx.get(f"{prefix}{year}", "—")
 
+    cic = cic or {"available": False}
     fin_lines = ["**Cảnh báo dấu hiệu bất thường của BCTC**"]
     fin_lines += [f"- ⚠ {w}" for w in financials["material_warnings"]] or ["- Không ghi nhận mâu thuẫn trọng yếu"]
     fin_lines += [f"- {w}" for w in financials["other_warnings"]]
+    interest = fm.interest_vs_cic(financials, cic.get("avg_balance_12m"))
+    if interest:                      # "tương quan chi phí lãi vay và diễn biến dư nợ theo CIC"
+        fin_lines.append(f"- ⚠ {interest}")
     derived = {f for fig in financials["years"].values() for f in fig.get("_derived", [])}
     if {"current_assets", "current_liabilities"} & derived:   # only the TT133 derivation
         fin_lines.append("- Ghi chú: BCTC không chia ngắn hạn/dài hạn (TT133) — TSNH/TSDH/nợ ngắn hạn được tính "
                          "theo Nguyên tắc 1")
     fin_lines.append("\n**Nhận xét về trạng thái tài chính của KH**")
-    fin_lines += [f"- {s}" for s in financials["status_remarks"]] or ["- Chưa có BCTC để đánh giá"]
+    fin_lines += [f"- {x}" for x in financials["status_remarks"]] or ["- Chưa có BCTC để đánh giá"]
     if vat.get("text"):
         fin_lines.append(f"- {vat['text']}")
-    if SHOW_GROUPS:
-        fin_lines.append(f"\n_Phân nhóm tài chính (POC):_ **{financials['group']}** — {financials['group_reason']}")
     ctx["NhanXetTaiChinh"] = "\n".join(fin_lines)
+    ctx["PhanNhomTaiChinh"] = _group_line("Phân nhóm tài chính doanh nghiệp", financials["group"],
+                                          financials["group_reason"])
 
-    # ---- 4. Dư nợ tại TCTD [BRD 16/10: cic_metrics.py] ----------------------------
-    cic = cic or {"available": False}
+    # ---- 4. Dư nợ tại TCTD ----------------------------------------------------------
     if cic.get("available"):
         ctx["NgayDuLieuCIC"] = cic["query_dates"] + "".join(f"\n\n⚠ {w}" for w in cic["warnings"])
-        for prefix, key in (("TCB", "TCB"), ("OtherBank", "OtherBank"), ("Total", "Total")):
-            row = cic["rows"][key]
-            ctx[f"{prefix}_ST"] = fm.fmt(row["short_term"])
-            ctx[f"{prefix}_MLT"] = fm.fmt(row["long_term"])
-            ctx[f"{prefix}_Other"] = fm.fmt(row["other"])
-            ctx[f"{prefix}_CKNB"] = fm.fmt(row["off_balance"])
-            ctx[f"{prefix}_Total" if prefix != "Total" else "Total_Credit"] = fm.fmt(row["total"])
-            # No R20 → collateral unknown, not zero.
-            ctx[f"{prefix}_Collateral"] = fm.fmt(row["collateral"]) if cic.get("has_r20") else "—"
-            if prefix != "Total":
-                ctx[f"{prefix}_CollateralOwner"] = ", ".join(sorted(row["owners"])) or "—"
-        ctx["SpecialMention"] = cic_metrics.describe_items(cic["special_mention"], "nợ cần chú ý trong 12 tháng gần nhất")
+        rows = []
+        for lender in cic.get("lenders") or []:
+            rows.append([lender["name"], fm.fmt(lender["short_term"]), fm.fmt(lender["long_term"]),
+                         fm.fmt(lender["other"]), fm.fmt(lender["total"]),
+                         "; ".join(lender["collaterals"]) or "—",
+                         fm.fmt(lender["collateral_value"]) if lender["collaterals"] or lender["collateral_value"]
+                         else "—",
+                         ", ".join(lender["owners"]) or "—"])
+        total = cic["rows"]["Total"]
+        rows.append(["**Tổng**", fm.fmt(total["short_term"]), fm.fmt(total["long_term"]),
+                     fm.fmt(total["other"] + total["off_balance"]), fm.fmt(total["total"]), "",
+                     fm.fmt(total["collateral"]) if cic.get("has_r20") else "—", ""])  # no R20 → unknown, not 0
+        ctx["BangDuNoTCTD"] = _md_table(
+            ["TCTD", "Dư nợ ngắn hạn", "Dư nợ TDH", "Dư nợ khác", "Tổng số dư CTD",
+             "Tên TSBĐ", "Giá trị TSBĐ", "Chủ sở hữu TSBĐ"], rows)
+        ctx["SpecialMention"] = cic_metrics.describe_items(cic["special_mention"],
+                                                           "nợ cần chú ý trong 12 tháng gần nhất")
         ctx["BadDebt"] = cic_metrics.describe_items(cic["bad_debt"], "nợ xấu trong 05 năm gần nhất")
-        ctx["CreditQuality"] = ("Không có nợ cần chú ý trong 12 tháng và nợ xấu trong 05 năm gần nhất"
-                                if not cic["special_mention"] and not cic["bad_debt"]
-                                else "Có phát sinh nợ cần chú ý / nợ xấu — xem chi tiết bên dưới")
-        duno = [f"- ⚠ {w}" for w in cic["warnings"]]
-        interest = fm.interest_vs_cic(financials, cic.get("avg_balance_12m"))
-        if interest:
-            duno.append(f"- ⚠ {interest}")
-        if cic.get("leverage") is not None:
-            duno.append(f"- Dư nợ BQ 12 tháng / doanh thu BQ tháng = {cic['leverage']:.1f} (ngưỡng {cic['limit']})"
-                        .replace(".", ","))
-        if SHOW_GROUPS:
-            duno.append(f"\n_Phân nhóm bureau (POC):_ **{cic['group']}** — {cic['group_reason']}")
-        ctx["NhanXetDuNo"] = "\n".join(duno) or "Không ghi nhận cảnh báo."
+        reason = cic["group_reason"]
+        if cic.get("leverage") is not None and "Dư nợ BQ" not in reason and "dư nợ BQ" not in reason:
+            reason += f" (dư nợ BQ 12 tháng / doanh thu BQ tháng = {cic['leverage']:.1f}, ngưỡng {cic['limit']})" \
+                .replace(".", ",")
+        ctx["PhanNhomBureau"] = _group_line("Phân nhóm bureau", cic["group"], reason)
     else:
         missing = "Chưa có bản tin CIC S10A/R20 trong hồ sơ"
-        ctx["NgayDuLieuCIC"] = missing
-        for prefix in ("TCB", "OtherBank", "Total"):
-            for suffix in ("ST", "MLT", "Other", "CKNB", "Collateral"):
-                ctx[f"{prefix}_{suffix}"] = "—"
-        ctx.update({"TCB_Total": "—", "OtherBank_Total": "—", "Total_Credit": "—",
-                    "TCB_CollateralOwner": "—", "OtherBank_CollateralOwner": "—",
-                    "CreditQuality": missing, "SpecialMention": missing, "BadDebt": missing,
-                    "NhanXetDuNo": missing + " — chưa đánh giá được thông tin tín dụng."})
+        ctx.update({"NgayDuLieuCIC": missing, "BangDuNoTCTD": missing, "SpecialMention": missing,
+                    "BadDebt": missing,
+                    "PhanNhomBureau": _group_line("Phân nhóm bureau", cic.get("group", "Chưa có CIC"),
+                                                  cic.get("group_reason", missing))})
 
-    # ---- 5. Phương án kinh doanh [BRD 16/10: computed from the plan] --------------
-    plans = [r["data"] for r in records if r.get("pass") == "plan" and r["data"].get("has_plan")]
-    if plans:
-        plan = plans[0]
-        year = financials.get("latest_year")
-        prev_revenue = (financials["years"].get(year) or {}).get("net_revenue") if year else None
-        revenue, profit = plan.get("plan_revenue"), plan.get("plan_profit_after_tax")
-        label = f" ({plan['plan_year']})" if plan.get("plan_year") else ""
-        ctx["PAKD_DTT_KeHoach"] = fm.fmt(revenue) + label
-        ctx["PAKD_TangTruong_KeHoach"] = fm.pct(revenue / prev_revenue - 1) if revenue and prev_revenue else "—"
-        ctx["PAKD_LNST_KeHoach"] = fm.fmt(profit) + label
-        ctx["PAKD_ROS_KeHoach"] = fm.pct(profit / revenue) if profit is not None and revenue else "—"
-        ctx["PAKD_DTT_CoSo"] = (plan.get("basis") or "—").replace("\n", " ")
-        ctx.update({"PAKD_TangTruong_CoSo": "", "PAKD_LNST_CoSo": "", "PAKD_ROS_CoSo": ""})
-        ctx["_has_plan"] = "1"
-    else:
-        ctx["_has_plan"] = ""
-        ctx["NhanXetPAKD"] = "Khách hàng không cung cấp phương án kinh doanh."
-        for row in ("DTT", "TangTruong", "LNST", "ROS"):          # table is hidden anyway
-            ctx[f"PAKD_{row}_KeHoach"] = ctx[f"PAKD_{row}_CoSo"] = ""
-
-    # ---- 6. Kết luận — value in code; the wording of the conclusion is the LLM's ----
+    # ---- 5. Kết luận: phương án kinh doanh (hidden without a plan) -------------------
+    plan = pick_plan(records)
+    ctx["BangPhuongAnKinhDoanh"] = plan_table(plan, financials, n1, n2) if plan else ""
+    if corp:
+        ctx["PhanNhomDoanhNghiep"] = _group_line(
+            "Phân nhóm doanh nghiệp", corp["group"],
+            "; ".join(corp["bad_reasons"]) if corp["bad_reasons"]
+            else f"tài chính: {corp['finance']}; tín dụng: {corp['bureau']}")
     if corp and income is not None:
         ctx["KetLuan"] = income_block(corp, income)
     return ctx
 
 
+def plan_table(plan: dict[str, Any], financials: dict[str, Any], n1: str, n2: str) -> str:
+    """[BRD 27/10] "Phương án kinh doanh (nếu có)" — history from mục 3, the plan, the basis.
+
+    The "Cơ sở của Khách hàng" column is left out when the plan gives no basis.
+    """
+
+    years, ratios, vat = financials["years"], financials["ratios"], financials.get("vat") or {}
+    rev = lambda y: (years.get(y) or {}).get("net_revenue")
+    lnst = lambda y: (years.get(y) or {}).get("profit_after_tax")
+    ratio = lambda y, k: (ratios.get(y) or {}).get(k)
+    plan_rev, plan_lnst = plan.get("plan_revenue"), plan.get("plan_profit_after_tax")
+    vat_now = (vat.get("by_year") or {}).get(vat.get("current_year")) if vat.get("current_year") else None
+    basis = " ".join(str(plan.get("basis") or "").split())
+    rows = [
+        ["Doanh thu thuần", fm.fmt(rev(n2)), fm.fmt(rev(n1)),
+         fm.fmt(vat_now["revenue"]) + " (tờ khai VAT)" if vat_now else "", fm.fmt(plan_rev), basis],
+        ["Biến động doanh thu thuần", fm.pct(ratio(n2, "revenue_growth")), fm.pct(ratio(n1, "revenue_growth")), "",
+         fm.pct(plan_rev / rev(n1) - 1) if plan_rev and rev(n1) else "—", ""],
+        ["Lợi nhuận sau thuế", fm.fmt(lnst(n2)), fm.fmt(lnst(n1)), "", fm.fmt(plan_lnst), ""],
+        ["ROS (LNST/DTT)", fm.pct(ratio(n2, "ros")), fm.pct(ratio(n1, "ros")), "",
+         fm.pct(plan_lnst / plan_rev) if plan_lnst is not None and plan_rev else "—", ""],
+    ]
+    plan_year = str(plan.get("plan_year") or "Năm kế hoạch")
+    header = ["Phương án kinh doanh (nếu có)", n2, n1, "Cập nhật năm T", plan_year, "Cơ sở của Khách hàng"]
+    if not basis:
+        header, rows = header[:-1], [r[:-1] for r in rows]
+    return "**Phương án kinh doanh (đơn vị tính: triệu đồng)**\n\n" + _md_table(header, rows)
+
+
 def income_block(corp: dict[str, Any], income: dict[str, Any]) -> str:
-    """[BRD 16/10] "Giá trị nguồn thu doanh nghiệp để đánh giá năng lực trả nợ"."""
+    """"Giá trị nguồn thu doanh nghiệp để đánh giá năng lực trả nợ" (formulas of the BRD)."""
 
     lines = ["**Giá trị nguồn thu doanh nghiệp để đánh giá năng lực trả nợ**", ""]
-    if SHOW_GROUPS:
-        lines += [f"_Phân nhóm doanh nghiệp (POC):_ **{corp['group']}** — tài chính: {corp['finance']}; "
-                  f"tín dụng: {corp['bureau']}", ""]
     if corp["group"] == "Bad corp":
         lines += ["Không sử dụng nguồn thu doanh nghiệp, không thực hiện đánh giá dự phóng. Cơ sở:"]
         lines += [f"- {r}" for r in corp["bad_reasons"]]
         return "\n".join(lines)
     year = income.get("year") or "N-1"
+    proj = income.get("projection")
+    if proj:
+        k = f" × {proj['growth_factor']:g}".replace(".", ",") if proj["growth_factor"] != 1 else ""
+        lines += [
+            "_Sử dụng phương án kinh doanh (ngành TCB: "
+            f"{proj['industry']}, tăng trưởng ngành {fm.pct(proj['industry_growth'])}, ROS ngành "
+            f"{fm.pct(proj['industry_ros'])})_",
+            f"- Doanh thu dự phóng khả thi = min[DT theo PAKD; DT {year} × (1 + tăng trưởng ngành{k})] = "
+            f"min[{fm.fmt(proj['plan_revenue'])}; {fm.fmt(proj['revenue_n'])} × (1 + "
+            f"{fm.pct(proj['industry_growth'])}{k})] = **{fm.fmt(proj['feasible_revenue'])}** triệu đồng",
+            f"- Tỷ suất lợi nhuận dự phóng khả thi = min{{ROS PAKD; max[ROS {year}; ROS ngành]}} = "
+            f"min{{{fm.pct(proj['plan_ros'])}; max[{fm.pct(proj['ros_hist'])}; {fm.pct(proj['industry_ros'])}]}} = "
+            f"**{fm.pct(proj['feasible_ros'])}**",
+            f"- Lợi nhuận dự phóng khả thi = {fm.pct(proj['feasible_ros'])} × {fm.fmt(proj['feasible_revenue'])} = "
+            f"**{fm.fmt(proj['lnst'])}** triệu đồng",
+        ]
+    else:
+        lines += [
+            f"- LNST hợp lý của doanh nghiệp = LNST {year} − DT tài chính − Thu nhập khác = "
+            f"{fm.fmt(income['lnst'])} − {fm.fmt(income['financial_income'] or 0)} − "
+            f"{fm.fmt(income['other_income'] or 0)} = **{fm.fmt(income['reasonable_lnst'])}** triệu đồng",
+        ]
     lines += [
-        f"- LNST hợp lý = LNST {year} − DT tài chính − Thu nhập khác = {fm.fmt(income['lnst'])} − "
-        f"{fm.fmt(income['financial_income'] or 0)} − {fm.fmt(income['other_income'] or 0)} = "
-        f"**{fm.fmt(income['reasonable_lnst'])}** triệu đồng",
-        f"- LNST sử dụng để trả nghĩa vụ TDH = Nghĩa vụ gốc TDH hằng năm − Khấu hao = "
+        f"- LNST sử dụng để trả nghĩa vụ TDH doanh nghiệp = Nghĩa vụ trả gốc TDH hằng năm − Khấu hao trong năm = "
         f"{fm.fmt(income['annual_lt_principal'] or 0)} − {fm.fmt(income['depreciation'] or 0)} → "
         f"**{fm.fmt(income['lnst_for_lt_debt'])}** triệu đồng (không âm)",
         "- Lợi tức / cổ tức tối đa chia được cho KHCN = (LNST hợp lý − LNST trả nợ TDH) × tỷ lệ góp vốn"
-        + (f" = **{fm.fmt(income['value'])}** triệu đồng" if income["value"] is not None else ": chưa tính được"),
+        + (f" = ({fm.fmt(income['reasonable_lnst'])} − {fm.fmt(income['lnst_for_lt_debt'])}) × "
+           + f"{income['ownership_pct']:g}%".replace(".", ",") + f" = **{fm.fmt(income['value'])}** triệu đồng"
+           if income["value"] is not None else ": chưa tính được"),
     ]
+    lines += [f"- ⚠ {w}" for w in income.get("warnings") or []]
     if income["missing"]:
         lines.append(f"- Thiếu dữ liệu: {'; '.join(income['missing'])}")
     return "\n".join(lines)
@@ -431,32 +486,3 @@ def fill_missing_financial_names(names: set[str], ctx: dict[str, str]) -> None:
     for name in names:
         if name not in ctx and FINANCIAL_NAME.match(name):
             ctx[name] = "—"
-
-
-# --------------------------------------------------------------------------- #
-# [BRD 16/10] output conditions applied to the rendered Markdown
-# --------------------------------------------------------------------------- #
-_EMPTY_PARTNER_ROW = re.compile(
-    r"<tr><td>(?:—|-||Chưa có thông tin(?: trong hồ sơ)?)</td>(?:<td></td>){3}</tr>")
-
-
-def apply_output_conditions(markdown: str, ctx: dict[str, str]) -> str:
-    """Rules the BRD states as "hiển thị khi …" rather than as a value.
-
-    - Đầu ra / đầu vào: "hồ sơ có ít hơn 5 đối tác thì XÓA HẲN các dòng thừa".
-    - Phương án kinh doanh: "TH không có phương án kinh doanh, ẩn đi bảng tính này".
-    """
-
-    markdown = _EMPTY_PARTNER_ROW.sub("", markdown)
-    if not ctx.get("_has_plan"):
-        out, in_section = [], False
-        for line in markdown.split("\n"):
-            if line.startswith("### 5."):
-                in_section = True
-            elif line.startswith("### ") or line.startswith("**Nhận xét về phương án"):
-                in_section = False
-            if in_section and line.lstrip().startswith("|"):
-                continue
-            out.append(line)
-        markdown = "\n".join(out)
-    return markdown

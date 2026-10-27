@@ -20,6 +20,8 @@ QUY TẮC BẮT BUỘC:
   một phần tử (TCTD, ngày/tháng, số tiền). Không có thì [].
 - "bad_debt_5y": phần 2.7 "Lịch sử nợ xấu tín dụng trong 05 năm gần nhất" — mỗi dòng
   một phần tử, ghi ngày phát sinh và nhóm nợ. Không có thì [].
+- [BRD 27/10] "card_late_payment_3y": lịch sử chậm thanh toán thẻ tín dụng trong 03 năm
+  gần nhất — mỗi dòng một phần tử (TCTD, ngày/tháng, số tiền). Không có thì [].
 - "monthly_balances_12m": phần 2.6 diễn biến dư nợ 12 tháng gần nhất — mỗi tháng một
   phần tử {"month": "mm/yyyy", "balance": số}.
 
@@ -36,6 +38,7 @@ Trả về CHÍNH XÁC JSON sau, không thêm text:
   ],
   "special_mention_12m": [{"lender": "...", "date": "...", "amount": null}],
   "bad_debt_5y": [{"lender": "...", "date": "...", "debt_group": "...", "amount": null}],
+  "card_late_payment_3y": [{"lender": "...", "date": "...", "amount": null}],
   "monthly_balances_12m": [{"month": "mm/yyyy", "balance": null}],
   "extraction_notes": ["..."]
 }

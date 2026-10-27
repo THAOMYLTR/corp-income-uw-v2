@@ -1,275 +1,251 @@
-# Corp Income — Pháp lý doanh nghiệp (BRD mục 1–4)
+# Corp Income — Thẩm định nguồn thu doanh nghiệp
 
-A **LangGraph** pipeline for the corporate (KHDN) legal check of the BRD *Corp Income
-Assessment*, use case **"Pháp lý doanh nghiệp"**, items 1–4. Built on the structure of
-[SME-creditmemo-multi-agent `refactor/ui-driven-inputs`](https://github.com/hodongtu/SME-creditmemo-multi-agent/tree/refactor/ui-driven-inputs):
-the same graph, the same upload boxes, the same `Config` / `build_llm` / `config/prompts`
-layout and the same notebook. The upload screen supplies the customer's files, the **agent**
-(`CORP_INCOME_AGENT`) and the **loan program** (`KHDN`); the pipeline does the rest:
-OCR → document classification → evidence-gap check → structured extraction (one pass per BRD
-item) → BRD checks → a Vietnamese report, an Excel workbook and the OCR text of every file.
+A **LangGraph** pipeline that reads a corporate (KHDN) dossier and writes the BRD's
+**"Appendix - Corp income"** report — *Thẩm định nguồn thu doanh nghiệp* — for a retail borrower
+whose repayment source is a company they own or hold capital in.
+
+It follows the **BRD of 27/10/2026** and its **document matrix** (`BRD_documentmatrix`): the
+dossier is sorted into the matrix's folders, each document type is tagged with the matrix agents
+that use it, and this repo runs the **Corp Income Agent (CIA)**.
 
 The entry point is the notebook [local_underwriting_agents.ipynb](local_underwriting_agents.ipynb);
-all logic lives in the importable package [src/](src/).
+all logic lives in [src/](src/). What changed from the previous BRD: [docs/CHANGES-BRD-2710.md](docs/CHANGES-BRD-2710.md).
 
 ---
 
 ## Table of Contents
 
-- [Key Features](#key-features)
-- [What it checks (BRD items 1–4)](#what-it-checks-brd-items-14)
-- [Architecture Overview](#architecture-overview)
-- [Agent Processing Workflow](#agent-processing-workflow)
-- [Project Structure](#project-structure)
+- [How it works in one paragraph](#how-it-works-in-one-paragraph)
+- [Workflow](#workflow)
+- [Folders and document matrix](#folders-and-document-matrix)
+- [The report (output template)](#the-report-output-template)
+- [Who computes what](#who-computes-what)
+- [Project structure](#project-structure)
 - [Installation](#installation)
 - [Configuration (.env)](#configuration-env)
-- [Running It](#running-it)
+- [Running it](#running-it)
 - [Outputs](#outputs)
-- [Report template](#report-template)
 - [Tests](#tests)
-- [Known limits](#known-limits)
+- [Known limits and open points](#known-limits-and-open-points)
 
 ---
 
-## Key Features
+## How it works in one paragraph
 
-- **Same deterministic pipeline as the SME repo**: every step is a LangGraph node and no LLM
-  decides which step runs next.
-- **Same seven upload boxes** (`ho_so_phap_ly`, `ho_so_tai_chinh`, `ho_so_vay_von`,
-  `ho_so_tai_san_dam_bao`, `ho_so_noi_bo`, `ho_so_soan_thao_noi_bo`, `ho_so_khac`). A file outside
-  every box is named in a warning and not processed.
-- **Reads what corporate dossiers arrive as**: digital PDFs from their **text layer** (no OCR
-  needed), scanned PDFs and **phone photos** through Tesseract, **Word (.docx)**, Excel/CSV, TXT.
-- **Four structured-extraction passes, one per BRD item**, each declared once in
-  `EXTRACTION_PASSES` and run only on the document types the matrix flags for it.
-- **BRD checks in code** (`src/agents/calculator/legal_checks.py`): exact MST match, 12-month
-  windows, ownership totals, borrower's recent capital acquisition, legal-rep changes, open
-  tax/BHXH debts. The LLM extracts; code checks and writes — the same input always gives the same
-  report.
-- **Evidence-gap check before spend**: no legal document at all → the run stops and says so before
-  a single extraction call.
-- **One switch for the LLM**: `LLM_PROVIDER=openai | anthropic | databricks`.
+Files are put in the folder of their document-matrix section. Each file is read once (PDF text
+layer, OCR, Word, Excel), classified by keywords (an LLM only breaks ties), and every LLM
+extraction pass the matrix flags for its type turns it into JSON. **Code** then does every check,
+number, ratio, threshold and group of the BRD and fills the template; **one LLM call** writes only
+the free-text cells (products, addresses, business-activity comment, conclusion) and is shown
+every code result so it cannot contradict them.
 
 ---
 
-## What it checks (BRD items 1–4)
+## Workflow
 
-| BRD | Sub-component | Output | Key checks |
-|---|---|---|---|
-| 1 | Thông tin cơ bản về pháp lý DN | Legal profile with a source per field | MST khớp tuyệt đối; tên/địa chỉ/vốn/ĐDPL khớp; trạng thái hoạt động; thay đổi trong 12 tháng; dữ liệu nội bộ chưa cập nhật; hoạt động thực tế tại địa chỉ |
-| 2 | Cổ đông, thành viên góp vốn | Members (%, capital, acquisition date) | Tổng tỷ lệ = 100%; chuyển nhượng trong 12 tháng; cổ đông pháp nhân; **KH cá nhân mới nhận vốn góp trong 12 tháng → cảnh báo** |
-| 3 | Người đại diện pháp luật | Legal rep(s) and actual operator | **ĐDPL thay đổi trong 12 tháng → cảnh báo**; người điều hành thực tế ≠ ĐDPL (no leadership-capability assessment, per BRD) |
-| 4 | Nợ thuế, BHXH, phạt, tranh chấp | Debts, penalties, enforcement, disputes | Còn nợ thuế/BHXH (>90 ngày); xử phạt chưa khắc phục; cưỡng chế; tranh chấp ảnh hưởng hoạt động/TSBĐ |
-
-Every finding is 🔴 cảnh báo · 🟠 cần làm rõ · 🔵 ghi nhận · 🟢 khớp, with the documents it rests
-on. The full BRD-step → code mapping is in [docs/technical-solution.md](docs/technical-solution.md).
-
----
-
-## Architecture Overview
-
-| Module | Role |
-|---|---|
-| [src/agents/supervisor.py](src/agents/supervisor.py) | **Orchestrator** — builds and runs the LangGraph, prepares documents, runs `EXTRACTION_PASSES` |
-| [src/agents/documents/](src/agents/documents/) | Discovery (`document_discovery.py`), keyword classification (`document_classification.py`) — unchanged from the SME repo |
-| [src/agents/documents/document_matrix.yaml](src/agents/documents/document_matrix.yaml) | 17 corporate document types in the 7 boxes; which BRD item reads each; `source` of each |
-| [src/agents/extraction/](src/agents/extraction/) | The four BRD extraction passes + shared `structured_extraction.py` |
-| [src/agents/calculator/legal_checks.py](src/agents/calculator/legal_checks.py) | The BRD B6 checks, deterministic |
-| [src/agents/specialist.py](src/agents/specialist.py) | `CORP_INCOME_AGENT`: records → checks → report (no LLM) |
-| [src/config.py](src/config.py) | `build_llm` (+ `LLM_PROVIDER`) and `Config` |
-| [src/prompts.py](src/prompts.py) | The only reader of `config/prompts/` |
-| [src/utils/reading/](src/utils/reading/) | OCR, PDF text layer, Word/Excel/CSV/PPTX/XML readers |
-| [src/utils/report/](src/utils/report/) | Report template rendering, Excel export, HTML/PDF export |
-| [src/templates/corp-income-structure.md](src/templates/corp-income-structure.md) | The report layout |
-
----
-
-## Agent Processing Workflow
+### Pipeline (LangGraph, deterministic — no LLM decides the next step)
 
 ```mermaid
 flowchart TD
-    START([Request: files + agent + loan_program]) --> C[discover_documents<br/>files inside the 7 upload boxes]
-    C --> D[classify_documents<br/>read text: PDF layer / OCR / Word / Excel<br/>keyword classification, LLM only when unsure]
-    D --> G[evidence_gap_check<br/>any document for BRD item 1?]
-    G -->|blocked| E1([END])
-    G -->|continue| X[extract_documents<br/>M1 legal basics · M2 shareholders<br/>M3 legal rep · M4 liabilities]
+    START([Notebook: folder of the dossier + loan date + borrower]) --> D[discover_documents<br/>files inside the 7 matrix folders]
+    D --> C[classify_documents<br/>read text: PDF layer / OCR / Word / Excel<br/>keyword match against document_matrix.yaml<br/>LLM only when unsure]
+    C --> G{evidence_gap_check<br/>any legal document?}
+    G -->|no| STOP([END — says what is missing])
+    G -->|yes| X[extract_documents — LLM passes, one per flag<br/>M1 legal basics · M2 shareholders · M3 legal rep<br/>M4 tax / disputes · M5 BCTC · M6 VAT<br/>M7 CIC S10A/R20 · M8 business plan · M9 business model]
     X --> R[fetch_reference_data<br/>internal / external data, watchlist]
-    R --> A[single_corp_income<br/>BRD checks + report]
-    A --> E2([END])
+    R --> A[CIA — corp income agent]
+    A --> CODE[Code: checks, ratios, groups,<br/>diagram, tables, income value]
+    CODE --> LLM[One LLM call: free-text cells<br/>+ rewrite of 2 comment drafts,<br/>numbers guarded]
+    LLM --> OUT([Report .md/.pdf · Excel · JSON · OCR text])
 ```
 
-**Stage 1 — Discovery & classification.** The box a file sits in narrows the candidate types;
-keyword scoring (filename hits ×3) picks the type, and the `MODEL_DOCUMENT` LLM is asked only
-when the keyword pass is unsure. A file whose content points to another box is flagged
-("Possible wrong upload box"). Text is read once per file and the method is recorded
-(`pdf_text_layer`, `ocr_pdf`, `ocr_image`, `docx`, `spreadsheet`, `text`).
+### From folder to report section
 
-**Stage 2 — Evidence gap check.** Stops when nothing can feed BRD item 1 (no GCN, charter,
-register, lookup, site visit, and no external/internal data). Missing mandatory types (the GCN
-ĐKDN) and missing tax documents are reported but do not stop the run.
-
-**Stage 3 — Structured extraction.** Each pass runs on the types the matrix flags for it:
-
-| Pass | Prompt | Model | Runs on |
-|---|---|---|---|
-| M1 Pháp lý cơ bản | `legal_basic_extraction.md` | `MODEL_PREMIUM` | GCN, điều lệ, sổ cổ đông, tra cứu ĐKDN, dữ liệu nội bộ, báo cáo thực địa |
-| M2 Cổ đông | `shareholders_extraction.md` | `MODEL_PREMIUM` | GCN, điều lệ, sổ cổ đông, chuyển nhượng vốn, QĐ bổ nhiệm/nghị quyết, tra cứu, nội bộ, thực địa |
-| M3 Người đại diện | `legal_rep_extraction.md` | `MODEL_ECONOMY` | GCN, điều lệ, QĐ bổ nhiệm, tra cứu, nội bộ, thực địa |
-| M4 Nợ thuế, tranh chấp | `liabilities_extraction.md` | `MODEL_ECONOMY` | thông báo thuế, BHXH, xử phạt, kiểm tra, tranh chấp, thuyết minh BCTC, tra cứu nợ, thực địa |
-
-Amounts are read as printed with their unit and scaled to đồng in code.
-
-**Stage 4 — Reference data.** `internal_data`, `external_data` (same JSON shape as the
-extraction) and a `watchlist` are passed into `process()` until the BCDE/BEP, Cổng ĐKDN and
-AML/BL/WL systems are connected; this node is where those queries will go.
-
-**Stage 5 — The agent.** Every extraction becomes a record tagged with its `source`
-(customer / field / external / internal); `legal_checks.py` compares the sources and applies the
-BRD rules; the report is rendered from `src/templates/corp-income-structure.md`.
+```mermaid
+flowchart LR
+    subgraph Folders["Folders (document matrix sections)"]
+        I["I. ho_so_phap_ly<br/>100 ĐKKD/Điều lệ/Sổ cổ đông · 101 giấy phép<br/>nhà xưởng · thực địa"]
+        II["II. ho_so_tai_chinh<br/>200 BCTC · 205 VAT / sao kê / PM bán hàng<br/>tồn kho, TK 131/331"]
+        III["III. ho_so_vay_von<br/>302 PAKD · 301 hợp đồng/hóa đơn<br/>tiến độ hợp đồng"]
+        IV["IV. ho_so_tai_san_dam_bao<br/>400 TSBĐ · 401 chứng thư"]
+        V["V. ho_so_noi_bo<br/>208 CIC · CIC liên quan · 708 blacklist<br/>internal / external data"]
+        VII["VII. ho_so_soan_thao_noi_bo<br/>701 khảo sát & đề xuất · ảnh · 706 giới hạn TD"]
+        VIII["VIII. ho_so_khac<br/>overlay CIC, adhoc"]
+    end
+    subgraph CIA["CIA reads (matrix agent → report section)"]
+        LA["LA → 1. Pháp lý"]
+        BA["BA → 2. Hoạt động kinh doanh"]
+        FS["FS → 3. Tài chính"]
+        CR["CR / RA → 4. Dư nợ tại TCTD"]
+        CP["CP → 5. Kết luận nguồn thu"]
+    end
+    I --> LA & BA
+    II --> FS & BA
+    III --> BA & FS & CP
+    V --> CR & LA
+    VII --> BA & FS & CR & CP
+    VIII --> CIA
+    IV -.->|"RA, CP only — not read by CIA"| X((listed only))
+```
 
 ---
 
-## Project Structure
+## Folders and document matrix
+
+The matrix is [src/agents/documents/document_matrix.yaml](src/agents/documents/document_matrix.yaml) —
+the single source of truth. Each type carries its matrix **code**, its **matrix_agents**
+(CIA, LA, BA, FS, RA, CP, CR), the matrix **validation** rules (shown as a checklist in the Excel
+"Hồ sơ" sheet), keywords, and which extraction passes run on it. CIA reads a type exactly when
+the matrix lists CIA for it (the loader refuses a matrix where the two disagree).
+
+| Folder | Matrix | What goes in |
+|---|---|---|
+| `ho_so_phap_ly` | I | **100** ĐKKD / GCN ĐKDN / GCN ĐT, điều lệ, sổ cổ đông / sổ thành viên, chuyển nhượng vốn · **101** giấy phép ngành nghề có điều kiện · hồ sơ quyền sử dụng nhà xưởng (HĐ thuê, GCN QSDĐ) · báo cáo khảo sát thực địa · QĐ bổ nhiệm, xử phạt, thanh tra, tranh chấp |
+| `ho_so_tai_chinh` | II | **200** BCTC 2 năm, thuyết minh · **205** tờ khai VAT (thay thế: sao kê TK 6 tháng, phần mềm bán hàng 12 tháng) · chi tiết tồn kho / phải thu (TK 131) / phải trả (TK 331) · thông báo nợ thuế, BHXH |
+| `ho_so_vay_von` | III | **302** phương án kinh doanh / đề nghị cấp tín dụng · **301** hợp đồng, hóa đơn đầu vào – đầu ra · hồ sơ tiến độ thực hiện hợp đồng |
+| `ho_so_tai_san_dam_bao` | IV | **400** hồ sơ TSBĐ · **401** chứng thư định giá (RA, CP — not read by CIA) |
+| `ho_so_noi_bo` | V | **208** CIC doanh nghiệp (S10A, R20) · CIC ĐDPL / cổ đông ≥ 30% · **708** blacklist / fraud · external data (tracuunnt, masothue, bocaodientu) · internal data (T24, BCDE, BEP, DBX, VIRAC) |
+| `ho_so_soan_thao_noi_bo` | VII | **701** báo cáo khảo sát và đề xuất tín dụng, ảnh khảo sát · **706** báo cáo giới hạn tín dụng |
+| `ho_so_khac` | VIII | overlay CIC, báo cáo adhoc, hồ sơ ngoài danh mục (read as context) |
+
+Step-by-step for the people filing the dossier (Vietnamese): [docs/HUONG-DAN-XEP-HO-SO.md](docs/HUONG-DAN-XEP-HO-SO.md).
+
+---
+
+## The report (output template)
+
+[src/templates/corp-income-structure.md](src/templates/corp-income-structure.md) has the same
+sections, rows and columns as the BRD's **Appendix - Corp income** sheet:
+
+| Section | Content |
+|---|---|
+| Header | Tên doanh nghiệp |
+| **1. Pháp lý doanh nghiệp** | a. ID T24, MST, năm thành lập ("Đăng ký lần đầu … thay đổi lần thứ …"), NĐDPL, tình trạng hoạt động (bold red when not operating) · b. họ tên, mối quan hệ, tỷ lệ góp vốn, thay đổi trong 12 tháng · Nhận xét về pháp lý Khách hàng |
+| **2. Hoạt động kinh doanh** | Sản phẩm/dịch vụ (loại hình, tên ngành TCB, diễn giải) · Địa chỉ TSC / nhà xưởng / kho (thuê hay sở hữu) · **Mô hình HĐKD**: sản phẩm đầu vào → ≤ 5 nhà cung cấp → doanh nghiệp → ≤ 5 khách mua → sản phẩm đầu ra · Nhận xét về HĐKD |
+| **3. Tài chính** | Nguồn · tóm tắt BCĐKT / KQKD năm N-2, N-1 (triệu đồng) + "Cập nhật các tháng năm N" theo tờ khai VAT · biến động DT, ROS, hệ số thanh toán hiện hành · Nhận xét · Phân nhóm tài chính (POC) |
+| **4. Dư nợ tại TCTD** | a. ngày tra cứu CIC · b. một dòng mỗi TCTD: dư nợ NH, TDH, khác, tổng; tên, giá trị, chủ sở hữu TSBĐ · c. nợ cần chú ý (12 tháng), nợ xấu (5 năm) · Phân nhóm bureau (POC) |
+| **5. Kết luận nguồn thu DN** | Bảng phương án kinh doanh (ẩn khi không có PAKD) · Phân nhóm doanh nghiệp (POC) · Nhận xét về nguồn thu + giá trị nguồn thu theo công thức BRD |
+
+"Phân nhóm … (POC)" cells: `CORP_INCOME_SHOW_GROUPS=0` leaves them empty (BRD: show only in POC).
+The template is plain Markdown/HTML with `{{placeholders}}` — replace it with your own layout
+without touching Python.
+
+---
+
+## Who computes what
+
+| Rule (BRD 27/10) | Done by | Where |
+|---|---|---|
+| Field priority ĐKKD → Điều lệ / Sổ cổ đông → thực địa; mismatches; status; 12-month changes; borrower %, NĐDPL | code | `calculator/legal_checks.py`, `utils/report/appendix_context.py` |
+| Mô hình HĐKD: source priority, top 5 by value, suppliers left / buyers right, no invented rows, share only when given | code (LLM pass M9 only reads each document) | `calculator/business_model.py` |
+| Ngành theo bảng ngành TCB, ROS ngành, tăng trưởng ngành | LLM picks one name from the list (M9); code looks it up | `calculator/industry.py`, `src/templates/bang-nganh-tcb.csv` |
+| Nguyên tắc 1 (TT200 / TT133), 2 (tờ khai VAT), 3 (biến động DT, ROS, HSTT); dấu hiệu bất thường BCTC; trạng thái tài chính; Bad / Normal / Good finance | code | `calculator/financial_metrics.py` |
+| CIC ≤ 1 tháng; bảng theo TCTD; nợ cần chú ý / nợ xấu; Bad / Normal / Good bureau (incl. chậm thanh toán thẻ 3 năm) | code | `calculator/cic_metrics.py` |
+| Bad / Normal / Good corp | code | `appendix_context.corp_group` |
+| Giá trị nguồn thu: LNST hợp lý, or projection with PAKD (min[PAKD; DT × (1 + tăng trưởng ngành × 1,5 if Good corp)], ROS = min{PAKD; max[lịch sử; ngành]}); LNST trả nợ TDH; lợi tức tối đa cho KHCN | code | `financial_metrics.income_estimate` |
+| Sản phẩm/dịch vụ, địa chỉ, nhận xét HĐKD, kết luận (wording) | LLM, framed by `corp-income-cell-specs.md` | `agents/report_writer.py` |
+| Nhận xét pháp lý, nhận xét tài chính | code draft, rewritten by the LLM; a rewrite that drops a number is rejected | `agents/specialist.py` (`POLISH_CELLS`) |
+
+---
+
+## Project structure
 
 ```
 .
-├── local_underwriting_agents.ipynb   # Entry point — driver notebook (same cells as the SME repo)
-├── config/
-│   └── prompts/                      # Every system prompt, one Markdown file each
+├── local_underwriting_agents.ipynb   # Entry point — driver notebook
+├── config/prompts/                   # Every LLM prompt, one Markdown file each
 ├── src/
-│   ├── config.py                     # LLM factory (+ LLM_PROVIDER) + Config
+│   ├── config.py                     # build_llm (+ LLM_PROVIDER) and Config
 │   ├── prompts.py                    # The only reader of config/prompts/
-│   ├── types.py                      # Shared types
+│   ├── types.py
 │   ├── agents/
-│   │   ├── supervisor.py             # LangGraph orchestrator + EXTRACTION_PASSES
-│   │   ├── specialist.py             # CORP_INCOME_AGENT
-│   │   ├── documents/                # discovery, keyword classification, routing matrix
-│   │   │   ├── document_matrix.py    # Loads and validates the YAML
-│   │   │   └── document_matrix.yaml  # 17 corporate document types in the 7 upload boxes
-│   │   ├── calculator/legal_checks.py
-│   │   └── extraction/               # legal_basic, shareholders, legal_rep, liabilities
-│   ├── utils/
-│   │   ├── common.py, paths.py
-│   │   ├── reading/                  # ocr.py, extractors.py
-│   │   └── report/                   # report_template.py, excel_export.py, visualization/
-│   └── templates/                    # corp-income-structure.md
-├── samples/<testcase>/               # Uploaded files, one folder per upload box (gitignored)
-├── logs/                             # Run outputs (gitignored)
-├── testing/                          # unittest
+│   │   ├── supervisor.py             # LangGraph + EXTRACTION_PASSES (M1–M9)
+│   │   ├── specialist.py             # CIA: records → checks → template → one LLM call
+│   │   ├── report_writer.py          # The LLM call for the free-text cells
+│   │   ├── documents/                # discovery, classification, document_matrix.yaml/.py
+│   │   ├── extraction/               # one module per pass (LLM → JSON)
+│   │   └── calculator/               # legal_checks, financial_metrics, cic_metrics,
+│   │                                 # business_model, industry, borrowers
+│   ├── templates/
+│   │   ├── corp-income-structure.md  # The report layout (Appendix - Corp income)
+│   │   ├── corp-income-guidance.md   # BRD guidance given to the LLM
+│   │   ├── corp-income-cell-specs.md # Frame of each LLM-written cell
+│   │   └── bang-nganh-tcb.csv        # PL1 — bảng ngành tại TCB (ROS, tăng trưởng)
+│   └── utils/                        # reading (OCR, PDF, Word, Excel), report rendering, Excel export
+├── samples/<testcase>/<folder>/      # The dossier, one sub-folder per matrix section (git-ignored)
+├── logs/                             # Run outputs (git-ignored)
+├── testing/                          # unittest, no API key needed
 ├── scripts/install_tesseract.sh      # Databricks cluster init script
-├── docs/                             # technical-solution.md, DATABRICKS.md, the BRD rows (xlsx)
-├── .env / .env.example
-└── README.md
+└── docs/                             # changes, filing guide, technical notes, Databricks set-up
 ```
 
-> There are **no `__init__.py` files** under `src/` — it is a namespace package, imported as
-> `src.agents.supervisor` from the project root (same as the SME repo).
-
-### System prompts
-
-| File | Placeholder the code fills |
-|---|---|
-| `legal_basic_extraction.md`, `shareholders_extraction.md`, `legal_rep_extraction.md`, `liabilities_extraction.md` | — |
-| `extraction_user.md` | — (the human message: `{filename}`, `{content}`) |
-| `document_classification.md` | `{{document_type_catalogue}}`, rendered from the matrix per upload box |
-| `document_classification_user.md` | — |
-
-`{{name}}` is a value the code fills, and only that; JSON examples use single braces.
-`testing/test_prompts.py` enforces it.
+There are no `__init__.py` files under `src/`: it is a namespace package imported from the
+project root as `src.agents.supervisor`.
 
 ---
 
 ## Installation
 
-**System requirements:** Python 3.11+ and **Tesseract OCR** with Vietnamese.
+Python 3.11+ and **Tesseract OCR** with Vietnamese:
 
 ```bash
-# macOS
-brew install tesseract tesseract-lang
-# Ubuntu/Debian (and Databricks: scripts/install_tesseract.sh as a cluster init script)
-sudo apt-get install tesseract-ocr tesseract-ocr-vie
-```
-
-```bash
+brew install tesseract tesseract-lang                     # macOS
+sudo apt-get install tesseract-ocr tesseract-ocr-vie      # Ubuntu / Databricks (scripts/install_tesseract.sh)
 pip install -r requirements.txt
 ```
 
-PDF export of the report needs WeasyPrint's native libraries (see `requirements.txt`); without
-them the notebook still saves the `.md`, `.xlsx` and JSON files. Databricks set-up step by step:
-[docs/DATABRICKS.md](docs/DATABRICKS.md).
+PDF export needs WeasyPrint's native libraries; without them the notebook still saves the
+`.md`, `.xlsx` and JSON files. Databricks: [docs/DATABRICKS.md](docs/DATABRICKS.md).
 
 ---
 
 ## Configuration (.env)
 
-Copy `.env.example` → `.env` (or, on Databricks, set the same names in the notebook's second
-cell from `dbutils.secrets`).
+Copy `.env.example` → `.env` (on Databricks set the same names from `dbutils.secrets`):
 
 ```env
 LLM_PROVIDER=openai          # openai | anthropic | databricks
 MODEL_DOCUMENT=gpt-4o-mini   # classification tie-break
-MODEL_ECONOMY=gpt-4o-mini    # BRD items 3-4
-MODEL_PREMIUM=gpt-4o         # BRD items 1-2
-
-OPENAI_API_KEY=…   OPENAI_API_BASE=…        # LLM_PROVIDER=openai (or an OpenAI-format gateway)
-ANTHROPIC_API_KEY=… ANTHROPIC_BASE_URL=…    # LLM_PROVIDER=anthropic
-DATABRICKS_HOST=…  DATABRICKS_TOKEN=…       # LLM_PROVIDER=databricks (MODEL_* = endpoint names)
+MODEL_ECONOMY=gpt-4o-mini    # cheaper passes
+MODEL_PREMIUM=gpt-4o         # legal passes, BCTC, report writer
+OPENAI_API_KEY=…   ANTHROPIC_API_KEY=…   DATABRICKS_HOST=…  DATABRICKS_TOKEN=…
+CORP_INCOME_SHOW_GROUPS=1    # 0 hides the "Phân nhóm … (POC)" cells
 ```
 
-An unset model or key raises at startup **naming the variable**, before any call is made. OCR
-settings are the SME repo's, plus `PDF_TEXT_LAYER=1` (read digital PDFs without OCR) and
-`OCR_CACHE_DIR` (set it to a Volume to keep OCR between runs).
-
-**Cost per run**: one classification call per document the keyword pass was unsure about, plus
-one call per document per BRD item it feeds (a GCN = 3, a tax notice = 1, a site-visit report = 4).
-Clear filenames and the right upload box are the biggest levers, exactly as in the SME repo.
+The VAT, CIC, plan and business-model passes use `financial_extraction_llm` unless the notebook
+sets their own LLM. An unset model or key raises at start-up, naming the variable.
 
 ---
 
-## Running It
+## Running it
 
-1. Open [local_underwriting_agents.ipynb](local_underwriting_agents.ipynb).
-2. **Cell 2** — paths & `load_dotenv`. **Cell 3** (Databricks only) — set the environment from
-   `dbutils.secrets`.
-3. **Cell 4** — the inputs:
+1. Put the dossier in `samples/<testcase>/` with one sub-folder per matrix section (table above).
+2. Open the notebook. **Cell 4** — inputs:
    ```python
    TESTCASE_ID = "case_1"
    LOAN_PROGRAM = "KHDN"
-   AGENT = "CORP_INCOME_AGENT"
-   INPUT_PATHS = [str(PROJECT_ROOT / "samples" / TESTCASE_ID)]   # or a /Volumes/… folder
-   LOAN_DATE = "13/10/2026"            # 12-month checks end here; None = today
-   BORROWER_NAMES = []                 # [] = tự tìm trong ho_so_vay_von; điền tay để ghi đè
+   AGENT = "CORP_INCOME_AGENT"          # CIA
+   INPUT_PATHS = [str(PROJECT_ROOT / "samples" / TESTCASE_ID)]
+   LOAN_DATE = "27/10/2026"             # 12-month / 1-month checks end here; None = today
+   BORROWER_NAMES = []                  # [] = found in ho_so_vay_von; fill in to override
+   ANNUAL_LT_PRINCIPAL = None           # nghĩa vụ trả gốc TDH hằng năm của DN (đồng), if known
    ```
-   Giấy tờ nào để vào ô nào: [docs/HUONG-DAN-XEP-HO-SO.md](docs/HUONG-DAN-XEP-HO-SO.md).
-4. **Cell 5** — builds `Config` with the LLM clients.
-5. **Cells 6–8** — import types, document modules, agents.
-6. **Cell 9** — `supervisor.process(INPUT_PATHS, agent=AGENT, loan_program=LOAN_PROGRAM, …)`;
-   prints the report, the step log, the classification of every document, failed extractions,
-   and one conclusion per BRD item.
-7. **Cell 10** — writes every artifact to `logs/<testcase>_<timestamp>/`.
+3. Run the cells in order: config → imports → `supervisor.process(...)` → save.
 
 ---
 
 ## Outputs
 
+Written to `logs/<testcase>_<timestamp>/`:
+
 | File | Content |
 |---|---|
-| `final_response.md` / `.pdf` | The report |
-| `corp_income.xlsx` | Tóm tắt · 1. Pháp lý cơ bản · 2. Cổ đông · 3. Người đại diện · 4. Nợ thuế - tranh chấp · Kiểm tra · Hồ sơ |
-| `corp_income.json` | Findings and summary per BRD item, every extraction record (đồng) |
-| `legal_basic_extraction.json` … `liabilities_extraction.json` | Each pass's JSON, per document |
-| `document_classifications.json` | Classification, source and read method per document |
-| `ocr/<file>.txt` | The full text read from each file — check here first when a field is wrong |
-| `result.json` | Response, steps, plan, gaps |
-
----
-
-## Report template
-
-The report is `src/templates/corp-income-structure.md` with `{{placeholders}}` filled in code
-(51 names: single fields with `_source`, whole tables, `itemN_findings`, `itemN_conclusion`; the
-list is at the top of the file). Replace the file with your own layout — no Python change. An
-unknown name renders as "—" and is named in the step log.
+| `final_response.md` / `.pdf` | The report (Appendix layout) |
+| `corp_income.xlsx` | Tóm tắt · 1–4 legal sheets · 5. Tài chính · **Mô hình HĐKD** · Kiểm tra · **Hồ sơ** (file, folder, matrix code, matrix agents, matrix validation checklist) |
+| `corp_income.json` | Checks, financials, CIC, groups, income estimate, business model, every extraction record |
+| `<pass>_extraction.json` | Each pass's JSON per document (incl. `business_model_extraction.json`) |
+| `document_classifications.json` | Type, folder, source and read method per document |
+| `ocr/<file>.txt` | The text read from each file — check here first when a value is wrong |
 
 ---
 
@@ -277,20 +253,25 @@ unknown name renders as "—" and is named in the step log.
 
 ```bash
 python -m unittest testing.test_prompts testing.test_config testing.test_document_classification \
-    testing.test_reading testing.test_corp_income_workflow testing.test_brd_1610
+    testing.test_reading testing.test_corp_income_workflow testing.test_brd_1610 testing.test_brd_2710
 ```
 
-`test_brd_1610` has one test per rule of the BRD of 16/10/2026 (see `docs/CHANGES-BRD-1610.md`).
-
-`test_corp_income_workflow` runs the whole graph on a small dossier with fake extraction chains
-(no API key); `test_reading` reads a real digital PDF, a Word file, a scanned PDF and a photo
-through Tesseract (skipped if Tesseract is not installed).
+`test_brd_2710` has one test per rule of the BRD / document matrix of 27/10/2026;
+`test_corp_income_workflow` runs the whole graph with fake extraction chains (no API key).
 
 ---
 
-## Known limits
+## Known limits and open points
 
-- No web search (BRD item 1 POC note): save the masothue / Cổng ĐKDN page into `ho_so_noi_bo`,
-  or pass the API result as `EXTERNAL_DATA`.
-- Fraud detection (tampered documents) is out of scope; AML/BL/WL = match against `WATCHLIST`.
+- **Bảng ngành TCB (PL1)**: only the first 13 rows (Recom) reached the repo — paste the rest into
+  `src/templates/bang-nganh-tcb.csv`. Without the customer's industry in the table, the projection
+  falls back to historical LNST and says so.
+- **Two BRD sheets disagree** — the code follows the Appendix (the output template) and keeps each
+  as a one-line constant in `financial_metrics.py`: Good finance growth **> 0%** (detail sheet:
+  > −20%), Good-corp growth factor **× 1,5** (detail sheet: × 2).
+- No web search (masothue, bocaodientu, dangkykinhdoanh): save the lookup page into
+  `ho_so_noi_bo`, or pass it as `EXTERNAL_DATA`.
+- Photo content (products, machines, people) is not analysed — only text OCR reads from a photo.
+- The matrix validation rules (đủ dấu, đủ trang, chữ ký…) are listed for the user to confirm in the
+  Excel "Hồ sơ" sheet; only the date rules (CIC ≤ 1 tháng) are checked in code.
 - Customer files and outputs are git-ignored — keep them in a Volume.

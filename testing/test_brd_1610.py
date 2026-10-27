@@ -8,7 +8,6 @@ from datetime import date
 
 from src.agents.calculator import cic_metrics
 from src.agents.calculator import financial_metrics as fm
-from src.utils.report.appendix_context import apply_output_conditions
 
 AS_OF = date(2026, 10, 16)
 M = 1e6  # triệu đồng → đồng
@@ -201,17 +200,7 @@ class RelativeYearsTest(unittest.TestCase):
         self.assertEqual(out, "<th>2022</th><th>2023</th>|400|500|25,0%|—")
 
 
-class OutputConditionsTest(unittest.TestCase):
-    def test_empty_partner_rows_are_removed_and_plan_table_hidden(self):
-        md = ("<table><tr><td>Công ty A (500 tr)</td><td></td><td></td><td></td></tr>"
-              "<tr><td>—</td><td></td><td></td><td></td></tr></table>\n"
-              "### 5. Phương án kinh doanh (nếu có)\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n"
-              "**Nhận xét về phương án kinh doanh**\n\nKhông có.")
-        out = apply_output_conditions(md, {"_has_plan": ""})
-        self.assertIn("Công ty A", out)
-        self.assertNotIn("<td>—</td>", out)
-        self.assertNotIn("| a | b |", out)
-        self.assertIn("**Nhận xét về phương án kinh doanh**", out)
+# OutputConditionsTest moved to test_brd_2710 (the tables are now built in code).
 
 
 class RevenueGrowthGuardTest(unittest.TestCase):

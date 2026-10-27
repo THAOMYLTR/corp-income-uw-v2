@@ -1,0 +1,15 @@
+# BRD 27/10/2026 — sheet "PL1 - Bảng ngành tại TCB". ROS and Tăng trưởng ngành are fractions (0.12 = 12%).
+# "-" = no figure. Only the first rows reached this repo; paste the remaining rows of PL1 below, same columns.
+Phân khúc,Lĩnh vực kinh tế,Sub-segment_ENG,Bizline - Sub-segment,Ngành,ROS,Tăng trưởng ngành
+SME,Recom,Civil Construction,SME-Recom-Civil Construction,Xây dựng dân dụng,0.12,0.07
+SME,Recom,Industrial Park Construction,SME-Recom-Industrial Park Construction,Xây dựng công nghiệp,0.027092437994583506,0.06
+SME,Recom,Industrial Park Developers,SME-Recom-Industrial Park Developers,Chủ đầu tư Khu công nghiệp,0.46147746546382784,0.16
+SME,Recom,Infrastructure construction,SME-Recom-Infrastructure construction,Xây dựng cơ sở hạ tầng,0.12,0.08
+SME,Recom,infrastructure real estate developer,SME-Recom-infrastructure real estate developer,Nhà phát triển BĐS xây dựng hạ tầng,0.3378635345790526,0.16
+SME,Recom,Manufacturing cement,SME-Recom-Manufacturing cement,Sản xuất Xi măng,0.033415121402087584,0.08
+SME,Recom,"Manufacturing construction materials (except for iron, steel, cement)","SME-Recom-Manufacturing construction materials (except for iron, steel, cement)","Sản xuất Vật liệu Xây dựng (trừ sắt, thép, xi măng)",0.03338735931554505,0.05
+SME,Recom,Manufacturing iron and steel,SME-Recom-Manufacturing iron and steel,Sản xuất Sắt thép,0.01901214397087232,0.05
+SME,Recom,Others,SME-Recom-Others,Khác,-,0.03
+SME,Recom,Residential Developer,SME-Recom-Residential Developer,Nhà phát triển khu dân cư,0.19029640313683716,0.16
+SME,Recom,Services installation,SME-Recom-Services installation,"Dịch vụ Xây lắp, lắp đặt",0.1036,0.13
+SME,Recom,Trading cement,SME-Recom-Trading cement,Thương mại Xi măng,0.012994771635460686,0.05
