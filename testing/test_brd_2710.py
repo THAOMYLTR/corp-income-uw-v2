@@ -142,6 +142,20 @@ class IndustryTest(unittest.TestCase):
             self.assertEqual(fm.segment_code(f), code)
 
 
+class RelationTest(unittest.TestCase):
+    def test_one_phrase_per_pair(self):
+        from src.utils.report.appendix_context import _relations
+        rel = lambda a, b, r: {"member_a": a, "member_b": b, "relation": r}
+        records = [{"pass": "shareholders", "source": "customer",
+                    "data": {"relationships": [rel("Lê Thị Hoa", "Vũ Hoàng Nguyên", "vợ")]}},
+                   {"pass": "shareholders", "source": "field",
+                    "data": {"relationships": [rel("Vũ Hoàng Nguyên", "Lê Thị Hoa", "chồng"),
+                                               rel("Vũ Minh", "Vũ Hoàng Nguyên", "con")]}}]
+        found = _relations(records)
+        self.assertEqual(found["le thi hoa"], ["vợ của Vũ Hoàng Nguyên"])
+        self.assertEqual(sorted(found["vu hoang nguyen"]), ["Vũ Minh là con", "chồng của Lê Thị Hoa"])
+
+
 class FinanceGroupTest(unittest.TestCase):
     def test_good_finance_needs_growth_above_zero(self):
         flat = dict(Y2025, net_revenue=800 * M, profit_after_tax=40 * M, retained_earnings=60 * M)  # growth 0%

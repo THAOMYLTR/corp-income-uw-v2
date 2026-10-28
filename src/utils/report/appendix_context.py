@@ -132,21 +132,31 @@ def _codes(items: dict, *numbers: int) -> dict[str, dict]:
 
 
 def _relations(records: list[dict[str, Any]]) -> dict[str, list[str]]:
-    """Relations between members; [BRD 16/10] the field report (thực địa) first."""
+    """Relations between members — ONE phrase per pair of people on each person's row.
 
-    found: dict[str, list[str]] = {}
+    Documents often state the same pair both ways ("A là vợ của B", "B là chồng của A").
+    For the row of person P and another person Q the phrase is, in this order of preference:
+      1. "<quan hệ> của Q"  — a document says what P is to Q (P = member_a), e.g. "vợ của B";
+      2. "Q là <quan hệ>"   — only if no document says that, e.g. "B là chồng".
+    The field report (thực địa) is read first, as the BRD asks.
+    """
+
+    own: dict[tuple[str, str], str] = {}        # (P, Q) → "<quan hệ> của Q"
+    other: dict[tuple[str, str], str] = {}      # (P, Q) → "Q là <quan hệ>"
     shareholders = [r for r in records if r.get("pass") == "shareholders"]
     shareholders.sort(key=lambda r: 0 if r.get("source") == "field" else 1)
     for record in shareholders:
         for rel in record["data"].get("relationships") or []:
-            if not isinstance(rel, dict):
+            if not isinstance(rel, dict) or not rel.get("member_a") or not rel.get("member_b"):
                 continue
             relation = rel.get("relation") or "có quan hệ"
-            a, b = rel.get("member_a"), rel.get("member_b")
-            # "member_a is <relation> of member_b": each row reads from its own person.
-            for me, text in ((a, f"{relation} của {b or '?'}"), (b, f"{a or '?'} là {relation}")):
-                if me and text not in found.setdefault(norm_person(me), []):
-                    found[norm_person(me)].append(text)
+            a, b = rel["member_a"], rel["member_b"]
+            pa, pb = norm_person(a), norm_person(b)
+            own.setdefault((pa, pb), f"{relation} của {b}")
+            other.setdefault((pb, pa), f"{a} là {relation}")
+    found: dict[str, list[str]] = {}
+    for (person, partner), text in {**other, **own}.items():   # own phrase wins for the same pair
+        found.setdefault(person, []).append(text)
     return found
 
 
