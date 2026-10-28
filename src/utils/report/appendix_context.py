@@ -27,6 +27,8 @@ from typing import Any
 from src.agents.calculator import business_model, cic_metrics
 from src.agents.calculator import financial_metrics as fm
 from src.agents.calculator.legal_checks import norm_person, parse_date, within_lookback
+from src.agents.documents.document_matrix import get_type
+from src.utils.common import normalize_text
 
 NO_INFO = "Chưa có thông tin"
 
@@ -80,6 +82,49 @@ def _pick_by_document(records: list[dict], field: str) -> tuple[Any, str]:
                 value = ", ".join(str(v.get("name") if isinstance(v, dict) else v) for v in value)
             return value, record.get("document", "")
     return None, ""
+
+
+# [BRD 27/10] Short names of the documents, for "không khớp ở bộ hồ sơ nào" in the legal comment.
+DOC_SHORT = {
+    "gcn_dkdn": "ĐKKD", "dieu_le": "Điều lệ", "so_dang_ky_co_dong": "Sổ cổ đông",
+    "chuyen_nhuong_von": "HĐ chuyển nhượng vốn", "quyet_dinh_bo_nhiem": "QĐ bổ nhiệm",
+    "tra_cuu_dkdn": "Tra cứu thuế/ĐKDN", "du_lieu_noi_bo": "Dữ liệu nội bộ",
+    "bao_cao_thuc_dia": "Báo cáo thực địa", "bao_cao_thuc_dia_phap_ly": "Báo cáo thực địa",
+    "internal_data": "Dữ liệu nội bộ", "external_data": "Tra cứu bên ngoài",
+}
+# mismatch code → (pass, field) whose values differ
+MISMATCH_FIELDS = {
+    "tax_code_mismatch": ("legal_basic", "tax_code"), "name_mismatch": ("legal_basic", "company_name"),
+    "address_mismatch": ("legal_basic", "head_office_address"),
+    "establishment_mismatch": ("legal_basic", "establishment_date"),
+    "rep_mismatch": ("legal_basic", "legal_representatives"),
+}
+
+
+def _doc_short(record: dict) -> str:
+    kind = record.get("document_type") or ""
+    doc = get_type(kind)
+    return DOC_SHORT.get(kind) or (doc.short_label if doc else "") or record.get("document") or "?"
+
+
+def _where_differs(records: list[dict], code: str) -> str:
+    """'0101234567 (ĐKKD, Điều lệ) ≠ 0109999999 (Tra cứu thuế/ĐKDN)' — no file names, no folders."""
+
+    pass_name, field = MISMATCH_FIELDS[code]
+    groups: dict[str, tuple[str, list[str]]] = {}
+    for record in records:
+        if record.get("pass") not in (pass_name, "legal_rep" if field == "legal_representatives" else ""):
+            continue
+        value = record["data"].get(field)
+        if isinstance(value, list):
+            value = ", ".join(str(v.get("name") if isinstance(v, dict) else v) for v in value if v)
+        if value in (None, ""):
+            continue
+        key = (norm_person if field == "legal_representatives" else normalize_text)(str(value))
+        shown, docs = groups.setdefault(key, (str(value), []))
+        if _doc_short(record) not in docs:
+            docs.append(_doc_short(record))
+    return " ≠ ".join(f"{shown} ({', '.join(docs)})" for shown, docs in groups.values()) if len(groups) > 1 else ""
 
 
 def _codes(items: dict, *numbers: int) -> dict[str, dict]:
@@ -303,17 +348,23 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
         is_rep = any(norm_person(n) in reps for n in borrower_names)
         lines.append(f"KH cá nhân vay vốn {', '.join(borrower_names)} nắm giữ "
                      + (f"{pct:g}% vốn góp".replace(".", ",") if pct is not None else "tỷ lệ vốn góp chưa xác định")
-                     + f"; {'là' if is_rep else 'không phải là'} người đại diện theo pháp luật của doanh nghiệp"
-                     + (f" ({result['meta']['borrower_source']})." if result["meta"].get("borrower_source") else "."))
+                     + f"; {'là' if is_rep else 'không phải là'} người đại diện theo pháp luật của doanh nghiệp.")
     else:
         lines.append("Chưa xác định được KH cá nhân vay vốn: hồ sơ vay vốn (giấy đề nghị vay / tờ trình) không nêu tên "
                      "thành viên góp vốn hoặc người đại diện nào — kiểm tra lại hồ sơ, hoặc khai báo BORROWER_NAMES.")
-    warn = [codes[c]["message"] for c in LEGAL_MISMATCH_CODES if c in codes]
+    # [BRD 27/10] No file names / folders; a mismatch says which documents disagree, briefly.
+    warn = []
+    for c in LEGAL_MISMATCH_CODES:
+        if c in codes:
+            where = _where_differs(records, c)
+            warn.append(codes[c]["message"] + (f": {where}" if where else ""))
     warn += [codes[c]["message"] for c in ("status_not_active", "status_unknown") if c in codes]
     warn += [f["message"] for f in items[2]["findings"]
              if f["code"] in ("ownership_not_100", "ownership_incomplete", "capital_sum_mismatch")]
+    listed = {*LEGAL_MISMATCH_CODES, "status_not_active", "status_unknown",
+              "ownership_not_100", "ownership_incomplete", "capital_sum_mismatch"}
     warn += [f["message"] for n in (1, 2, 3) for f in items[n]["findings"]
-             if f["severity"] == "alert" and f["message"] not in warn]
+             if f["severity"] == "alert" and f["code"] not in listed and f["message"] not in warn]
     if warn:
         lines.append("Cảnh báo pháp lý cần đánh giá lại:")
         lines += [f"  + {w}" for w in warn]

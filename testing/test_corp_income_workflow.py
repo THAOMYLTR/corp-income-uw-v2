@@ -208,6 +208,16 @@ class AppendixTemplateTest(CorpIncomeWorkflowTest):
         self.assertIn("| Nguyễn Văn A | Khách hàng vay vốn | 60% | Có — nhận vốn góp ngày 20/03/2026 |", report)
         self.assertNotIn("{{", report)
 
+    def test_legal_comment_names_documents_only_where_they_differ(self):
+        """[BRD 27/10] No file names in the legal comment; a mismatch says which documents differ."""
+        md = self.result["response"]
+        start = md.index("Nhận xét về pháp lý Khách hàng")
+        comment = md[start:md.index("\n", start)]
+        self.assertNotIn(".txt", comment)
+        self.assertNotIn("ho_so_", comment)
+        self.assertIn("0101234568 (Tra cứu thuế/ĐKDN) ≠ 0101234567 (ĐKKD, Dữ liệu nội bộ)", comment)
+        self.assertEqual(comment.count("MST không khớp"), 1)
+
     def test_financial_table_and_ratios_are_computed_in_code(self):
         report = self.result["response"]
         self.assertIn("<td>{}</td>".format("70.000"), report)          # DTT 2025, triệu đồng

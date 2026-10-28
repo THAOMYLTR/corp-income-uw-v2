@@ -11,8 +11,9 @@ Ghi chú trong khối này không gửi cho LLM.
 ## NhanXet
 [BRD 27/10] Ô nhận xét DUY NHẤT của mục 1 (pháp lý DN và pháp lý KH vay). Viết đúng khung:
 **Kết luận:** <Phù hợp / Cần làm rõ / Rủi ro cao> — 1 câu: DN hoạt động bao lâu, KH vay sở hữu bao nhiêu %, có là NĐDPL không.
-**Căn cứ:** số năm DN hoạt động; % vốn góp KH vay nắm giữ; vai trò NĐDPL; MST / tình trạng hoạt động đã đối chiếu — mỗi ý một gạch đầu dòng, có nguồn.
-**Cảnh báo pháp lý cần đánh giá lại:** liệt kê nguyên văn các cảnh báo (tên/TSC/NĐDPL/năm thành lập không khớp, DN không hoạt động/tạm ngưng, tổng tỷ lệ sở hữu ≠ 100%, thay đổi thành viên/NĐDPL trong 12 tháng).
+**Căn cứ:** số năm DN hoạt động; % vốn góp KH vay nắm giữ; vai trò NĐDPL; MST / tình trạng hoạt động đã đối chiếu — mỗi ý một gạch đầu dòng, ngắn gọn.
+**Cảnh báo pháp lý cần đánh giá lại:** liệt kê nguyên văn các cảnh báo (tên/TSC/NĐDPL/năm thành lập không khớp, DN không hoạt động/tạm ngưng, tổng tỷ lệ sở hữu ≠ 100%, thay đổi thành viên/NĐDPL trong 12 tháng). Thông tin không khớp thì giữ nguyên phần "giá trị (bộ hồ sơ) ≠ giá trị (bộ hồ sơ)" của bản nháp.
+Ô này KHÔNG ghi tên file, tên thư mục hay nguồn (KH cung cấp / thực địa / tra cứu…) — kể cả khi quy tắc chung yêu cầu nêu cơ sở. Chỉ nêu bộ hồ sơ (ĐKKD, Điều lệ, Tra cứu thuế…) ở chỗ thông tin không khớp.
 **Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.phap_ly" — làm quyết định mạnh lên hay yếu đi, vì sao.
 
 ## SanPhamDichVu
