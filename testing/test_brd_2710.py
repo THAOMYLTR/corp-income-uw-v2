@@ -83,19 +83,34 @@ class BusinessModelTest(unittest.TestCase):
         self.assertEqual(merged[0]["product"], "Thép cuộn")      # field report wins the product
 
     def test_suppliers_left_customers_right_no_invented_rows(self):
+        import base64, re
         records = [model("hop_dong_dau_vao_dau_ra", "HD.pdf",
                          suppliers=[{"name": "Nhà cung cấp X", "product": "Xi măng", "value": 5 * M}],
                          customers=[{"name": "Khách Y", "product": "", "value": 9 * M},
                                     {"name": "Khách Z", "product": "Gạch", "value": 3 * M}])]
         html = business_model.diagram("CÔNG TY ABC", records)
-        first_row = html.split("<tr>")[2]
-        self.assertLess(first_row.index("Nhà cung cấp X"), first_row.index("CÔNG TY ABC"))
-        self.assertLess(first_row.index("CÔNG TY ABC"), first_row.index("Khách Y"))
-        self.assertEqual(html.count("<tr>"), 3)                    # header + 2 rows (max of the two sides)
-        self.assertNotIn("khác", html.lower().replace("khách", ""))
-        self.assertNotIn("không rõ", html)
+        self.assertNotIn("\n", html)                               # fits one table cell
         self.assertIn("không có tỷ trọng", html)
-        self.assertNotIn("\n", html)
+        svg = base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)", html).group(1)).decode("utf-8")
+        x = {t: float(re.search(r'<tspan x="([\d.]+)"[^>]*>' + re.escape(t), svg).group(1))
+             for t in ("Xi măng", "Nhà cung cấp X", "CÔNG TY ABC", "Gạch", "Khách Z", "Khách Y")}
+        # 5 tiers: sản phẩm đầu vào < đối tác đầu vào < DN < sản phẩm đầu ra < đối tác đầu ra
+        self.assertLess(x["Xi măng"], x["Nhà cung cấp X"])
+        self.assertLess(x["Nhà cung cấp X"], x["CÔNG TY ABC"])
+        self.assertLess(x["CÔNG TY ABC"], x["Gạch"])
+        self.assertLess(x["Gạch"], x["Khách Z"])
+        self.assertEqual(x["Khách Y"], x["Khách Z"])                # no product → no product box
+        self.assertEqual(svg.count("<rect x"), 6)                    # 2 left + 3 right (Y has no product) + DN
+        self.assertNotIn("không rõ", svg)
+        self.assertNotIn("khác", svg.lower().replace("khách", ""))
+
+    def test_share_labels_only_when_given(self):
+        import base64, re
+        records = [model("bao_cao_thuc_dia", "BCTD.pdf",
+                         suppliers=[{"name": "A", "product": "", "value": 1 * M, "share_pct": 45}])]
+        svg = base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)",
+                                         business_model.diagram("DN", records)).group(1)).decode("utf-8")
+        self.assertIn(">45%<", svg)
 
     def test_no_partner_no_diagram(self):
         self.assertEqual(business_model.diagram("ABC", []), "")

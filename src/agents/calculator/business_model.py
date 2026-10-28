@@ -14,6 +14,7 @@ Input: records of pass "business_model" (one per document). The BRD rules:
 
 from __future__ import annotations
 
+import base64
 import html
 from typing import Any
 
@@ -85,8 +86,112 @@ def _cell(text: str) -> str:
     return html.escape(" ".join(str(text or "").split())).replace("|", "/")
 
 
+# --------------------------------------------------------------------------- #
+# [BRD 27/10] The diagram, drawn as an SVG (same look as the BRD's Excel shape):
+#   sản phẩm đầu vào → đối tác đầu vào ─%─┐                ┌─%→ sản phẩm đầu ra → đối tác đầu ra
+#                                          ├→ DOANH NGHIỆP ─┤
+#   sản phẩm đầu vào → đối tác đầu vào ─%─┘                └─%→ sản phẩm đầu ra → đối tác đầu ra
+# Embedded as <img src="data:image/svg+xml;base64,…">: one line (fits the table cell) and
+# shown the same in the PDF (WeasyPrint), HTML and the .md file. No library needed.
+# --------------------------------------------------------------------------- #
+BOX_W, BOX_H, COL_GAP, ROW_GAP, MARGIN = 150, 52, 90, 22, 16
+FILL, STROKE, TEXT, LINE = "#dcdcf5", "#8f8fcf", "#1f1f3d", "#555555"
+FONT = "Arial, Helvetica, sans-serif"
+CHARS_PER_LINE, MAX_LINES = 22, 3
+WIDTH = 2 * MARGIN + 5 * BOX_W + 4 * COL_GAP
+
+
+def _wrap(text: str) -> list[str]:
+    """Split a label into at most MAX_LINES lines of about CHARS_PER_LINE characters."""
+
+    lines, line = [], ""
+    for word in " ".join(str(text or "").split()).split(" "):
+        if line and len(line) + 1 + len(word) > CHARS_PER_LINE:
+            lines.append(line)
+            line = word
+        else:
+            line = f"{line} {word}".strip()
+    lines.append(line)
+    if len(lines) > MAX_LINES:
+        lines = lines[:MAX_LINES]
+        lines[-1] = lines[-1][: CHARS_PER_LINE - 1].rstrip() + "…"
+    return lines
+
+
+def _box(x: float, y: float, text: str, bold: bool = False) -> str:
+    lines = _wrap(text)
+    first = y + BOX_H / 2 - (len(lines) - 1) * 7 + 4
+    spans = "".join(f'<tspan x="{x + BOX_W / 2}" y="{first + i * 14}">{html.escape(t)}</tspan>'
+                    for i, t in enumerate(lines))
+    weight = ' font-weight="bold"' if bold else ""
+    return (f'<rect x="{x}" y="{y}" width="{BOX_W}" height="{BOX_H}" rx="3" fill="{FILL}" '
+            f'stroke="{STROKE}"/><text text-anchor="middle" font-size="11"{weight}>{spans}</text>')
+
+
+def _label(x: float, y: float, text: str) -> str:
+    """A % on a line, on a white patch so the line does not cross the digits."""
+
+    w = 7 * len(text) + 6
+    return (f'<rect x="{x - w / 2}" y="{y - 8}" width="{w}" height="14" fill="#ffffff"/>'
+            f'<text x="{x}" y="{y + 3}" text-anchor="middle" font-size="10">{html.escape(text)}</text>')
+
+
+def _share(p: dict[str, Any]) -> str:
+    return f"{p['share_pct']:g}%".replace(".", ",") if p.get("share_pct") is not None else ""
+
+
+def diagram_svg(company: str, left: list[dict[str, Any]], right: list[dict[str, Any]]) -> str:
+    """The SVG text. Suppliers always on the LEFT (arrows into the company), buyers on the
+    RIGHT (arrows out). A partner with no product has no product box (BRD: xóa khối đó)."""
+
+    rows = max(len(left), len(right), 1)
+    col = [MARGIN + i * (BOX_W + COL_GAP) for i in range(5)]
+    height = 2 * MARGIN + rows * BOX_H + (rows - 1) * ROW_GAP
+    row_y = lambda i, n: MARGIN + (height - 2 * MARGIN - (n * BOX_H + (n - 1) * ROW_GAP)) / 2 + i * (BOX_H + ROW_GAP)
+    mid = height / 2
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{height}" '
+        f'viewBox="0 0 {WIDTH} {height}" font-family="{FONT}" fill="{TEXT}">',
+        f'<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">'
+        f'<path d="M0,0 L8,4 L0,8 z" fill="{LINE}"/></marker></defs>',
+        f'<rect width="100%" height="100%" fill="#ffffff"/>',
+    ]
+    line = f'fill="none" stroke="{LINE}" stroke-width="1.2"'
+    trunk_l = col[1] + BOX_W + COL_GAP / 2          # where the left branches merge
+    trunk_r = col[2] + BOX_W + COL_GAP / 2          # where the right branches split
+
+    for i, p in enumerate(left):                    # [sản phẩm] → [đối tác] ─%─ → công ty
+        y = row_y(i, len(left))
+        cy = y + BOX_H / 2
+        if p.get("product"):
+            parts.append(_box(col[0], y, p["product"]))
+            parts.append(f'<path d="M{col[0] + BOX_W},{cy} H{col[1] - 2}" {line} marker-end="url(#a)"/>')
+        parts.append(_box(col[1], y, p["name"]))
+        parts.append(f'<path d="M{col[1] + BOX_W},{cy} H{trunk_l} V{mid} H{col[2] - 2}" {line} '
+                     'marker-end="url(#a)"/>')
+        if _share(p):
+            parts.append(_label(col[1] + BOX_W + COL_GAP / 4, cy, _share(p)))
+
+    for i, p in enumerate(right):                   # công ty ─%→ [sản phẩm] → [đối tác]
+        y = row_y(i, len(right))
+        cy = y + BOX_H / 2
+        target = col[3] if p.get("product") else col[4]
+        parts.append(f'<path d="M{col[2] + BOX_W},{mid} H{trunk_r} V{cy} H{target - 2}" {line} '
+                     'marker-end="url(#a)"/>')
+        if _share(p):
+            parts.append(_label(trunk_r + COL_GAP / 4, cy, _share(p)))
+        if p.get("product"):
+            parts.append(_box(col[3], y, p["product"]))
+            parts.append(f'<path d="M{col[3] + BOX_W},{cy} H{col[4] - 2}" {line} marker-end="url(#a)"/>')
+        parts.append(_box(col[4], y, p["name"]))
+
+    parts.append(_box(col[2], mid - BOX_H / 2, company, bold=True))
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def diagram(company: str, records: list[dict[str, Any]]) -> str:
-    """The 5-tier diagram as an HTML table (renders in Markdown, HTML and PDF).
+    """The 5-tier diagram, as a one-line <img> with the SVG inside (data URI).
 
     Returns "" when no document names a partner (the template then says so).
     """
@@ -94,35 +199,12 @@ def diagram(company: str, records: list[dict[str, Any]]) -> str:
     left, right = partners(records, "suppliers"), partners(records, "customers")
     if not left and not right:
         return ""
+    svg = diagram_svg(company, left, right)
+    alt = _cell("Đầu vào: " + ", ".join(p["name"] for p in left)
+                + " → " + company + " → Đầu ra: " + ", ".join(p["name"] for p in right))
+    image = (f'<img alt="{alt}" style="width:100%;max-width:{WIDTH}px" '
+             f'src="data:image/svg+xml;base64,{base64.b64encode(svg.encode("utf-8")).decode("ascii")}">')
     with_share = any(p["share_pct"] is not None for p in left + right)
-
-    def label(p: dict[str, Any] | None) -> str:
-        if not p:
-            return ""
-        share = f" ({p['share_pct']:g}%)".replace(".", ",") if with_share and p["share_pct"] is not None else ""
-        return _cell(p["name"]) + share
-
-    rows = max(len(left), len(right))
-    head = ("<tr><th>Sản phẩm đầu vào</th><th>Đối tác đầu vào<br>(nhà cung cấp)</th><th></th>"
-            "<th>Doanh nghiệp</th><th></th><th>Đối tác đầu ra<br>(khách mua)</th><th>Sản phẩm đầu ra</th></tr>")
-    body = []
-    for i in range(rows):
-        sup = left[i] if i < len(left) else None
-        cus = right[i] if i < len(right) else None
-        cells = [
-            f"<td>{_cell(sup['product']) if sup else ''}</td>",
-            f"<td>{label(sup)}</td>",
-            f"<td>{'→' if sup else ''}</td>",
-        ]
-        if i == 0:
-            cells.append(f'<td rowspan="{rows}" align="center"><b>{_cell(company)}</b></td>')
-        cells += [
-            f"<td>{'→' if cus else ''}</td>",
-            f"<td>{label(cus)}</td>",
-            f"<td>{_cell(cus['product']) if cus else ''}</td>",
-        ]
-        body.append("<tr>" + "".join(cells) + "</tr>")
     note = "" if with_share else "<br><i>Hồ sơ không có tỷ trọng — chỉ ghi tên đối tác và sản phẩm.</i>"
     sources = sorted({p["source"] for p in left + right if p.get("source")})
-    return ("<table>" + head + "".join(body) + "</table>"
-            + note + (f"<br><i>Nguồn: {_cell(', '.join(sources))}</i>" if sources else ""))
+    return image + note + (f"<br><i>Nguồn: {_cell(', '.join(sources))}</i>" if sources else "")
