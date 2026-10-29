@@ -253,7 +253,7 @@ Mục tiêu: người phê duyệt đọc 30 giây là biết NÊN hay KHÔNG N�
 
 **1. Khung mỗi ô nhận xét (đúng thứ tự):**
 - **Kết luận:** một trong ba mức — *Phù hợp* / *Cần làm rõ* / *Rủi ro cao* — kèm 1 câu nói thẳng vấn đề chính.
-- **Căn cứ:** 2–4 gạch đầu dòng, mỗi dòng = 1 sự kiện + con số/ngày/tên + nguồn (tên file).
+- **Căn cứ:** 2–4 gạch đầu dòng, mỗi dòng = 1 sự kiện + con số/ngày/tên, ngắn, KHÔNG ghi nguồn / tên file (BRD 29/10).
 - **Cảnh báo:** liệt kê đủ các cảnh báo của mục đó, không bỏ sót, không làm nhẹ đi.
 - **Ảnh hưởng tới quyết định:** 1 câu — điều này làm việc sử dụng nguồn thu doanh nghiệp MẠNH LÊN hay YẾU ĐI, vì sao.
 

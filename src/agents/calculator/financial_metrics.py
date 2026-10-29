@@ -139,7 +139,7 @@ def merge_periods(records: list[dict[str, Any]]) -> dict[str, Any]:
             sources.append(label)
         if data.get("auditor_name"):
             auditors.append(str(data["auditor_name"]))
-        unusual += [f"{u} — {record.get('document')}" for u in data.get("unusual_items") or [] if u]
+        unusual += [str(u) for u in data.get("unusual_items") or [] if u and str(u) not in unusual]
         for period in data.get("periods") or []:
             if not isinstance(period, dict):
                 continue
@@ -167,8 +167,7 @@ def merge_periods(records: list[dict[str, Any]]) -> dict[str, Any]:
                       and abs(target[field] - value) > BALANCE_TOLERANCE * max(abs(target[field]), 1)):
                     # [BT] số liệu cuối kỳ năm trước <> đầu kỳ năm sau
                     cross_document.append(
-                        f"{LABELS.get(field, field)} năm {target['period']}: {fmt(target[field])} "
-                        f"({target['_source'][field]}) ≠ {fmt(value)} ({record.get('document')})")
+                        f"{LABELS.get(field, field)} năm {target['period']}: {fmt(target[field])} ≠ {fmt(value)}")
     return {"years": dict(sorted(years.items())), "interim": interim, "unusual_items": unusual,
             "sources": sources, "auditors": auditors, "cross_document": cross_document}
 
@@ -246,9 +245,8 @@ def vat_summary(records: list[dict[str, Any]], as_of: date, years: dict[str, Any
         cur = by_year[current]
         prev_revenue = _num((years.get(str(current - 1)) or {}).get("net_revenue"))
         share = _ratio(cur["revenue"], prev_revenue)
-        text = (f"Doanh thu theo tờ khai VAT đến tháng {max(cur['months']):02d}/{current} là "
-                f"{fmt(cur['revenue'])} triệu đồng"
-                + (f", bằng {pct(share)} doanh thu năm {current - 1}" if share is not None else ""))
+        text = (f"DT theo tờ khai VAT đến T{max(cur['months']):02d}/{current}: {fmt(cur['revenue'])} tr"
+                + (f" = {pct(share)} DT {current - 1}" if share is not None else ""))
         # [BRD 27/10] biến động DT năm N = DT BQ tháng năm N (tờ khai) / DT BQ tháng năm N-1 − 1
         if prev_revenue:
             monthly_growth = (cur["revenue"] / len(cur["months"])) / (prev_revenue / 12) - 1
@@ -305,8 +303,7 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
             material.append(f"Công ty kiểm toán thuộc danh sách loại trừ: {auditor}")
             bs_texts.append(material[-1])
     if merged["auditors"] and not excluded:
-        other.append("Chưa có danh sách công ty kiểm toán loại trừ để đối chiếu "
-                     f"({EXCLUDED_AUDITORS_FILE.name}) — kiểm toán: {', '.join(merged['auditors'])}")
+        other.append(f"Chưa đối chiếu danh sách công ty kiểm toán loại trừ (kiểm toán: {', '.join(merged['auditors'])})")
         bs_texts.append(other[-1])
     for index, year in enumerate(ordered):
         fig = years[year]
@@ -343,8 +340,7 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
                          f"{prev.get('months') or 12} tháng (năm đầu thành lập)")
         growth = ratios[year]["revenue_growth"]
         if growth is not None and not REVENUE_GROWTH_CHECK[0] <= growth <= REVENUE_GROWTH_CHECK[1]:
-            other.append(f"{year}: biến động DT {pct(growth)} (DTT {fmt(prev.get('net_revenue'))} → "
-                         f"{fmt(fig.get('net_revenue'))}) — bất thường, kiểm tra lại số đọc / kỳ báo cáo")
+            other.append(f"Biến động DT {year} bất thường — kiểm tra lại số đọc / kỳ báo cáo")
     cross = [f"Số liệu cuối kỳ năm trước ≠ đầu kỳ năm sau: {m}" for m in merged["cross_document"]]
     material += cross
     bs_texts += cross
@@ -358,29 +354,25 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
         revenue = fig.get("net_revenue")
         if revenue is not None:
             segment = next(name for floor, name in SEGMENTS if revenue >= floor)
-            status.append(f"Doanh thu thuần năm {latest} đạt {fmt(revenue)} triệu đồng, thuộc phân khúc {segment}")
-        if r["revenue_growth"] is not None:
-            status.append(f"Biến động doanh thu năm {latest}: {pct(r['revenue_growth'])}"
-                          + (" — HĐKD của KH suy giảm" if r["revenue_growth"] < REVENUE_DROP_ALERT else ""))
+            status.append(f"Phân khúc {segment} (theo DTT {latest})")
+        if r["revenue_growth"] is not None and r["revenue_growth"] < REVENUE_DROP_ALERT:
+            status.append(f"DTT {latest} giảm > 20% — HĐKD của KH suy giảm")
         if vat.get("monthly_growth") is not None:
             # [BRD 27/10] DT BQ tháng năm N (tờ khai VAT) so với năm N-1
-            status.append(f"Doanh thu BQ tháng năm {vat['current_year']} (tờ khai VAT) so với năm {latest}: "
-                          f"{pct(vat['monthly_growth'])}"
-                          + (" — doanh thu suy giảm, đề nghị đánh giá lại nguyên nhân"
-                             if vat["monthly_growth"] < REVENUE_DROP_ALERT else ""))
+            status.append(f"DT BQ tháng {vat['current_year']} (tờ khai VAT) so với {latest}: "
+                          f"{signed_pct(vat['monthly_growth'])}"
+                          + (" — suy giảm, đánh giá lại nguyên nhân" if vat["monthly_growth"] < REVENUE_DROP_ALERT else ""))
         lntt = fig.get("profit_before_tax")
         non_core = sum(v for v in (fig.get("other_income"), fig.get("financial_income")) if v is not None)
         if lntt and lntt > 0 and non_core and non_core / lntt > NON_CORE_PROFIT_ALERT:
-            status.append(f"(Thu nhập khác + DT tài chính) / LNTT = {pct(non_core / lntt)} > 20% — lợi nhuận phụ thuộc "
-                          "hoạt động tài chính/thu nhập khác, chất lượng lợi nhuận thấp")
+            status.append(f"(Thu nhập khác + DT tài chính) / LNTT = {pct(non_core / lntt)} > 20% — chất lượng lợi nhuận thấp")
         gross, interest = fig.get("gross_profit"), fig.get("interest_expense")
         if gross and gross > 0 and interest is not None and interest / gross > INTEREST_TO_GROSS_ALERT:
-            status.append(f"Chi phí lãi vay / LN gộp = {pct(interest / gross)} > 50% — lãi vay bào mòn phần lớn lợi nhuận gộp")
+            status.append(f"Chi phí lãi vay / LN gộp = {pct(interest / gross)} > 50% — lãi vay bào mòn lợi nhuận gộp")
         if r["ros"] is not None and r["ros"] < 0:
-            status.append(f"ROS năm {latest} = {pct(r['ros'])} < 0 — HĐKD không hiệu quả")
+            status.append(f"ROS {latest} < 0 — HĐKD không hiệu quả")
         if r["current_ratio"] is not None and r["current_ratio"] < 1:
-            status.append(f"Hệ số thanh toán hiện hành năm {latest} = {r['current_ratio']:.2f}".replace(".", ",")
-                          + " < 1 — tài sản ngắn hạn không đủ chi trả nợ ngắn hạn, bố trí nguồn vốn chưa cân đối")
+            status.append(f"HSTT {latest} < 1 — TSNH không đủ trả nợ ngắn hạn")
 
     # [NF] Phân nhóm tài chính. "Năm N" = cột năm gần nhất của bảng tài chính (năm BCTC gần
     # nhất): biến động DT, ROS và HSTT của năm đó.
@@ -507,8 +499,7 @@ def interest_vs_cic(financials: dict[str, Any], avg_balance_12m: float | None) -
     rate = interest / avg_balance_12m
     if INTEREST_RATE_BAND[0] <= rate <= INTEREST_RATE_BAND[1]:
         return ""
-    return (f"{year}: Chi phí lãi vay {fmt(interest)} / dư nợ BQ 12 tháng theo CIC {fmt(avg_balance_12m)} = "
-            f"{pct(rate)}/năm, ngoài khoảng 6%–14% — tương quan không phù hợp")
+    return f"Chi phí lãi vay {year} / dư nợ BQ CIC = {pct(rate)}/năm, ngoài khoảng 6%–14% — không phù hợp"
 
 
 # --------------------------------------------------------------------------- #

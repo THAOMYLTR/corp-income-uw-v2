@@ -9,10 +9,10 @@ Ghi chú trong khối này không gửi cho LLM.
 -->
 
 ## SanPhamDichVu
-Đúng 3 dòng nối bằng "<br>":
-Loại hình: <sản xuất / thương mại / dịch vụ> (<tỷ trọng nếu đa loại hình>) — <nguồn>
+Đúng 3 dòng ngắn nối bằng "<br>", KHÔNG ghi nguồn / tên file:
+Loại hình: <sản xuất / thương mại / dịch vụ> (<tỷ trọng nếu đa loại hình>)
 Tên ngành: <tên theo bảng ngành TCB, hoặc như hồ sơ + "chưa đối chiếu bảng ngành TCB">
-Diễn giải chi tiết: <sản phẩm chính, quy mô, theo báo cáo thực địa — hoặc "Báo cáo thực địa chưa có thông tin">
+Diễn giải: <sản phẩm chính, quy mô — dưới 25 từ; không có thì "—">
 
 ## NhanXetHDKD
 [BRD 29/10] Dòng "Cảnh báo HĐKD" dưới bảng mục 2 — CHỈ liệt kê cảnh báo, mỗi cảnh báo một gạch đầu dòng
@@ -30,13 +30,10 @@ Không có cảnh báo nào thì ghi đúng "—" (hệ thống tự ẩn dòng)
 Địa chỉ kho hàng + "(đi thuê / sở hữu của … / chưa xác định)". Hồ sơ không có kho hàng thì ghi đúng "—" (hệ thống tự ẩn dòng).
 
 ## KetLuanNguonThuDoanhNghiep
-[BRD 27/10] Mục 5 không còn ô nhận xét riêng cho phương án kinh doanh: nếu có PAKD, nêu trong
-"Lý do chính" / "Rủi ro còn lại" việc doanh thu kế hoạch có cơ sở hay không (so với số lịch sử
-và báo cáo thực địa) — KHÔNG tự đánh giá khả thi ngoài quy tắc (giá trị dự phóng hệ thống in bên dưới).
-Viết đúng khung, theo "danh_gia_tin_dung" (quyết định đã chốt, KHÔNG đổi):
+[BRD 29/10] NGẮN GỌN — tối đa ~80 từ, KHÔNG ghi nguồn / tên file. Quy tắc quyết định giữ nguyên theo
+"danh_gia_tin_dung" (đã chốt, KHÔNG đổi): Bad corp → Không sử dụng; Normal corp → tối đa Sử dụng có điều kiện;
+Good corp và không còn rủi ro trung bình trở lên → Sử dụng. Viết đúng khung:
 **Đề xuất: <Sử dụng / Sử dụng có điều kiện / Không sử dụng> nguồn thu doanh nghiệp để đánh giá năng lực trả nợ lần này.**
-**Lý do chính:** 2–3 gạch đầu dòng mạnh nhất (rủi ro hoặc điểm mạnh), mỗi dòng có số liệu + nguồn.
-**Rủi ro còn lại & biện pháp giảm thiểu:** chỉ rủi ro mức cao / trung bình.
-**Điều kiện:** (khi "Sử dụng có điều kiện") điều kiện trước giải ngân / trong thời gian vay.
-**Hồ sơ cần bổ sung / câu hỏi cho ĐVKD:** gạch đầu dòng cụ thể.
+**Lý do:** tối đa 3 gạch đầu dòng, mỗi dòng dưới 20 từ, có số liệu (nếu có PAKD: doanh thu kế hoạch có cơ sở hay không).
+**Điều kiện:** (chỉ khi "Sử dụng có điều kiện") tối đa 2 gạch đầu dòng.
 Không nhắc lại công thức / giá trị thu nhập — hệ thống in ngay bên dưới.
