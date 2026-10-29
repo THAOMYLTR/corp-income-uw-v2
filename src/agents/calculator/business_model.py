@@ -228,5 +228,4 @@ def diagram(company: str, records: list[dict[str, Any]]) -> str:
              f'src="data:image/svg+xml;base64,{base64.b64encode(svg.encode("utf-8")).decode("ascii")}">')
     with_share = any(p["share_pct"] is not None for p in left + right)
     note = "" if with_share else "<br><i>Hồ sơ không có tỷ trọng — chỉ ghi tên đối tác và sản phẩm.</i>"
-    sources = sorted({p["source"] for p in left + right if p.get("source")})
-    return image + note + (f"<br><i>Nguồn: {_cell(', '.join(sources))}</i>" if sources else "")
+    return image + note
