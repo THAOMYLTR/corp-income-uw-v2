@@ -171,6 +171,45 @@ class RelationTest(unittest.TestCase):
         self.assertEqual(sorted(found["vu hoang nguyen"]), ["Vũ Minh là con", "chồng của Lê Thị Hoa"])
 
 
+class BorrowerFromSiteVisitTest(unittest.TestCase):
+    """[BRD 29/10] Đại diện KH trong báo cáo thực địa = người đứng ra vay (trước hồ sơ vay vốn)."""
+
+    MEMBERS = {"pass": "shareholders", "source": "customer", "document": "So co dong.pdf",
+               "data": {"members": [{"name": "Vũ Hoàng Nguyên", "member_type": "ca_nhan"},
+                                    {"name": "Nguyễn Huệ Chi", "member_type": "ca_nhan"}]}}
+    LOAN_REQUEST = None
+
+    def setUp(self):
+        from types import SimpleNamespace as Doc
+        self.Doc = Doc
+        self.loan = Doc(declared_group="ho_so_vay_von", source="customer", filename="De nghi vay.pdf",
+                        content="GIẤY ĐỀ NGHỊ VAY VỐN — Ông Vũ Hoàng Nguyên và Bà Nguyễn Huệ Chi")
+
+    def detect(self, docs, records):
+        from src.agents.calculator.borrowers import detect_borrowers
+        return detect_borrowers(docs, records)
+
+    def test_llm_field_customer_representative(self):
+        field = {"pass": "shareholders", "source": "field", "document": "BCTD.pdf",
+                 "data": {"customer_representative": "Bà Nguyễn Huệ Chi"}}
+        self.assertEqual(self.detect([self.loan], [self.MEMBERS, field]), (["Nguyễn Huệ Chi"], ["BCTD.pdf"]))
+
+    def test_representative_line_in_the_report_text(self):
+        report = self.Doc(declared_group="ho_so_soan_thao_noi_bo", source="field", filename="BCTD.pdf",
+                          content="BÁO CÁO KHẢO SÁT THỰC ĐỊA\nĐại diện khách hàng: Bà Nguyễn Huệ Chi - Phó giám đốc\n"
+                                  "Thành viên góp vốn: Vũ Hoàng Nguyên, Nguyễn Huệ Chi")
+        self.assertEqual(self.detect([report, self.loan], [self.MEMBERS]), (["Nguyễn Huệ Chi"], ["BCTD.pdf"]))
+
+    def test_people_marked_kh_vay(self):
+        field = {"pass": "shareholders", "source": "field", "document": "BCTD.pdf",
+                 "data": {"people": [{"name": "Nguyễn Huệ Chi", "relation_to_borrower": "KH vay"},
+                                     {"name": "Vũ Hoàng Nguyên", "relation_to_borrower": "Chồng KH vay"}]}}
+        self.assertEqual(self.detect([], [self.MEMBERS, field])[0], ["Nguyễn Huệ Chi"])
+
+    def test_falls_back_to_the_loan_request(self):
+        self.assertEqual(self.detect([self.loan], [self.MEMBERS])[0], ["Vũ Hoàng Nguyên", "Nguyễn Huệ Chi"])
+
+
 class FinanceGroupTest(unittest.TestCase):
     def test_good_finance_needs_growth_above_zero(self):
         flat = dict(Y2025, net_revenue=800 * M, profit_after_tax=40 * M, retained_earnings=60 * M)  # growth 0%
