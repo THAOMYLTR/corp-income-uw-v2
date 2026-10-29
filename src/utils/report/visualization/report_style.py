@@ -14,6 +14,10 @@ _TABLE = re.compile(r"<table(?P<attrs>[^>]*)>(?P<body>.*?)</table>", re.DOTALL)
 _CELL = re.compile(r"<t[hd]\b")
 _ROW = re.compile(r"<tr\b.*?</tr>", re.DOTALL)
 
+# [Sửa 29/10] Report font: Times New Roman, headings 10pt, body and tables 8pt.
+HEADING_PT = 10
+BODY_PT = 8
+
 REPORT_CSS = f"""
 @page {{
     size: A4;
@@ -35,26 +39,27 @@ body {{
        with them to size the diagram boxes, and measuring in one font while
        printing in another leaves every box the wrong width. */
     font-family: "Times New Roman", Times, "Liberation Serif", serif;
-    font-size: 9.5pt;
+    font-size: {BODY_PT}pt;                 /* [Sửa 29/10] body 8pt (was 9.5pt) */
     line-height: 1.4;
     margin: 0;
 }}
-h1 {{ font-size: 15pt; margin: 10px 0 6px; }}
-h2 {{ font-size: 12.5pt; margin: 12px 0 5px; }}
-h3 {{ font-size: 11pt; margin: 10px 0 4px; }}
-h4 {{ font-size: 10pt; margin: 8px 0 4px; }}
+/* [Sửa 29/10] every heading 10pt (was 15 / 12.5 / 11 / 10pt). Change HEADING_PT / BODY_PT above. */
+h1 {{ font-size: {HEADING_PT}pt; margin: 8px 0 5px; }}
+h2 {{ font-size: {HEADING_PT}pt; margin: 8px 0 4px; }}
+h3 {{ font-size: {HEADING_PT}pt; margin: 6px 0 3px; }}
+h4 {{ font-size: {HEADING_PT}pt; margin: 6px 0 3px; }}
 p, li {{ margin: 4px 0; }}
 blockquote {{
     margin: 6px 0; padding: 4px 10px;
     border-left: 3px solid #2f6f9f; background: #f5f8fb;
 }}
-code {{ font-size: 8.5pt; }}
+code {{ font-size: {BODY_PT}pt; }}
 
 table {{
     border-collapse: collapse;
     width: 100%;
     margin: 6px 0;
-    font-size: 8.5pt;
+    font-size: {BODY_PT}pt;
     /* Let the engine fit columns to content instead of overflowing the page. */
     table-layout: auto;
     page-break-inside: auto;
