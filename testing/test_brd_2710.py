@@ -11,7 +11,8 @@ from pathlib import Path
 from src.agents.calculator import business_model, cic_metrics, industry
 from src.agents.calculator import financial_metrics as fm
 from src.agents.documents import document_matrix as dm
-from src.utils.report.appendix_context import apply_output_conditions, plan_cells
+from src.utils.report.appendix_context import apply_output_conditions, debt_table, plan_cells
+from src.utils.report.visualization.debt_chart import debt_chart
 from src.utils.report.report_template import template_placeholders, load_template
 
 AS_OF = date(2026, 10, 27)
@@ -209,22 +210,63 @@ class ProjectionTest(unittest.TestCase):
 
 
 class PlanTableTest(unittest.TestCase):
-    TABLE = ('<table id="pakd">\n<tr><th>Phương án kinh doanh (nếu có)</th><th class="coso">Cơ sở của Khách hàng</th>'
-             '</tr>\n<tr><td>Doanh thu thuần</td><td class="coso">x</td></tr>\n</table>\nsau')
+    """[BRD 29/10] Dự phóng kinh doanh: TH vs KH, ROS / tăng trưởng theo ngành TCB vs theo dự phóng."""
 
     def test_plan_cells(self):
-        f = fm.compute([fin([Y2025, Y2024])], AS_OF)
-        cells = plan_cells({"plan_year": 2026, "plan_revenue": 1200 * M, "plan_profit_after_tax": 60 * M,
-                            "basis": "HĐ mới"}, f, "2025")
-        self.assertEqual((cells["PAKD_TangTruong_KeHoach"], cells["PAKD_ROS_KeHoach"]), ("20,0%", "5,0%"))
-        self.assertEqual(cells["PAKD_NamKeHoach"], "2026")
+        f = fm.compute([fin([dict(Y2025, cogs=600 * M), Y2024])], AS_OF)
+        nganh = {"name": "Xây dựng dân dụng", "segment": "SME", "ros": 0.12, "growth": 0.07}
+        cells = plan_cells({"plan_year": 2026, "plan_revenue": 1200 * M, "plan_cogs": 690 * M,
+                            "plan_profit_after_tax": 60 * M, "basis": "HĐ mới"}, f, "2025", nganh)
+        self.assertEqual(cells["PAKD_DTT_TangGiam"], "+20,0%")             # 1200 / 1000 − 1
+        self.assertEqual(cells["PAKD_GV_TangGiam"], "+15,0%")              # 690 / 600 − 1
+        self.assertEqual(cells["PAKD_LNST_TangGiam"], "+20,0%")            # 60 / 50 − 1
+        self.assertEqual((cells["PAKD_ROS"], cells["PAKD_TangTruong"]), ("5,0%", "+20,0%"))
+        self.assertEqual((cells["Nganh_ROS"], cells["Nganh_TangTruong"]), ("12,0%", "7,0%"))
+        self.assertIn("phân khúc SME", cells["Nganh_CoSo"])
 
-    def test_table_hidden_without_plan_and_basis_column_without_basis(self):
-        self.assertEqual(apply_output_conditions(self.TABLE, {"_has_plan": ""}), "sau")
-        out = apply_output_conditions(self.TABLE, {"_has_plan": "1", "_plan_basis": ""})
-        self.assertIn("Doanh thu thuần", out)
-        self.assertNotIn("Cơ sở của Khách hàng", out)
-        self.assertNotIn('class="coso"', out)
+    def test_tables_hidden_without_plan(self):
+        md = ('<p class="no-pakd">Khách hàng không cung cấp phương án kinh doanh.</p>\n'
+              '<table class="pakd">\n<tr><td>Doanh thu thuần</td></tr>\n</table>\nsau')
+        self.assertEqual(apply_output_conditions(md, {"_has_plan": ""}),
+                         '<p class="no-pakd">Khách hàng không cung cấp phương án kinh doanh.</p>\nsau')
+        self.assertNotIn("no-pakd", apply_output_conditions(md, {"_has_plan": "1"}))
+
+
+class AddressLinesTest(unittest.TestCase):
+    def test_missing_factory_and_warehouse_are_skipped(self):
+        row = "| Địa chỉ | - TSC: Số 1 Lê Lợi<br>- Nhà xưởng: —<br>- Kho hàng: Chưa có thông tin trong hồ sơ |"
+        out = apply_output_conditions(row + "\n**Cảnh báo HĐKD:** —\n",
+                                      {"NhaXuong": "—", "KhoHang": "Chưa có thông tin trong hồ sơ", "NhanXetHDKD": "—"})
+        self.assertEqual(out, "| Địa chỉ | - TSC: Số 1 Lê Lợi |\n")
+        kept = apply_output_conditions(row.replace("Nhà xưởng: —", "Nhà xưởng: KCN Quang Minh (đi thuê)"),
+                                       {"NhaXuong": "KCN Quang Minh (đi thuê)", "KhoHang": "—"})
+        self.assertIn("Nhà xưởng: KCN Quang Minh", kept)
+
+
+class FinanceTablesTest(unittest.TestCase):
+    """[BRD 29/10] a. lines ≥ 20% of total assets; b. growth = năm sau / năm trước − 1, signed."""
+
+    def test_only_lines_of_20_percent_or_more(self):
+        y25 = dict(Y2025, cash=25 * M, receivables=10 * M, fixed_assets=30 * M, inventory=5 * M)
+        y24 = dict(Y2024, cash=5 * M, receivables=30 * M, fixed_assets=50 * M, inventory=5 * M)
+        f = fm.compute([fin([y25, y24])], AS_OF)
+        shown = [label for label, _ in fm.asset_lines(f, ("2024", "2025"))]
+        self.assertEqual(shown, ["Tiền và tương đương tiền", "Phải thu & trả trước", "TSCĐ ròng"])
+
+    def test_signed_growth(self):
+        self.assertEqual((fm.signed_pct(2.426), fm.signed_pct(-0.014), fm.signed_pct(None)),
+                         ("+242,6%", "-1,4%", "—"))
+
+    def test_interest_band_6_to_14_percent(self):
+        f = fm.compute([fin([dict(Y2025, interest_expense=1 * M), Y2024])], AS_OF)
+        self.assertIn("ngoài khoảng 6%–14%", fm.interest_vs_cic(f, 100 * M))      # 1%/năm
+        self.assertEqual(fm.interest_vs_cic(f, 10 * M), "")                         # 10%/năm
+
+    def test_structure_remarks(self):
+        f = fm.compute([fin([dict(Y2025, non_current_assets=60 * M), Y2024])], AS_OF)
+        remarks = fm.structure_remarks(f, "thuong_mai")
+        self.assertTrue(any("thương mại có tài sản dài hạn" in r for r in remarks))
+        self.assertTrue(any("Vốn lưu động ròng năm 2025 = 30" in r for r in remarks))     # 60 − 30
 
 
 class CicTableTest(unittest.TestCase):
@@ -241,7 +283,8 @@ class CicTableTest(unittest.TestCase):
         r = cic_metrics.compute([self.s10a()], AS_OF, revenue_prev_year=900 * M, business_type="thuong_mai")
         rows = {x["name"]: x for x in r["lenders"]}
         self.assertEqual(rows["Techcombank"]["collaterals"], ["QSDĐ Hà Nội"])
-        self.assertEqual(rows["Vietcombank"]["other"], 5 * M)           # cam kết ngoại bảng in "dư nợ khác"
+        self.assertEqual(rows["Vietcombank"]["off_balance"], 5 * M)     # [BRD 29/10] ngoại bảng apart
+        self.assertEqual(rows["Vietcombank"]["total"], 20 * M)          # not in Tổng dư nợ
         self.assertEqual(r["group"], "Good bureau")
 
     def test_card_late_payment_blocks_good_bureau(self):
@@ -250,32 +293,46 @@ class CicTableTest(unittest.TestCase):
         self.assertEqual(r["group"], "Normal bureau")
 
 
+class DebtTableTest(unittest.TestCase):
+    def test_columns_per_lender_and_chart(self):
+        data = {"report_type": "S10A", "query_date": "20/10/2026",
+                "lenders": [{"name": "Vietinbank", "short_term": 60 * M, "long_term": 20 * M},
+                            {"name": "VCB", "short_term": 10 * M, "finance_lease": 10 * M, "off_balance": 7 * M}],
+                "monthly_balances_12m": [{"month": f"{m:02d}/2026", "balance": (90 + m) * M} for m in range(1, 13)]}
+        cic = cic_metrics.compute([{"pass": "cic", "document": "CIC.pdf", "data": data}], AS_OF, 1200 * M)
+        table = debt_table(cic)
+        self.assertNotIn("\n", table)                                  # one line: sits in a table cell
+        self.assertIn("<th>Vietinbank</th><th>VCB</th><th>Tổng</th>", table)
+        self.assertIn("<td>Cho thuê TC</td><td>0</td><td>10</td><td>10</td>", table)
+        self.assertIn("<td>%</td><td>80,0%</td><td>20,0%</td><td>100%</td>", table)
+        self.assertIn("Cam kết ngoại bảng tại: VCB (*)", table)
+        self.assertEqual([m for m, _ in cic["monthly"]][:2], ["01/2026", "02/2026"])
+        chart = debt_chart(cic["monthly"], cic["avg_balance_12m"])
+        self.assertTrue(chart.startswith("<img") and "\n" not in chart)
+        self.assertEqual(debt_chart([]), "")
+
+
 class TemplateTest(unittest.TestCase):
     TEXT = load_template()[0]
 
-    def test_template_has_the_appendix_sections(self):
-        for heading in ("### 1. Pháp lý doanh nghiệp", "#### a. Thông tin cơ bản về pháp lý doanh nghiệp",
-                        "#### b. Thành viên góp vốn & người đại diện theo pháp luật",
-                        "### 2. Hoạt động kinh doanh", "Mô hình HĐKD (nếu có)", "### 3. Tài chính",
-                        "Cập nhật các tháng năm", "### 4. Dư nợ tại TCTD", "#### c. Chất lượng tín dụng",
-                        "### 5. Kết luận nguồn thu doanh nghiệp"):
-            self.assertIn(heading, self.TEXT)
+    def test_template_follows_the_brd_of_29_10(self):
+        for text in ("#### a. Thông tin cơ bản về pháp lý doanh nghiệp",
+                     "| Tên thành viên góp vốn/ ban lãnh đạo | Tỷ lệ vốn góp (%) | Chức vụ | Mối quan hệ | "
+                     "Mức độ ảnh hưởng tới Khách hàng | Đánh giá về năng lực, uy tín và kinh nghiệm |",
+                     "#### a. Ngành nghề hoạt động kinh doanh", "#### b. Mô tả hoạt động kinh doanh",
+                     "| Mô hình hoạt động kinh doanh | {{MoHinhHDKD}} |",
+                     "#### a. Cơ cấu tài sản, nguồn vốn",
+                     "<th>Chỉ tiêu</th><th>{{Nam-2}}</th><th>% Tỷ trọng</th><th>{{Nam-1}}</th><th>% Tỷ trọng</th>"
+                     "<th>Nhận xét</th>",
+                     "#### b. Quy mô & tăng trưởng & chỉ số", "<th>Tăng trưởng</th>",
+                     "{{BangDuNoTCTD}}", "{{BieuDoDuNo}}", "#### b. Chất lượng tín dụng",
+                     "<th>Chỉ tiêu</th><th>TH {{Nam-1}}</th><th>KH {{PAKD_NamKeHoach}}</th><th>Tăng/ giảm</th>"
+                     "<th>Cơ sở dự phóng</th>",
+                     "<th>Theo am hiểu ngành TCB</th><th>Theo dự phóng</th>", "#### b. Đề xuất"):
+            self.assertIn(text, self.TEXT)
         names = set(template_placeholders(self.TEXT))
-        self.assertFalse({"NhanXetPhapLyDN", "NhanXetDuNo", "NhanXetPAKD", "Nguon", "DoanhNghiepA"} & names)
-
-    def test_tables_are_written_out_like_the_brd(self):
-        # Every column header of the BRD tables is in the template itself, not built by code.
-        for header in ("| Họ và tên | Mối quan hệ | Tỷ lệ góp vốn |",
-                       '<th rowspan="2">TCTD</th><th colspan="4">Số dư cấp tín dụng</th>',
-                       "<th>Dư nợ ngắn hạn</th><th>Dư nợ TDH</th><th>Dư nợ khác</th><th>Tổng số dư CTD</th>",
-                       '<th rowspan="2">Tên TSBĐ</th><th rowspan="2">Giá trị TSBĐ</th><th rowspan="2">Chủ sở hữu TSBĐ</th>',
-                       "<th>Phương án kinh doanh (nếu có)</th><th>{{Nam-2}}</th><th>{{Nam-1}}</th><th>Cập nhật năm T</th>",
-                       '<th class="coso">Cơ sở của Khách hàng</th>',
-                       "<th>Phân nhóm tài chính doanh nghiệp (POC)</th>", "<th>Phân nhóm bureau (POC)</th>",
-                       "<th>Phân nhóm doanh nghiệp (POC)</th>"):
-            self.assertIn(header, self.TEXT)
-        for row in ("Doanh thu thuần", "Biến động doanh thu thuần", "Lợi nhuận sau thuế", "ROS (LNST/DTT)"):
-            self.assertIn(f"<tr><td>{row}</td>", self.TEXT)
+        self.assertFalse({"NhanXet", "NhanXetTaiChinh", "KQ_TaiChinh_1", "DTTCurrent"} & names)
+        self.assertNotIn('class="poc"', self.TEXT)                      # no "Phân nhóm" tables any more
 
 
 if __name__ == "__main__":

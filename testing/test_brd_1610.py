@@ -135,7 +135,7 @@ class WriterFramesTest(unittest.TestCase):
         from src.agents.report_writer import load_cell_specs
         specs = load_cell_specs()
         self.assertIn("NhanXetHDKD", specs)
-        self.assertIn("**Kết luận:**", specs["NhanXetHDKD"])
+        self.assertIn("Không có cảnh báo nào thì ghi đúng", specs["NhanXetHDKD"])      # [BRD 29/10]
 
     def test_number_guard(self):
         from src.agents.report_writer import keeps_every_number

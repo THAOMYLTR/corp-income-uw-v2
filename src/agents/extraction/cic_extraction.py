@@ -15,7 +15,7 @@ from src.agents.extraction.structured_extraction import (
 from src.prompts import system_prompt
 
 REQUIRED_TOP_LEVEL_KEYS = {"report_type", "lenders"}
-_LENDER_FIELDS = ("short_term", "long_term", "other", "off_balance")
+_LENDER_FIELDS = ("short_term", "long_term", "finance_lease", "other", "off_balance")
 
 
 def normalize_amounts(result: dict[str, Any]) -> dict[str, Any]:

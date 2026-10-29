@@ -19,7 +19,7 @@ REQUIRED_TOP_LEVEL_KEYS = {"has_plan"}
 
 def normalize_amounts(result: dict[str, Any]) -> dict[str, Any]:
     multiplier = resolve_money_multiplier(result.get("source_unit"))
-    for field in ("plan_revenue", "plan_profit_after_tax"):
+    for field in ("plan_revenue", "plan_cogs", "plan_profit_after_tax"):
         result[field] = scale_amount(result.get(field), multiplier)
     result["source_unit"] = "dong"
     return result

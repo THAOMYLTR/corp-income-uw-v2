@@ -32,6 +32,8 @@ QUY TẮC BẮT BUỘC:
   phần để hệ thống tự tính — "cash" (tiền và tương đương tiền), "short_term_investments"
   (đầu tư tài chính ngắn hạn), "receivables" (các khoản phải thu), "inventory" (hàng
   tồn kho), "other_assets" (tài sản khác/tài sản ngắn hạn khác). KHÔNG tự cộng.
+- [BRD 29/10] "fixed_assets": tài sản cố định — GIÁ TRỊ CÒN LẠI (ròng, sau hao mòn), mã 220 (TT200)
+  hoặc dòng "Tài sản cố định" (TT133).
 - [BRD 16/10] "retained_earnings": lợi nhuận sau thuế chưa phân phối (mã 421).
   "other_income": thu nhập khác (mã 31). "interest_expense": "trong đó: chi phí lãi
   vay" (mã 23). "auditor_name": tên công ty kiểm toán (BCTC kiểm toán), '' nếu không có.
@@ -61,7 +63,7 @@ Trả về CHÍNH XÁC JSON sau, không thêm text:
       "profit_before_tax": null, "profit_after_tax": null,
       "depreciation": null,
       "cash": null, "short_term_investments": null, "receivables": null,
-      "inventory": null, "other_assets": null,
+      "inventory": null, "other_assets": null, "fixed_assets": null,
       "retained_earnings": null, "other_income": null, "interest_expense": null,
       "page": <số trang từ mốc "--- Page N ---" hoặc null>
     }

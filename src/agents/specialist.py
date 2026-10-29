@@ -81,8 +81,8 @@ EXCERPT_FIRST = ("bao_cao_thuc_dia", "bao_cao_thuc_dia_phap_ly", "du_lieu_noi_bo
 # [BRD 16/10] Comments code writes as a fact list; the LLM rewrites them into the frame of
 # corp-income-cell-specs.md. A rewrite that drops any number of the draft is rejected and
 # the code draft is kept. CORP_INCOME_POLISH_COMMENTS=0 keeps the code drafts as they are.
-# [BRD 27/10] the template has one legal comment and no CIC comment any more.
-POLISH_CELLS = ("NhanXet", "NhanXetTaiChinh")
+# [BRD 29/10] comments are short code-written lines inside the tables now: no LLM rewrite.
+POLISH_CELLS: tuple[str, ...] = ()
 POLISH = os.getenv("CORP_INCOME_POLISH_COMMENTS", "1") != "0"
 EXCERPT_CHARS = {"first": 6_000, "other": 2_500}
 EXCERPT_TOTAL = 80_000
@@ -244,7 +244,8 @@ class CorpIncomeAnalysis:
         # 1. Code fills every fact and figure.
         names = template_placeholders(template_body)
         ctx = {**build_context(base),
-               **build_appendix_context(base, records, financials, as_of, cic=cic, corp=corp, income=income)}
+               **build_appendix_context(base, records, financials, as_of, cic=cic, corp=corp, income=income,
+                                 industry=nganh)}
         fill_missing_financial_names(set(names), ctx)
 
         # 2. The LLM writes only what is left.
@@ -253,7 +254,9 @@ class CorpIncomeAnalysis:
         evidence = {
             "ngay_tham_chieu": meta["as_of"],
             "khach_hang_vay": borrower_names,
-            "gia_tri_da_dien": {name: ctx[name] for name in names if name in ctx},
+            # images (diagram, chart) are not sent to the LLM
+            "gia_tri_da_dien": {name: ctx[name] for name in names
+                                if name in ctx and "data:image" not in str(ctx[name])},
             "phap_ly": _compact_items(items),
             "tai_chinh": {
                 "nguon": financials["sources"],
@@ -311,7 +314,7 @@ class CorpIncomeAnalysis:
             "unknown_placeholders": [],
         })
 
-        # "hiển thị khi …": plan table, "Cơ sở" column, POC group tables.
+        # "hiển thị khi …": plan tables, factory / warehouse lines, empty warning lines.
         markdown = apply_output_conditions(render_markdown(base, template_text, ctx), ctx)
         return {
             "response": markdown,

@@ -34,7 +34,7 @@ FIELDS = (
     "net_revenue", "cogs", "gross_profit", "financial_income", "financial_expenses",
     "selling_expenses", "admin_expenses", "operating_profit", "other_profit",
     "profit_before_tax", "profit_after_tax", "depreciation",
-    "cash", "short_term_investments", "receivables", "inventory", "other_assets",
+    "cash", "short_term_investments", "receivables", "inventory", "other_assets", "fixed_assets",
     "retained_earnings", "other_income", "interest_expense",
 )
 BALANCE_SHEET_FIELDS = (
@@ -71,8 +71,9 @@ INTEREST_TO_GROSS_ALERT = 0.50      # [TT] chi phí lãi vay / LN gộp > 50%
 VAT_BCTC_DIFF_ALERT = 0.20
 # [BT] BRD: chi phí lãi vay vs dư nợ BQ (CIC) x lãi suất giả định 10%/năm "không phù hợp"
 # — no band given. Placeholder: outside 50%-200% of the implied interest.
-ASSUMED_INTEREST_RATE = 0.10
-INTEREST_BAND = (0.5, 2.0)
+ASSUMED_INTEREST_RATE = 0.10        # kept for older callers
+# [BRD 29/10] chi phí lãi vay / dư nợ BQ CIC cùng kỳ = lãi suất ngầm định; ngoài 6%–14%/năm → cảnh báo.
+INTEREST_RATE_BAND = (0.06, 0.14)
 # [TT] Phân khúc KH theo doanh thu năm gần nhất (tỷ đồng).
 SEGMENTS = ((2000e9, "Large corp"), (600e9, "MM"), (200e9, "USME"), (0, "SME"))
 # [BRD 27/10] segment code of the TCB industry table (bang-nganh-tcb.csv)
@@ -107,7 +108,8 @@ def fmt(value: float | None) -> str:
 def pct(value: float | None) -> str:
     if value is None:
         return "—"
-    return f"{value * 100:.1f}%".replace(".", ",")
+    # Vietnamese print: "." groups thousands, "," is the decimal mark (1.178,3%)
+    return f"{value * 100:,.1f}%".replace(",", " ").replace(".", ",").replace(" ", ".")
 
 
 # --------------------------------------------------------------------------- #
@@ -296,23 +298,28 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
     # [BT] Cảnh báo dấu hiệu bất thường. ``material`` = mâu thuẫn trọng yếu → Bad finance.
     material: list[str] = []
     other: list[str] = []
+    bs_texts: list[str] = []       # [BRD 29/10] warnings of the balance sheet → table "a. Cơ cấu tài sản"
     excluded = _excluded_auditors()
     for auditor in merged["auditors"]:
         if any(name and name in normalize_text(auditor) for name in excluded):
             material.append(f"Công ty kiểm toán thuộc danh sách loại trừ: {auditor}")
+            bs_texts.append(material[-1])
     if merged["auditors"] and not excluded:
         other.append("Chưa có danh sách công ty kiểm toán loại trừ để đối chiếu "
                      f"({EXCLUDED_AUDITORS_FILE.name}) — kiểm toán: {', '.join(merged['auditors'])}")
+        bs_texts.append(other[-1])
     for index, year in enumerate(ordered):
         fig = years[year]
         assets, capital = fig.get("total_assets"), fig.get("total_capital")
         if assets and capital and abs(assets - capital) > BALANCE_TOLERANCE * assets:
             material.append(f"{year}: Tổng tài sản ({fmt(assets)}) ≠ Tổng nguồn vốn ({fmt(capital)})")
+            bs_texts.append(material[-1])
         prev = years.get(str(int(year) - 1)) or {}
         re_now, re_prev, lnst = fig.get("retained_earnings"), prev.get("retained_earnings"), fig.get("profit_after_tax")
         if None not in (re_now, re_prev, lnst) and (re_now - re_prev) > lnst + BALANCE_TOLERANCE * max(abs(lnst), 1):
             material.append(f"{year}: LNST chưa phân phối tăng {fmt(re_now - re_prev)} > LNST trong kỳ {fmt(lnst)} "
                             "(trừ khi có điều chỉnh hồi tố / phân phối lại)")
+            bs_texts.append(material[-1])
         vat_year = vat["by_year"].get(int(year))
         if vat_year and len(vat_year["months"]) == 12 and fig.get("net_revenue"):
             diff = vat_year["revenue"] / fig["net_revenue"] - 1
@@ -338,7 +345,9 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
         if growth is not None and not REVENUE_GROWTH_CHECK[0] <= growth <= REVENUE_GROWTH_CHECK[1]:
             other.append(f"{year}: biến động DT {pct(growth)} (DTT {fmt(prev.get('net_revenue'))} → "
                          f"{fmt(fig.get('net_revenue'))}) — bất thường, kiểm tra lại số đọc / kỳ báo cáo")
-    material += [f"Số liệu cuối kỳ năm trước ≠ đầu kỳ năm sau: {m}" for m in merged["cross_document"]]
+    cross = [f"Số liệu cuối kỳ năm trước ≠ đầu kỳ năm sau: {m}" for m in merged["cross_document"]]
+    material += cross
+    bs_texts += cross
     other += [f"Khoản mục bất thường: {u}" for u in merged["unusual_items"]]
 
     # [TT] Nhận xét trạng thái tài chính — on the latest full year.
@@ -389,8 +398,93 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
 
     return {**merged, "ratios": ratios, "vat": vat, "latest_year": latest, "growth_n": growth_n,
             "material_warnings": material, "other_warnings": other,
+            # [BRD 29/10] split by table: a (balance sheet) / b (income statement, ratios)
+            "bs_warnings": [w for w in material + other if w in bs_texts],
+            "pl_warnings": [w for w in material + other if w not in bs_texts],
             "warnings": material + other,               # kept for older callers (step log, Excel)
             "status_remarks": status, "group": group, "group_reason": reason}
+
+
+# [BRD 29/10] "Cơ cấu tài sản, nguồn vốn": asset lines; only those ≥ 20% of total assets are shown.
+ASSET_LINES = (
+    ("Tiền và tương đương tiền", "cash"), ("Đầu tư tài chính ngắn hạn", "short_term_investments"),
+    ("Phải thu & trả trước", "receivables"), ("Hàng tồn kho", "inventory"),
+    ("Tài sản ngắn hạn khác", "other_assets"), ("TSCĐ ròng", "fixed_assets"),
+    ("Tài sản dài hạn khác", "_other_long_term"),
+)
+SHARE_SHOWN = 0.20
+LONG_TERM_TRADE_ALERT = 0.50     # thương mại: TSDH > 50% tổng TS → KYC bổ sung
+INVENTORY_SERVICE_ALERT = 0.30   # dịch vụ: HTK > 30% tổng TS → KYC bổ sung
+SINGLE_ITEM_ALERT = 0.50         # một khoản mục > 50% tổng TS → tìm hiểu nguyên nhân
+
+
+def asset_value(fig: dict[str, Any], field: str) -> float | None:
+    if field == "_other_long_term":
+        nca, fixed = fig.get("non_current_assets"), fig.get("fixed_assets")
+        return nca - fixed if None not in (nca, fixed) and nca - fixed > 0 else None
+    return fig.get(field)
+
+
+def asset_lines(financials: dict[str, Any], years: tuple[str, ...]) -> list[tuple[str, str]]:
+    """The asset lines with a share ≥ 20% of total assets in at least one of ``years``.
+
+    Falls back to Tài sản ngắn hạn / dài hạn when the statement has no line detail.
+    """
+
+    lines = ASSET_LINES
+    figs = [financials["years"].get(y) or {} for y in years]
+    if not any(asset_value(f, field) is not None for f in figs for _, field in ASSET_LINES):
+        lines = (("Tài sản ngắn hạn", "current_assets"), ("Tài sản dài hạn", "non_current_assets"))
+    shown = []
+    for label, field in lines:
+        for fig in figs:
+            value, total = asset_value(fig, field), fig.get("total_assets")
+            if value is not None and total and value / total >= SHARE_SHOWN:
+                shown.append((label, field))
+                break
+    return shown
+
+
+def structure_remarks(financials: dict[str, Any], business_type: str = "") -> list[str]:
+    """[BRD 29/10] Nhận xét chung về cơ cấu tài sản, nguồn vốn (năm gần nhất).
+
+    Rules of the BRD (Bảng cân đối kế toán): khoản mục > 50% tổng TS; thương mại có TSDH > 50%;
+    sản xuất không có TSDH; dịch vụ có HTK > 30%; vốn lưu động ròng = TSNH − nợ ngắn hạn.
+    """
+
+    year = financials.get("latest_year")
+    fig = financials["years"].get(year) or {} if year else {}
+    total = fig.get("total_assets")
+    if not total:
+        return []
+    out = []
+    for label, field in ASSET_LINES:
+        value = asset_value(fig, field)
+        if value is not None and value / total > SINGLE_ITEM_ALERT:
+            out.append(f"{label} chiếm {pct(value / total)} tổng tài sản năm {year} — tìm hiểu nguyên nhân")
+    long_term, inventory = fig.get("non_current_assets"), fig.get("inventory")
+    if business_type == "thuong_mai" and long_term is not None and long_term / total > LONG_TERM_TRADE_ALERT:
+        out.append(f"DN thương mại có tài sản dài hạn {pct(long_term / total)} tổng tài sản — KYC bổ sung đây là tài sản gì")
+    if business_type == "san_xuat" and not long_term:
+        out.append("DN sản xuất không có tài sản dài hạn — hỏi địa điểm, máy móc thiết bị sản xuất là của ai")
+    if business_type.startswith("dich_vu") and inventory is not None and inventory / total > INVENTORY_SERVICE_ALERT:
+        out.append(f"DN dịch vụ có hàng tồn kho {pct(inventory / total)} tổng tài sản — KYC bổ sung đây là gì")
+    current, short_debt = fig.get("current_assets"), fig.get("current_liabilities")
+    if None not in (current, short_debt):
+        wc = current - short_debt
+        out.append(f"Vốn lưu động ròng năm {year} = {fmt(wc)} triệu đồng — "
+                   + ("bố trí nguồn vốn cân đối" if wc >= 0 else
+                      "mất cân đối, DN dùng vốn ngắn hạn đầu tư dài hạn, rủi ro thanh toán ngắn hạn; "
+                      "làm rõ nguyên nhân và lộ trình khắc phục, thận trọng khi dùng nguồn thu DN"))
+    return out
+
+
+def signed_pct(value: float | None) -> str:
+    """[BRD 29/10] "Tăng trưởng": +242,6% / -1,4%."""
+
+    if value is None:
+        return "—"
+    return ("+" if value > 0 else "") + pct(value)
 
 
 def segment_code(financials: dict[str, Any]) -> str:
@@ -404,18 +498,17 @@ def segment_code(financials: dict[str, Any]) -> str:
 
 
 def interest_vs_cic(financials: dict[str, Any], avg_balance_12m: float | None) -> str:
-    """[BT] Chi phí lãi vay vs dư nợ BQ 12 tháng (CIC) x 10%/năm; '' when consistent or unknown."""
+    """[BRD 29/10] Chi phí lãi vay / dư nợ BQ 12 tháng (CIC) ngoài 6%–14%/năm → '' khi phù hợp / thiếu số."""
 
     year = financials.get("latest_year")
     interest = (financials["years"].get(year) or {}).get("interest_expense") if year else None
     if interest is None or not avg_balance_12m:
         return ""
-    implied = avg_balance_12m * ASSUMED_INTEREST_RATE
-    ratio = interest / implied
-    if INTEREST_BAND[0] <= ratio <= INTEREST_BAND[1]:
+    rate = interest / avg_balance_12m
+    if INTEREST_RATE_BAND[0] <= rate <= INTEREST_RATE_BAND[1]:
         return ""
-    return (f"{year}: Chi phí lãi vay {fmt(interest)} so với ước tính theo dư nợ BQ CIC x 10%/năm "
-            f"({fmt(implied)}) = {pct(ratio)} — tương quan không phù hợp")
+    return (f"{year}: Chi phí lãi vay {fmt(interest)} / dư nợ BQ 12 tháng theo CIC {fmt(avg_balance_12m)} = "
+            f"{pct(rate)}/năm, ngoài khoảng 6%–14% — tương quan không phù hợp")
 
 
 # --------------------------------------------------------------------------- #
@@ -515,4 +608,5 @@ def sources_text(financials: dict[str, Any]) -> str:
 
 
 __all__ = ["compute", "income_estimate", "interest_vs_cic", "fmt", "pct", "segment_code", "sources_text",
+           "asset_lines", "asset_value", "structure_remarks", "signed_pct",
            "SOURCE_LABELS"]

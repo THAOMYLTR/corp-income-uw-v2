@@ -30,7 +30,7 @@ DEBT_TO_MONTHLY_REVENUE_LIMIT = {
 }
 DEFAULT_LIMIT = 6                           # loại hình chưa xác định → ngưỡng chặt hơn
 TCB_NAMES = ("techcombank", "ky thuong", "tcb")
-LENDER_FIELDS = ("short_term", "long_term", "other", "off_balance")
+LENDER_FIELDS = ("short_term", "long_term", "finance_lease", "other", "off_balance")
 
 
 def _is_tcb(name: Any) -> bool:
@@ -47,7 +47,7 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
     cic = [r for r in records if r.get("pass") == "cic" and isinstance(r.get("data"), dict)]
     if not cic:
         return {"available": False, "group": "Chưa có CIC", "group_reason": "Hồ sơ chưa có bản tin CIC S10A/R20",
-                "warnings": [], "rows": {}, "lenders": [], "card_late": [], "query_dates": "", "special_mention": [], "bad_debt": [],
+                "warnings": [], "rows": {}, "lenders": [], "card_late": [], "monthly": [], "query_dates": "", "special_mention": [], "bad_debt": [],
                 "avg_balance_12m": None}
 
     warnings: list[str] = []
@@ -102,15 +102,15 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
     def lender_row(name: Any) -> dict[str, Any]:
         label = str(name or "TCTD không rõ tên").strip()
         return by_lender.setdefault(normalize_text(label), {
-            "name": label, "short_term": 0.0, "long_term": 0.0, "other": 0.0, "total": 0.0,
-            "collaterals": [], "collateral_value": 0.0, "owners": []})
+            "name": label, "short_term": 0.0, "long_term": 0.0, "finance_lease": 0.0, "other": 0.0,
+            "off_balance": 0.0, "total": 0.0, "collaterals": [], "collateral_value": 0.0, "owners": []})
 
+    # [BRD 29/10] "total" = dư nợ nội bảng (NH + DH + cho thuê TC + khác); cam kết ngoại bảng separate.
     for lender in (latest["data"].get("lenders") if latest else []) or []:
         row = lender_row(lender.get("name"))
-        row["short_term"] += _num(lender.get("short_term")) or 0.0
-        row["long_term"] += _num(lender.get("long_term")) or 0.0
-        row["other"] += (_num(lender.get("other")) or 0.0) + (_num(lender.get("off_balance")) or 0.0)
-        row["total"] = row["short_term"] + row["long_term"] + row["other"]
+        for field in ("short_term", "long_term", "finance_lease", "other", "off_balance"):
+            row[field] += _num(lender.get(field)) or 0.0
+        row["total"] = row["short_term"] + row["long_term"] + row["finance_lease"] + row["other"]
     for record in r20:
         for col in record["data"].get("collaterals") or []:
             row = lender_row(col.get("lender"))
@@ -125,8 +125,12 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
     special = [s for s in data.get("special_mention_12m") or [] if isinstance(s, dict)]
     bad = [b for b in data.get("bad_debt_5y") or [] if isinstance(b, dict)]
     card_late = [c for c in data.get("card_late_payment_3y") or [] if isinstance(c, dict)]  # [BRD 27/10]
-    balances = [_num(m.get("balance")) for m in data.get("monthly_balances_12m") or [] if isinstance(m, dict)]
-    balances = [b for b in balances if b is not None]
+    # [BRD 29/10] monthly balances, oldest first — the chart beside the debt table
+    monthly = [(str(m.get("month") or ""), _num(m.get("balance")))
+               for m in data.get("monthly_balances_12m") or [] if isinstance(m, dict)]
+    monthly = [(month, value) for month, value in monthly if value is not None]
+    monthly.sort(key=lambda mv: parse_date("01/" + mv[0]) or date.min)
+    balances = [value for _, value in monthly]
     avg_balance = sum(balances) / len(balances) if balances else None
 
     # [NB] bureau group
@@ -157,7 +161,7 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
             f" (dư nợ BQ 12 tháng / DT BQ tháng = {leverage:.1f}, ngưỡng {limit})".replace(".", ",")
             if leverage is not None else " (thiếu diễn biến dư nợ 12 tháng hoặc doanh thu năm N-1)")
     return {"available": True, "group": group, "group_reason": reason, "warnings": warnings,
-            "rows": rows, "lenders": list(by_lender.values()), "card_late": card_late,
+            "rows": rows, "lenders": list(by_lender.values()), "card_late": card_late, "monthly": monthly,
             "query_dates": "; ".join(dates), "special_mention": special, "bad_debt": bad,
             "avg_balance_12m": avg_balance, "leverage": leverage, "limit": limit, "has_r20": bool(r20)}
 

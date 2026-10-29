@@ -9,7 +9,7 @@ dossier is sorted into the matrix's folders, each document type is tagged with t
 that use it, and this repo runs the **Corp Income Agent (CIA)**.
 
 The entry point is the notebook [local_underwriting_agents.ipynb](local_underwriting_agents.ipynb);
-all logic lives in [src/](src/). What changed from the previous BRD: [docs/CHANGES-BRD-2710.md](docs/CHANGES-BRD-2710.md).
+all logic lives in [src/](src/). What changed: [docs/CHANGES-BRD-2910.md](docs/CHANGES-BRD-2910.md) (output template of 29/10), [docs/CHANGES-BRD-2710.md](docs/CHANGES-BRD-2710.md) (BRD + document matrix of 27/10).
 
 ---
 
@@ -114,26 +114,22 @@ Step-by-step for the people filing the dossier (Vietnamese): [docs/HUONG-DAN-XEP
 
 ## The report (output template)
 
-[src/templates/corp-income-structure.md](src/templates/corp-income-structure.md) writes out every
-table of the BRD's **Appendix - Corp income** sheet — headers, columns and row labels are in the
-file itself; code only fills cells and data rows:
+[src/templates/corp-income-structure.md](src/templates/corp-income-structure.md) follows the
+**BRD of 29/10/2026** (more compact than 27/10). Table headers and row labels are written in the
+template; code fills cells and data rows:
 
-| Section | Tables in the template |
+| Section | Content |
 |---|---|
-| Header | Tên doanh nghiệp |
-| **1. Pháp lý doanh nghiệp** | a. ID T24 · MST · năm thành lập ("Đăng ký lần đầu … thay đổi lần thứ …") · NĐDPL · tình trạng hoạt động (bold red when not operating) |
-| | b. **Họ và tên \| Mối quan hệ \| Tỷ lệ góp vốn \| Thay đổi TV góp vốn & NĐDPL trong 12 tháng** — one row per member (`{{RowsThanhVien}}`) · Nhận xét về pháp lý Khách hàng |
-| **2. Hoạt động kinh doanh** | Sản phẩm/dịch vụ · Địa chỉ TSC / nhà xưởng / kho · **Mô hình HĐKD**: sản phẩm đầu vào → ≤ 5 nhà cung cấp → doanh nghiệp → ≤ 5 khách mua → sản phẩm đầu ra · Nhận xét về HĐKD |
-| **3. Tài chính** | Nguồn · **Bảng cân đối kế toán \| N-2 \| N-1 \| Báo cáo KQKD \| N-2 \| N-1 \| Cập nhật các tháng năm N** (triệu đồng) with the three ratios · Nhận xét · **Phân nhóm tài chính (POC) \| Phân loại \| Tiêu chí \| Kết quả** |
-| **4. Dư nợ tại TCTD** | a. Ngày tra cứu CIC · b. **TCTD \| Số dư cấp tín dụng [Dư nợ ngắn hạn \| Dư nợ TDH \| Dư nợ khác \| Tổng số dư CTD] \| Tên TSBĐ \| Giá trị TSBĐ \| Chủ sở hữu TSBĐ** — one row per TCTD + total (`{{RowsDuNoTCTD}}`) · c. nợ cần chú ý, nợ xấu · **Phân nhóm bureau (POC)** |
-| **5. Kết luận nguồn thu DN** | **Phương án kinh doanh (nếu có) \| N-2 \| N-1 \| Cập nhật năm T \| Năm kế hoạch \| Cơ sở của Khách hàng** × Doanh thu thuần / Biến động DTT / LNST / ROS · **Phân nhóm doanh nghiệp (POC)** · Nhận xét về nguồn thu + giá trị nguồn thu theo công thức BRD |
+| **1. Pháp lý** | a. ID T24 · MST · năm thành lập ("Đăng ký lần đầu … thay đổi lần thứ …") · NĐDPL · tình trạng hoạt động (bold red when not operating) |
+| | b. **Tên thành viên góp vốn/ ban lãnh đạo \| Tỷ lệ vốn góp (%) \| Chức vụ \| Mối quan hệ \| Mức độ ảnh hưởng tới KH \| Đánh giá năng lực, uy tín, kinh nghiệm** — % from sổ cổ đông → điều lệ; the last four from the site-visit report · "Cảnh báo pháp lý" only when there is one |
+| **2. Hoạt động kinh doanh** | a. Sản phẩm/ dịch vụ · b. Địa chỉ (TSC; nhà xưởng / kho hàng only when the dossier has them) · Mô hình hoạt động kinh doanh (5-tier diagram) · "Cảnh báo HĐKD" only when there is one |
+| **3. Tài chính** | Nguồn · a. **Cơ cấu tài sản, nguồn vốn**: Tổng tài sản + the asset lines ≥ 20% (N-2, N-1, % tỷ trọng) and one comment on the structure · b. **Quy mô & tăng trưởng & chỉ số**: DTT, LNST (Tăng trưởng = năm sau / năm trước − 1, "+x%" / "-x%"), ROS, hệ số TT hiện hành, one comment |
+| **4. Dư nợ tại TCTD** | a. Table with one column per TCTD + Tổng (ngắn hạn, dài hạn, cho thuê TC, tổng, %, BQ 12 tháng, cam kết ngoại bảng, TSBĐ) and, to its right, a **chart of the debt by month** from CIC S10A · b. nợ cần chú ý, nợ xấu |
+| **5. Kết luận nguồn thu** | a. **Dự phóng kinh doanh** (only with a PAKD): TH vs KH (DTT, giá vốn, LNST, tăng/giảm, cơ sở) and ROS / tăng trưởng theo ngành TCB vs theo dự phóng · b. Đề xuất + giá trị nguồn thu theo công thức BRD |
 
-"Hiển thị khi …" rules, applied after filling (`appendix_context.apply_output_conditions`): the
-business-plan table is removed when there is no plan; its "Cơ sở của Khách hàng" column when the
-plan states no basis; the three "Phân nhóm (POC)" tables when `CORP_INCOME_SHOW_GROUPS=0`. In a
-POC table the group that applies is marked ✔ in "Kết quả", with its basis.
-
-Edit the template to change the layout — no Python change, as long as the `{{placeholders}}` stay.
+Grouping (Bad / Normal / Good finance, bureau, corp) is still computed and drives the conclusion,
+but the 29/10 template no longer shows the group tables. Edit the template to change the layout —
+no Python change, as long as the `{{placeholders}}` stay.
 
 ---
 
@@ -215,7 +211,6 @@ MODEL_DOCUMENT=gpt-4o-mini   # classification tie-break
 MODEL_ECONOMY=gpt-4o-mini    # cheaper passes
 MODEL_PREMIUM=gpt-4o         # legal passes, BCTC, report writer
 OPENAI_API_KEY=…   ANTHROPIC_API_KEY=…   DATABRICKS_HOST=…  DATABRICKS_TOKEN=…
-CORP_INCOME_SHOW_GROUPS=1    # 0 hides the "Phân nhóm … (POC)" cells
 ```
 
 The VAT, CIC, plan and business-model passes use `financial_extraction_llm` unless the notebook

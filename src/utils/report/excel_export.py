@@ -65,7 +65,7 @@ def write_excel(result: dict[str, Any], path: str | Path) -> Path:
            [[n, item["title"], item["conclusion"]] for n, item in items.items()]
            + [[], ["", "Ngày tham chiếu", meta["as_of"]],
               ["", "KH cá nhân vay vốn", ", ".join(meta["borrower_names"]) or "—"]]
-           # [BRD 16/10] groups (POC)
+           # groups (computed, not shown in the 29/10 report)
            + ([[], ["", "Phân nhóm doanh nghiệp", result["corp_group"]["group"]],
                ["", "Phân nhóm tài chính", result["corp_group"]["finance"]],
                ["", "Phân nhóm bureau", result["corp_group"]["bureau"]]]

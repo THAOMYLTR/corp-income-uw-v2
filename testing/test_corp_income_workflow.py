@@ -205,14 +205,16 @@ class AppendixTemplateTest(CorpIncomeWorkflowTest):
         self.assertIn("| Mã số thuế | 0101234567 ⚠ không khớp giữa các nguồn |", report)
         self.assertIn("| Năm thành lập | 2015 (Đăng ký lần đầu 12/05/2015; thay đổi lần thứ 6 ngày 20/03/2026) |",
                       report)
-        self.assertIn("| Nguyễn Văn A | Khách hàng vay vốn | 60% | Có — nhận vốn góp ngày 20/03/2026 |", report)
+        # [BRD 29/10] 1b: tên | tỷ lệ | chức vụ | quan hệ | ảnh hưởng | năng lực (last three: site report)
+        self.assertIn("| Nguyễn Văn A | 60 | Thành viên góp vốn | KH vay (người đứng ra vay) | — | — |", report)
+        self.assertIn("| Trần Thị B | 0 | Giám đốc kiêm người đại diện theo pháp luật |", report)
         self.assertNotIn("{{", report)
 
     def test_legal_comment_names_documents_only_where_they_differ(self):
-        """[BRD 27/10] No file names in the legal comment; a mismatch says which documents differ."""
+        """[BRD 29/10] Legal warnings: no file names; a mismatch says which documents differ."""
         md = self.result["response"]
-        start = md.index("Nhận xét về pháp lý Khách hàng")
-        comment = md[start:md.index("\n", start)]
+        start = md.index("**Cảnh báo pháp lý:**")
+        comment = md[start:md.index("---", start)]
         self.assertNotIn(".txt", comment)
         self.assertNotIn("ho_so_", comment)
         self.assertIn("0101234568 (Tra cứu thuế/ĐKDN) ≠ 0101234567 (ĐKKD, Dữ liệu nội bộ)", comment)
@@ -245,10 +247,9 @@ class AppendixTemplateTest(CorpIncomeWorkflowTest):
         report = self.result["response"]
         self.assertIn("LLM:NhanXetHDKD", report)
         self.assertIn("1 cell(s) empty", meta["writer_error"])           # fake leaves one cell empty
-        # [BRD 16/10] the fake rewrite "LLM:NhanXet" drops every number → the code draft is kept
-        self.assertIn("NhanXet", evidence["ban_nhap_code"])
-        self.assertIn("kept the code draft", meta["writer_error"])
-        self.assertIn("Doanh nghiệp đã hoạt động", report)
+        # [BRD 29/10] comments are code-written table lines: nothing is sent for an LLM rewrite
+        self.assertEqual(evidence["ban_nhap_code"], {})
+        self.assertNotIn("data:image", json.dumps(evidence["gia_tri_da_dien"]))
         self.assertNotIn("LLM:NhanXetTaiChinh", report)
 
 

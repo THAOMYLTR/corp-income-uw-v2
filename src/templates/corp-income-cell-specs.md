@@ -8,14 +8,6 @@ Nội dung bên dưới là khung LLM PHẢI theo — thứ tự các phần, s�
 Ghi chú trong khối này không gửi cho LLM.
 -->
 
-## NhanXet
-[BRD 27/10] Ô nhận xét DUY NHẤT của mục 1 (pháp lý DN và pháp lý KH vay). Viết đúng khung:
-**Kết luận:** <Phù hợp / Cần làm rõ / Rủi ro cao> — 1 câu: DN hoạt động bao lâu, KH vay sở hữu bao nhiêu %, có là NĐDPL không.
-**Căn cứ:** số năm DN hoạt động; % vốn góp KH vay nắm giữ; vai trò NĐDPL; MST / tình trạng hoạt động đã đối chiếu — mỗi ý một gạch đầu dòng, ngắn gọn.
-**Cảnh báo pháp lý cần đánh giá lại:** liệt kê nguyên văn các cảnh báo (tên/TSC/NĐDPL/năm thành lập không khớp, DN không hoạt động/tạm ngưng, tổng tỷ lệ sở hữu ≠ 100%, thay đổi thành viên/NĐDPL trong 12 tháng). Thông tin không khớp thì giữ nguyên phần "giá trị (bộ hồ sơ) ≠ giá trị (bộ hồ sơ)" của bản nháp.
-Ô này KHÔNG ghi tên file, tên thư mục hay nguồn (KH cung cấp / thực địa / tra cứu…) — kể cả khi quy tắc chung yêu cầu nêu cơ sở. Chỉ nêu bộ hồ sơ (ĐKKD, Điều lệ, Tra cứu thuế…) ở chỗ thông tin không khớp.
-**Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.phap_ly" — làm quyết định mạnh lên hay yếu đi, vì sao.
-
 ## SanPhamDichVu
 Đúng 3 dòng nối bằng "<br>":
 Loại hình: <sản xuất / thương mại / dịch vụ> (<tỷ trọng nếu đa loại hình>) — <nguồn>
@@ -23,22 +15,19 @@ Tên ngành: <tên theo bảng ngành TCB, hoặc như hồ sơ + "chưa đối 
 Diễn giải chi tiết: <sản phẩm chính, quy mô, theo báo cáo thực địa — hoặc "Báo cáo thực địa chưa có thông tin">
 
 ## NhanXetHDKD
-Viết đúng khung:
-**Kết luận:** <Phù hợp / Cần làm rõ / Rủi ro cao> — 1 câu: DN làm gì, ở đâu, đã xác minh qua tài liệu nào.
-**Đối chiếu:** 2–4 gạch đầu dòng, mỗi dòng: <nguồn A> vs <nguồn B> → khớp / không khớp (ngành nghề, sản phẩm, địa chỉ, đối tác).
-**Cảnh báo:** các cảnh báo của mục 2 trong guidance (thiếu loại hình/ngành nghề, ảnh thiếu biển hiệu, sản phẩm/địa chỉ không khớp…).
-**Cảnh báo bắt buộc kiểm tra:** báo cáo thực địa thiếu loại hình / ngành nghề; ảnh thực địa thiếu biển hiệu hoặc biển hiệu không có tên DN; không có người làm việc / số người / máy móc không phù hợp ngành nghề, loại hình; sản phẩm dịch vụ, địa chỉ không khớp giữa báo cáo thực địa và tài liệu đối chiếu.
-**Đề xuất:** tài liệu cần bổ sung (hợp đồng đầu ra/đầu vào, hóa đơn, sổ TK 131/331, hợp đồng thuê…).
-**Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.hoat_dong_kinh_doanh" — làm quyết định mạnh lên hay yếu đi, vì sao.
+[BRD 29/10] Dòng "Cảnh báo HĐKD" dưới bảng mục 2 — CHỈ liệt kê cảnh báo, mỗi cảnh báo một gạch đầu dòng
+ngắn (dưới 25 từ), không ghi tên file / thư mục / nguồn:
+- báo cáo thực địa thiếu loại hình, ngành nghề;
+- ảnh thực địa thiếu biển hiệu hoặc biển hiệu không có tên DN; không có người làm việc / máy móc không phù hợp ngành nghề;
+- sản phẩm dịch vụ, ngành nghề, địa chỉ không khớp giữa báo cáo thực địa và tài liệu đối chiếu (ghi "<A> ≠ <B>");
+- ngành nghề theo dữ liệu nội bộ TCB khác báo cáo thực địa → "rủi ro cao, đề nghị đánh giá lại".
+Không có cảnh báo nào thì ghi đúng "—" (hệ thống tự ẩn dòng).
 
-## NhanXetTaiChinh
-Giữ NGUYÊN mọi con số, tỷ lệ, năm trong bản nháp của hệ thống. Viết đúng khung:
-**Kết luận:** <Tài chính ổn định / Có dấu hiệu suy giảm / BCTC có mâu thuẫn trọng yếu> — 1 câu.
-**Cảnh báo dấu hiệu bất thường của BCTC:** gạch đầu dòng, nguyên văn số liệu.
-**Trạng thái tài chính:** phân khúc; biến động doanh thu; hiệu quả (ROS, chất lượng lợi nhuận, lãi vay); thanh khoản — mỗi ý một dòng, có số.
-**Doanh thu năm hiện tại:** theo tờ khai VAT (nếu có).
-Dòng "Phân nhóm tài chính (POC)" giữ nguyên ở cuối nếu bản nháp có.
-**Ảnh hưởng tới quyết định:** 1 câu lấy từ "danh_gia_tin_dung.anh_huong_theo_muc.tai_chinh" — làm quyết định mạnh lên hay yếu đi, vì sao.
+## NhaXuong
+Địa chỉ nhà xưởng + "(đi thuê / sở hữu của … / chưa xác định)". Hồ sơ không có nhà xưởng thì ghi đúng "—" (hệ thống tự ẩn dòng).
+
+## KhoHang
+Địa chỉ kho hàng + "(đi thuê / sở hữu của … / chưa xác định)". Hồ sơ không có kho hàng thì ghi đúng "—" (hệ thống tự ẩn dòng).
 
 ## KetLuanNguonThuDoanhNghiep
 [BRD 27/10] Mục 5 không còn ô nhận xét riêng cho phương án kinh doanh: nếu có PAKD, nêu trong

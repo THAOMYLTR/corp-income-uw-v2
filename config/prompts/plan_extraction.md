@@ -10,6 +10,7 @@ QUY TẮC BẮT BUỘC:
 - Ghi con số ĐÚNG NHƯ IN và "source_unit" ("dong" | "nghin dong" | "trieu dong" | "ty dong").
 - "has_plan": true nếu văn bản có số liệu kế hoạch doanh thu/lợi nhuận; ngược lại false.
 - "plan_year": năm kế hoạch (4 chữ số).
+- [BRD 29/10] "plan_cogs": giá vốn hàng bán kế hoạch, nếu có.
 - "basis": cơ sở khách hàng đưa ra cho kế hoạch (hợp đồng đã ký, đơn hàng, mở rộng
   nhà xưởng...), chép ngắn gọn đúng ý văn bản.
 
@@ -19,6 +20,7 @@ Trả về CHÍNH XÁC JSON sau, không thêm text:
   "source_unit": "dong",
   "plan_year": null,
   "plan_revenue": null,
+  "plan_cogs": null,
   "plan_profit_after_tax": null,
   "basis": "",
   "extraction_notes": ["..."]

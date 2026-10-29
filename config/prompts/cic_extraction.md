@@ -14,7 +14,8 @@ QUY TẮC BẮT BUỘC:
   "dd/mm/yyyy".
 - "lenders": MỖI DÒNG dư nợ trên bản tin là một phần tử (không gộp), ghi tên TCTD như in:
   "short_term" dư nợ cho vay ngắn hạn, "long_term" dư nợ trung + dài hạn, "other" dư
-  nợ khác, "off_balance" cam kết ngoại bảng.
+  nợ khác, "off_balance" cam kết ngoại bảng. [BRD 29/10] "finance_lease": dư nợ cho thuê tài
+  chính (nếu bản tin tách riêng; khi đó KHÔNG cộng lại vào "other").
 - "collaterals" (R20): mỗi TSBĐ một dòng: tên/loại TSBĐ, giá trị, chủ sở hữu, TCTD nhận.
 - "special_mention_12m": phần 2.9 "Nợ cần chú ý trong 12 tháng gần nhất" — mỗi dòng
   một phần tử (TCTD, ngày/tháng, số tiền). Không có thì [].
@@ -31,7 +32,7 @@ Trả về CHÍNH XÁC JSON sau, không thêm text:
   "query_date": "dd/mm/yyyy",
   "source_unit": "trieu dong",
   "lenders": [
-    {"name": "...", "short_term": null, "long_term": null, "other": null, "off_balance": null}
+    {"name": "...", "short_term": null, "long_term": null, "finance_lease": null, "other": null, "off_balance": null}
   ],
   "collaterals": [
     {"name": "...", "value": null, "owner": "...", "lender": "..."}

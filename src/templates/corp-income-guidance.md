@@ -321,3 +321,16 @@ Mục tiêu: người phê duyệt đọc 30 giây là biết NÊN hay KHÔNG N�
   - DT kế hoạch > 20% DT năm gần nhất mà PAKD không ghi cơ sở → cảnh báo bổ sung.
 - LNST sử dụng để trả nghĩa vụ TDH = nghĩa vụ trả gốc TDH hằng năm − khấu hao trong năm.
 - Lợi tức / cổ tức tối đa chia được cho KHCN = (LNST hợp lý − LNST trả nghĩa vụ TDH) × tỷ lệ góp vốn.
+
+---
+
+##### BỔ SUNG THEO BRD 29/10/2026 (template cô đọng)
+
+> Thay cho phần trình bày của BRD 27/10; các quy tắc tính toán giữ nguyên.
+
+- Báo cáo không còn bảng "Phân nhóm" — nhóm Bad / Normal / Good vẫn được tính và quyết định đề xuất.
+- Mục 1b: chức vụ, mối quan hệ với KH vay, mức độ ảnh hưởng, đánh giá năng lực lấy từ báo cáo khảo sát thực địa [code].
+- Mục 2: nhà xưởng / kho hàng không có trong hồ sơ thì ghi "—" (dòng tự ẩn). "Cảnh báo HĐKD" chỉ ghi cảnh báo, không có thì "—".
+- Mục 3, 4: nhận xét nằm trong bảng, do code viết [code]. Chi phí lãi vay / dư nợ BQ CIC ngoài 6%–14%/năm → cảnh báo.
+- Mục 5: dự phóng theo PAKD; ROS và tăng trưởng ngành theo bảng ngành TCB (phân khúc theo doanh thu);
+  tăng trưởng theo dự phóng = DTT dự phóng / DTT thực hiện − 1.

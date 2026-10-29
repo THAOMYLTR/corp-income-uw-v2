@@ -70,6 +70,12 @@ th {{ background: #eef2f6; text-align: left; }}
 tr {{ page-break-inside: avoid; }}
 thead {{ display: table-header-group; }}
 
+/* [BRD 29/10] Mục 4: debt table on the left, monthly chart on the right, no outer border. */
+table.layout {{ border: none; margin: 6px 0; }}
+table.layout > tbody > tr > td, table.layout > tr > td {{ border: none; padding: 0 6px 0 0; vertical-align: top; }}
+td.layout-main {{ width: 58%; }}
+td.layout-side {{ width: 42%; }}
+
 /* Wide financial tables step down instead of overflowing the page box. */
 table.tbl-wide {{ font-size: 7.5pt; }}
 table.tbl-wide th, table.tbl-wide td {{ padding: 2px 3px; }}

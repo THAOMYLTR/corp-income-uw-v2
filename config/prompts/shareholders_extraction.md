@@ -32,6 +32,13 @@ QUY TẮC RIÊNG:
   chồng, cha con, anh em, nhân viên, đối tác, công ty mẹ-con...). Kèm câu trích
   ngắn làm căn cứ. "relation" là vai trò của member_a ĐỐI VỚI member_b: member_a "Lê Thị C",
   member_b "Nguyễn Văn A", relation "vợ" nghĩa là Lê Thị C là vợ của Nguyễn Văn A.
+- [BRD 29/10] "people": CHỈ từ báo cáo khảo sát thực địa / RBO (văn bản khác để []). Mỗi thành
+  viên góp vốn hoặc người trong ban lãnh đạo được báo cáo nhắc tới một phần tử:
+  "name"; "position" chức vụ như báo cáo ghi (Giám đốc, Phó giám đốc, thành viên góp vốn…);
+  "relation_to_borrower" quan hệ với KHÁCH HÀNG VAY như báo cáo ghi, ngắn (vd "Chồng KH vay",
+  "Con KH vay", "KH vay" nếu chính là người vay); "influence" mức độ ảnh hưởng tới hoạt động
+  công ty như báo cáo ghi (vd "Cao. Quyết định chính…"); "assessment" đánh giá năng lực, uy tín,
+  kinh nghiệm như báo cáo ghi. Chép ngắn gọn đúng ý báo cáo, KHÔNG tự đánh giá; không có thì "".
 - "beneficial_owner_notes": CHỈ từ báo cáo thực địa/RBO — ai là chủ thực sự,
   người đứng tên hộ... ghi đúng như cán bộ ghi nhận.
 
@@ -52,6 +59,9 @@ Trả về CHÍNH XÁC JSON sau, không thêm text:
   ],
   "relationships": [
     {"member_a": "...", "member_b": "...", "relation": "...", "evidence": "trích ngắn"}
+  ],
+  "people": [
+    {"name": "...", "position": "", "relation_to_borrower": "", "influence": "", "assessment": ""}
   ],
   "beneficial_owner_notes": ["..."],
   "extraction_notes": ["..."]
