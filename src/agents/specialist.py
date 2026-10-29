@@ -286,7 +286,8 @@ class CorpIncomeAnalysis:
             # [BRD 27/10] industry chosen in code from the TCB table, and the partners of the diagram
             "nganh_tcb": nganh or "Chưa xác định ngành theo bảng ngành TCB",
             # [Sửa 29/10] "Sản phẩm/ dịch vụ" of the site-visit report → SanPhamDichVu, dòng Diễn giải
-            "san_pham_dich_vu_bao_cao_thuc_dia": business_model.product_service(records) or None,
+            "san_pham_dich_vu_bao_cao_thuc_dia": business_model.product_service(
+                records, {d.filename: d.content or "" for d in documents}) or None,
             "mo_hinh_hdkd": {"dau_vao": business_model.partners(records, "suppliers"),
                              "dau_ra": business_model.partners(records, "customers")},
             "ho_so": [{"file": d["filename"], "loai": d["label"], "nguon": d["source"],

@@ -24,8 +24,8 @@ QUY TẮC BẮT BUỘC:
 - "source_unit": đơn vị của các giá trị ("dong" | "nghin dong" | "trieu dong" | "ty dong").
 - Hợp đồng nguyên tắc không nêu mặt hàng thì "product" = "".
 - [Sửa 29/10] "product_service": CHỈ từ báo cáo khảo sát thực địa — chép NGUYÊN VĂN ô bên cạnh nhãn
-  "Sản phẩm/ dịch vụ" (mục Hoạt động kinh doanh), vd "Dịch vụ Y tế và hoạt động hỗ trợ y tế".
-  Văn bản khác hoặc không có nhãn này thì "".
+  "Sản phẩm/ dịch vụ" (mục Hoạt động kinh doanh) của CHÍNH văn bản này. Văn bản khác, không có nhãn
+  này hoặc ô trống thì "". Tuyệt đối không tự đặt câu.
 
 DANH SÁCH NGÀNH (bảng ngành tại TCB):
 {{industry_list}}

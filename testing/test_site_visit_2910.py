@@ -86,6 +86,18 @@ class SiteVisitTest(unittest.TestCase):
         self.assertIn('<i style="font-size:0.8em">(*) Hiển thị 5 đối tác tối đa.</i>', business_model.diagram("DN", records(6)))
         self.assertNotIn("(*)", business_model.diagram("DN", records(5)))
 
+    def test_product_service_must_be_in_its_own_report(self):
+        records = [{"pass": "business_model", "document_type": "bao_cao_thuc_dia", "document": "Thực địa.xlsx",
+                    "data": {"product_service": "Dịch vụ Y tế và hoạt động hỗ trợ y tế"}}]   # copied, not in text
+        other_case = {"Thực địa.xlsx": "Sản phẩm/ dịch vụ\tSản xuất bao bì nhựa"}
+        self.assertEqual(business_model.product_service(records, other_case), "")
+        same = {"Thực địa.xlsx": "Sản phẩm/ dịch vụ\tDịch vụ Y tế và hoạt động hỗ trợ y tế"}
+        self.assertEqual(business_model.product_service(records, same), "Dịch vụ Y tế và hoạt động hỗ trợ y tế")
+
+    def test_prompt_has_no_example_from_an_old_case(self):
+        with open("config/prompts/business_model_extraction.md", encoding="utf-8") as handle:
+            self.assertNotIn("Y tế", handle.read())
+
 
 if __name__ == "__main__":
     unittest.main()

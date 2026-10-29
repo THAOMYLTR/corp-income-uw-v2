@@ -89,16 +89,19 @@ def industry(records: list[dict[str, Any]], segment: str = "") -> dict[str, Any]
     return None
 
 
-def product_service(records: list[dict[str, Any]]) -> str:
+def product_service(records: list[dict[str, Any]], texts: dict[str, str] | None = None) -> str:
     """[Sửa 29/10] "Sản phẩm/ dịch vụ" as the site-visit report writes it ('' if none).
 
     Read by the business_model pass over the WHOLE report — the writer LLM only sees the first
     6.000 characters of it, and in the MB form this row comes after the long checklist (mục A).
+    ``texts`` = {file name: text read}: a value that is not in its own document is dropped, so a
+    sentence the LLM made up (or copied from an older case) never reaches the report.
     """
 
     for record in _records(records):
         text = " ".join(str(record["data"].get("product_service") or "").split())
-        if text:
+        source = (texts or {}).get(record.get("document", ""))
+        if text and (source is None or normalize_text(text) in normalize_text(source)):
             return text
     return ""
 
