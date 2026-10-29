@@ -94,7 +94,7 @@ def _cell(text: str) -> str:
 # Embedded as <img src="data:image/svg+xml;base64,…">: one line (fits the table cell) and
 # shown the same in the PDF (WeasyPrint), HTML and the .md file. No library needed.
 # --------------------------------------------------------------------------- #
-BOX_W, BOX_H, COL_GAP, ROW_GAP, MARGIN = 150, 52, 90, 22, 16
+BOX_W, BOX_H, COL_GAP, ROW_GAP, MARGIN = 150, 58, 90, 22, 16
 FILL, STROKE, TEXT, LINE = "#dcdcf5", "#8f8fcf", "#1f1f3d", "#555555"
 FONT = "Arial, Helvetica, sans-serif"
 CHARS_PER_LINE, MAX_LINES = 22, 3
@@ -118,11 +118,26 @@ def _wrap(text: str) -> list[str]:
     return lines
 
 
-def _box(x: float, y: float, text: str, bold: bool = False) -> str:
+def _money(value: Any) -> str:
+    """[BRD 29/10] Contract value in the partner box, triệu đồng: 135000000 → "135 tr"."""
+
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return ""
+    return f"{value / 1e6:,.0f}".replace(",", ".") + " tr"
+
+
+def _box(x: float, y: float, text: str, bold: bool = False, value: str = "") -> str:
+    """A box with its label; ``value`` (e.g. "135 tr") is a bold line right under the name."""
+
     lines = _wrap(text)
-    first = y + BOX_H / 2 - (len(lines) - 1) * 7 + 4
-    spans = "".join(f'<tspan x="{x + BOX_W / 2}" y="{first + i * 14}">{html.escape(t)}</tspan>'
-                    for i, t in enumerate(lines))
+    if value and len(lines) > 2:                   # name keeps 2 lines when a value is shown
+        lines = lines[:2]
+        lines[-1] = lines[-1][: CHARS_PER_LINE - 1].rstrip() + "…"
+    rows = [(t, False) for t in lines] + ([(value, True)] if value else [])
+    first = y + BOX_H / 2 - (len(rows) - 1) * 7 + 4
+    spans = "".join(f'<tspan x="{x + BOX_W / 2}" y="{first + i * 14}"'
+                    + (' font-weight="bold"' if strong else "") + f'>{html.escape(t)}</tspan>'
+                    for i, (t, strong) in enumerate(rows))
     weight = ' font-weight="bold"' if bold else ""
     return (f'<rect x="{x}" y="{y}" width="{BOX_W}" height="{BOX_H}" rx="3" fill="{FILL}" '
             f'stroke="{STROKE}"/><text text-anchor="middle" font-size="11"{weight}>{spans}</text>')
@@ -166,7 +181,7 @@ def diagram_svg(company: str, left: list[dict[str, Any]], right: list[dict[str, 
         if p.get("product"):
             parts.append(_box(col[0], y, p["product"]))
             parts.append(f'<path d="M{col[0] + BOX_W},{cy} H{col[1] - 2}" {line} marker-end="url(#a)"/>')
-        parts.append(_box(col[1], y, p["name"]))
+        parts.append(_box(col[1], y, p["name"], value=_money(p.get("value"))))
         parts.append(f'<path d="M{col[1] + BOX_W},{cy} H{trunk_l} V{mid} H{col[2] - 2}" {line} '
                      'marker-end="url(#a)"/>')
         if _share(p):
@@ -183,7 +198,7 @@ def diagram_svg(company: str, left: list[dict[str, Any]], right: list[dict[str, 
         if p.get("product"):
             parts.append(_box(col[3], y, p["product"]))
             parts.append(f'<path d="M{col[3] + BOX_W},{cy} H{col[4] - 2}" {line} marker-end="url(#a)"/>')
-        parts.append(_box(col[4], y, p["name"]))
+        parts.append(_box(col[4], y, p["name"], value=_money(p.get("value"))))
 
     parts.append(_box(col[2], mid - BOX_H / 2, company, bold=True))
     parts.append("</svg>")

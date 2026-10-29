@@ -105,6 +105,18 @@ class BusinessModelTest(unittest.TestCase):
         self.assertNotIn("không rõ", svg)
         self.assertNotIn("khác", svg.lower().replace("khách", ""))
 
+    def test_contract_value_under_the_partner_name(self):
+        import base64, re
+        records = [model("hop_dong_dau_vao_dau_ra", "HD.pdf",
+                         suppliers=[{"name": "Dược Hậu Giang", "product": "Thuốc", "value": 135 * M}],
+                         customers=[{"name": "BHXH Hà Nội", "product": "", "value": None}])]
+        svg = base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)",
+                                         business_model.diagram("DN", records)).group(1)).decode("utf-8")
+        name_y = float(re.search(r'y="([\d.]+)">Dược Hậu Giang<', svg).group(1))
+        value_y = float(re.search(r'y="([\d.]+)" font-weight="bold">135 tr<', svg).group(1))
+        self.assertGreater(value_y, name_y)                       # right under the name, same box
+        self.assertNotIn(" tr<", svg.split("BHXH Hà Nội")[1][:80])  # no value → no value line
+
     def test_share_labels_only_when_given(self):
         import base64, re
         records = [model("bao_cao_thuc_dia", "BCTD.pdf",
