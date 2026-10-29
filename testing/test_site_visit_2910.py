@@ -79,6 +79,13 @@ class SiteVisitTest(unittest.TestCase):
         rows = {p["name"]: p["share_pct"] for p in business_model.partners(records, "suppliers")}
         self.assertEqual(rows, {"Dược Hậu Giang": 75.0, "Nam Phùng": 25.0, "Không rõ giá trị": None})
 
+    def test_note_when_more_than_five_partners(self):
+        def records(n):
+            return [{"pass": "business_model", "document_type": "so_chi_tiet_cong_no", "data": {
+                "suppliers": [{"name": f"NCC {i}", "value": i * 1e6} for i in range(1, n + 1)]}}]
+        self.assertIn("<i>(*) Hiển thị 5 đối tác tối đa.</i>", business_model.diagram("DN", records(6)))
+        self.assertNotIn("(*)", business_model.diagram("DN", records(5)))
+
 
 if __name__ == "__main__":
     unittest.main()

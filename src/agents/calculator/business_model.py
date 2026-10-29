@@ -42,7 +42,7 @@ def _records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(found, key=lambda r: SOURCE_PRIORITY.get(r.get("document_type"), 9))
 
 
-def partners(records: list[dict[str, Any]], side: str) -> list[dict[str, Any]]:
+def partners(records: list[dict[str, Any]], side: str, limit: int | None = MAX_PARTNERS) -> list[dict[str, Any]]:
     """Top 5 suppliers ("suppliers") or customers ("customers"), merged across documents.
 
     The same partner named by several documents is one row; the first (highest
@@ -74,7 +74,7 @@ def partners(records: list[dict[str, Any]], side: str) -> list[dict[str, Any]]:
             r["share_pct"] = round(r["value"] / total * 100, 1) if r["value"] else None
     # Largest value first; partners without a value keep their document order after them.
     rows.sort(key=lambda r: -(r["value"] if r["value"] is not None else -1))
-    return rows[:MAX_PARTNERS]
+    return rows[:limit]
 
 
 def industry(records: list[dict[str, Any]], segment: str = "") -> dict[str, Any] | None:
@@ -240,7 +240,8 @@ def diagram(company: str, records: list[dict[str, Any]]) -> str:
     Returns "" when no document names a partner (the template then says so).
     """
 
-    left, right = partners(records, "suppliers"), partners(records, "customers")
+    every_left, every_right = partners(records, "suppliers", None), partners(records, "customers", None)
+    left, right = every_left[:MAX_PARTNERS], every_right[:MAX_PARTNERS]
     if not left and not right:
         return ""
     svg = diagram_svg(company, left, right)
@@ -250,4 +251,7 @@ def diagram(company: str, records: list[dict[str, Any]]) -> str:
              f'src="data:image/svg+xml;base64,{base64.b64encode(svg.encode("utf-8")).decode("ascii")}">')
     with_share = any(p["share_pct"] is not None for p in left + right)
     note = "" if with_share else "<br><i>Hồ sơ không có tỷ trọng — chỉ ghi tên đối tác và sản phẩm.</i>"
+    # [Sửa 29/10] more than 5 partners on a side: % are over all of them, so the 5 shown add to < 100%
+    if max(len(every_left), len(every_right)) > MAX_PARTNERS:
+        note += f"<br><i>(*) Hiển thị {MAX_PARTNERS} đối tác tối đa.</i>"
     return image + note
