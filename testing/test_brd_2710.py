@@ -113,9 +113,11 @@ class BusinessModelTest(unittest.TestCase):
         svg = base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)",
                                          business_model.diagram("DN", records)).group(1)).decode("utf-8")
         name_y = float(re.search(r'y="([\d.]+)">Dược Hậu Giang<', svg).group(1))
-        value_y = float(re.search(r'y="([\d.]+)" font-weight="bold">135 tr<', svg).group(1))
+        value_y = float(re.search(r'y="([\d.]+)" font-weight="bold">135tr<', svg).group(1))
         self.assertGreater(value_y, name_y)                       # right under the name, same box
-        self.assertNotIn(" tr<", svg.split("BHXH Hà Nội")[1][:80])  # no value → no value line
+        self.assertNotIn("tr<", svg.split("BHXH Hà Nội")[1][:80])   # no value → no value line
+        self.assertEqual([business_model._money(v) for v in (135 * M, 950 * M, 1.5e9, 180e9, 2_345e9)],
+                         ["135tr", "950tr", "1,5tỷ", "180tỷ", "2.345tỷ"])
 
     def test_share_labels_only_when_given(self):
         import base64, re

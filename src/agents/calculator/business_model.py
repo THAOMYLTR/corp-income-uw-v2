@@ -119,11 +119,18 @@ def _wrap(text: str) -> list[str]:
 
 
 def _money(value: Any) -> str:
-    """[BRD 29/10] Contract value in the partner box, triệu đồng: 135000000 → "135 tr"."""
+    """[BRD 29/10] Contract value in the partner box, compact: "135tr", "1,5tỷ", "180tỷ".
+
+    Below 1 tỷ in triệu đồng; from 1 tỷ in tỷ đồng (one decimal, dropped when ,0) — so
+    180 tỷ never reads as "180tr".
+    """
 
     if not isinstance(value, (int, float)) or isinstance(value, bool):
         return ""
-    return f"{value / 1e6:,.0f}".replace(",", ".") + " tr"
+    if abs(value) < 1e9:
+        return f"{value / 1e6:,.0f}".replace(",", ".") + "tr"
+    text = f"{value / 1e9:,.1f}".replace(",", " ").replace(".", ",").replace(" ", ".")
+    return text.removesuffix(",0") + "tỷ"
 
 
 def _box(x: float, y: float, text: str, bold: bool = False, value: str = "") -> str:
