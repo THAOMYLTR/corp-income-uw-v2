@@ -53,15 +53,19 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
     warnings: list[str] = []
     # [NG] report dates
     dates = []
+    invalid: list[str] = []        # [Sửa 29/10] short reasons for the ONE validity line of mục 4a
     for record in cic:
         data = record["data"]
         when = parse_date(data.get("query_date"))
-        dates.append(f"{data.get('report_type') or 'CIC'}: {data.get('query_date') or 'không rõ ngày'}")
+        kind_name = data.get("report_type") or "CIC"
+        dates.append(f"{kind_name}: {data.get('query_date') or 'không rõ ngày'}")
         if when is None:
             warnings.append(f"Không đọc được ngày tra cứu trên {record.get('document')} — kiểm tra lại bản tin")
+            invalid.append(f"không đọc được ngày tra cứu {kind_name}")
         elif (as_of - when).days > MAX_REPORT_AGE_DAYS:
-            warnings.append(f"Bản tin {data.get('report_type') or 'CIC'} tra cứu ngày {when:%d/%m/%Y}, quá 1 tháng "
+            warnings.append(f"Bản tin {kind_name} tra cứu ngày {when:%d/%m/%Y}, quá 1 tháng "
                             f"tính đến {as_of:%d/%m/%Y} — đề nghị lấy lại dữ liệu CIC")
+            invalid.append(f"{kind_name} tra cứu {when:%d/%m/%Y}, quá 1 tháng tính đến {as_of:%d/%m/%Y}")
 
     # [Sửa 20/10] Một file PDF thường gộp cả S10A lẫn R20, LLM chỉ ghi một report_type →
     # R20 bị báo "chưa có". Bản tin nào có danh sách TSBĐ (collaterals) cũng tính là có R20;
@@ -75,6 +79,11 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
         warnings.append("Chưa có bản tin S10A (dư nợ, nợ cần chú ý, nợ xấu)")
     if not r20:
         warnings.append("Chưa có bản tin R20 (tài sản bảo đảm)")
+    # [Sửa 29/10] ONE line under the debt table: is the CIC used for OCR valid (within 1 month)?
+    invalid = list(dict.fromkeys(invalid))                       # several prints → once
+    validity = (f"Bản tin CIC hợp lệ ({'; '.join(dict.fromkeys(dates))}) — tra cứu trong vòng 1 tháng"
+                if not invalid else
+                f"Bản tin CIC chưa hợp lệ: {'; '.join(invalid)} — đề nghị lấy lại dữ liệu CIC")
 
     # [DN] sum lines per bank group — latest S10A only (several prints of the same report)
     latest = max(s10a, key=lambda r: parse_date(r["data"].get("query_date")) or date.min) if s10a else None
@@ -132,6 +141,11 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
     monthly.sort(key=lambda mv: parse_date("01/" + mv[0]) or date.min)
     balances = [value for _, value in monthly]
     avg_balance = sum(balances) / len(balances) if balances else None
+    # [Sửa 29/10] Không có dư nợ tại TCTD (bản tin S10A không có dòng nào, hoặc tổng = 0) và không có
+    # diễn biến 12 tháng → dư nợ BQ 12 tháng = 0.
+    no_debt = bool(s10a) and not any(rows["Total"][f] for f in LENDER_FIELDS if f != "off_balance")
+    if avg_balance is None and no_debt:
+        avg_balance = 0.0
 
     # [NB] bureau group
     def within(item: dict, days: int) -> bool:
@@ -142,6 +156,8 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
     special_recent = [s for s in special if within(s, SPECIAL_MENTION_LOOKBACK_DAYS)]
     limit = DEBT_TO_MONTHLY_REVENUE_LIMIT.get(business_type, DEFAULT_LIMIT)
     leverage = (avg_balance / (revenue_prev_year / 12)) if avg_balance is not None and revenue_prev_year else None
+    if avg_balance == 0:
+        leverage = 0.0             # [Sửa 29/10] dư nợ BQ 12 tháng = 0 → within every threshold, revenue or not
     if not s10a:
         group, reason = "Chưa có CIC", "Thiếu bản tin S10A"
     elif bad_recent or special_recent:
@@ -160,7 +176,9 @@ def compute(records: list[dict[str, Any]], as_of: date, revenue_prev_year: float
         reason = "Không thuộc Bad/Good bureau" + (
             f" (dư nợ BQ 12 tháng / DT BQ tháng = {leverage:.1f}, ngưỡng {limit})".replace(".", ",")
             if leverage is not None else " (thiếu diễn biến dư nợ 12 tháng hoặc doanh thu năm N-1)")
-    return {"available": True, "group": group, "group_reason": reason, "warnings": warnings,
+    if group == "Good bureau" and avg_balance == 0:
+        reason = "Không chậm thanh toán thẻ 3 năm, không nợ xấu 5 năm; không có dư nợ tại TCTD (dư nợ BQ 12 tháng = 0)"
+    return {"available": True, "group": group, "group_reason": reason, "warnings": warnings, "validity": validity,
             "rows": rows, "lenders": list(by_lender.values()), "card_late": card_late, "monthly": monthly,
             "query_dates": "; ".join(dates), "special_mention": special, "bad_debt": bad,
             "avg_balance_12m": avg_balance, "leverage": leverage, "limit": limit, "has_r20": bool(r20)}

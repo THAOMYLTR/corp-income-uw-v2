@@ -14,6 +14,12 @@ _TABLE = re.compile(r"<table(?P<attrs>[^>]*)>(?P<body>.*?)</table>", re.DOTALL)
 _CELL = re.compile(r"<t[hd]\b")
 _ROW = re.compile(r"<tr\b.*?</tr>", re.DOTALL)
 
+# [Sửa 29/10] Report font: Helvetica, headings 11pt, body and tables 10pt. Change these to resize.
+# The business-model diagram and debt chart keep their own size and font (they are images).
+FONT_FAMILY = 'Helvetica, Arial, "Liberation Sans", sans-serif'
+HEADING_PT = 11
+BODY_PT = 10
+
 REPORT_CSS = f"""
 @page {{
     size: A4;
@@ -21,40 +27,33 @@ REPORT_CSS = f"""
     @bottom-center {{
         content: counter(page) " / " counter(pages);
         /* A page margin box does not inherit from body, so without this the page
-           number printed in whatever the renderer defaults to — PT Serif here,
-           beside a report set in Times. */
-        font-family: "Times New Roman", Times, "Liberation Serif", serif;
+           number printed in whatever the renderer defaults to. */
+        font-family: {FONT_FAMILY};
         font-size: 8pt;
         color: #666;
     }}
 }}
 body {{
-    /* Serif, and named in full so WeasyPrint asks fontconfig for the real
-       face rather than falling back to whatever "serif" resolves to.
-       graph_svg.FONT_STACK must list the same families: it measures text
-       with them to size the diagram boxes, and measuring in one font while
-       printing in another leaves every box the wrong width. */
-    font-family: "Times New Roman", Times, "Liberation Serif", serif;
-    font-size: 9.5pt;
+    /* Named in full so WeasyPrint asks fontconfig for the real face; Arial / Liberation Sans
+       stand in where Helvetica is not installed (Linux, Databricks). */
+    font-family: {FONT_FAMILY};
+    font-size: {BODY_PT}pt;
     line-height: 1.4;
     margin: 0;
 }}
-h1 {{ font-size: 15pt; margin: 10px 0 6px; }}
-h2 {{ font-size: 12.5pt; margin: 12px 0 5px; }}
-h3 {{ font-size: 11pt; margin: 10px 0 4px; }}
-h4 {{ font-size: 10pt; margin: 8px 0 4px; }}
+h1, h2, h3, h4 {{ font-size: {HEADING_PT}pt; margin: 8px 0 4px; }}
 p, li {{ margin: 4px 0; }}
 blockquote {{
     margin: 6px 0; padding: 4px 10px;
     border-left: 3px solid #2f6f9f; background: #f5f8fb;
 }}
-code {{ font-size: 8.5pt; }}
+code {{ font-size: {BODY_PT}pt; }}
 
 table {{
     border-collapse: collapse;
     width: 100%;
     margin: 6px 0;
-    font-size: 8.5pt;
+    font-size: {BODY_PT}pt;
     /* Let the engine fit columns to content instead of overflowing the page. */
     table-layout: auto;
     page-break-inside: auto;
@@ -64,7 +63,7 @@ th, td {{
     padding: 3px 5px;
     vertical-align: top;
     overflow-wrap: break-word;
-    word-break: break-word;
+    /* [Sửa 29/10] no "word-break: break-word": at 10pt it split numbers ("92.92 / 1") */
 }}
 th {{ background: #eef2f6; text-align: left; }}
 tr {{ page-break-inside: avoid; }}

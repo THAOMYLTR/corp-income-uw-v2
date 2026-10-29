@@ -380,6 +380,8 @@ def compute(records: list[dict[str, Any]], as_of: date | None = None) -> dict[st
             status.append(f"Chi phí lãi vay / LN gộp = {pct(interest / gross)} > 50% — lãi vay bào mòn phần lớn lợi nhuận gộp")
         if r["ros"] is not None and r["ros"] < 0:
             status.append(f"ROS năm {latest} = {pct(r['ros'])} < 0 — HĐKD không hiệu quả")
+        elif r["ros"] is not None and r["ros"] > 0:        # [Sửa 29/10]
+            status.append(f"ROS năm {latest} = {pct(r['ros'])} > 0 — KH là doanh nghiệp có hoạt động kinh doanh hiệu quả")
         if r["current_ratio"] is not None and r["current_ratio"] < 1:
             status.append(f"Hệ số thanh toán hiện hành năm {latest} = {r['current_ratio']:.2f}".replace(".", ",")
                           + " < 1 — tài sản ngắn hạn không đủ chi trả nợ ngắn hạn, bố trí nguồn vốn chưa cân đối")
@@ -471,14 +473,28 @@ def structure_remarks(financials: dict[str, Any], business_type: str = "") -> li
         out.append("DN sản xuất không có tài sản dài hạn — hỏi địa điểm, máy móc thiết bị sản xuất là của ai")
     if business_type.startswith("dich_vu") and inventory is not None and inventory / total > INVENTORY_SERVICE_ALERT:
         out.append(f"DN dịch vụ có hàng tồn kho {pct(inventory / total)} tổng tài sản — KYC bổ sung đây là gì")
-    current, short_debt = fig.get("current_assets"), fig.get("current_liabilities")
-    if None not in (current, short_debt):
-        wc = current - short_debt
-        out.append(f"Vốn lưu động ròng năm {year} = {fmt(wc)} triệu đồng — "
-                   + ("bố trí nguồn vốn cân đối" if wc >= 0 else
-                      "mất cân đối, DN dùng vốn ngắn hạn đầu tư dài hạn, rủi ro thanh toán ngắn hạn; "
-                      "làm rõ nguyên nhân và lộ trình khắc phục, thận trọng khi dùng nguồn thu DN"))
+    # [Sửa 29/10] Vốn lưu động ròng no longer commented here — current_ratio_remark comes first.
     return out
+
+
+def current_ratio_remark(financials: dict[str, Any]) -> str:
+    """[Sửa 29/10] Nhận xét ưu tiên của mục 3a: hệ số thanh toán hiện hành năm gần nhất.
+
+    > 1 → KH đủ năng lực thanh toán các nghĩa vụ ngắn hạn đến hạn. < 1 → same risk the net-working-
+    capital remark used to give (TSNH < nợ ngắn hạn). '' when the balance sheet lacks the figures.
+    """
+
+    year = financials.get("latest_year")
+    ratio = ((financials.get("ratios") or {}).get(year) or {}).get("current_ratio") if year else None
+    if ratio is None:
+        return ""
+    text = f"Hệ số thanh toán hiện hành năm {year} = {ratio:.2f}".replace(".", ",")
+    if ratio > 1:
+        return text + " > 1 — KH đủ năng lực thanh toán các nghĩa vụ ngắn hạn đến hạn"
+    if ratio < 1:
+        return (text + " < 1 — tài sản ngắn hạn không đủ chi trả nợ ngắn hạn, rủi ro thanh toán ngắn hạn; "
+                "làm rõ nguyên nhân và lộ trình khắc phục, thận trọng khi dùng nguồn thu DN")
+    return text + " — tài sản ngắn hạn vừa đủ chi trả nợ ngắn hạn"
 
 
 def signed_pct(value: float | None) -> str:
@@ -610,5 +626,5 @@ def sources_text(financials: dict[str, Any]) -> str:
 
 
 __all__ = ["compute", "income_estimate", "interest_vs_cic", "fmt", "pct", "segment_code", "sources_text",
-           "asset_lines", "asset_value", "structure_remarks", "signed_pct",
+           "asset_lines", "asset_value", "structure_remarks", "current_ratio_remark", "signed_pct",
            "SOURCE_LABELS"]

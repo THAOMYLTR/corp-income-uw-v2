@@ -27,7 +27,6 @@ Who fills what:
 
 | Nội dung | Thông tin |
 |---|---|
-| ID T24 (nếu có) | {{T24ID}} |
 | Mã số thuế | {{MST}} |
 | Năm thành lập | {{NamThanhLap}} |
 | Người đại diện theo PL | {{NguoiDaiDien}} |

@@ -41,6 +41,7 @@ from src.utils.report.appendix_context import (
     apply_output_conditions,
     borrower_ownership,
     build_appendix_context,
+    drop_repeated_warnings,
     business_type,
     corp_group,
     fill_missing_financial_names,
@@ -309,6 +310,9 @@ class CorpIncomeAnalysis:
             writer_error = "; ".join(x for x in (writer_error, "kept the code draft (LLM rewrite lost numbers or "
                                                  f"was empty): {', '.join(rejected)}") if x)
         ctx.update(written)
+        # [Sửa 29/10] 2b does not repeat the source mismatches already warned in 1b
+        if "NhanXetHDKD" in ctx:
+            ctx["NhanXetHDKD"] = drop_repeated_warnings(ctx["NhanXetHDKD"], ctx.get("CanhBaoPhapLy", ""))
         meta.update({
             "code_placeholders": [n for n in names if n not in remaining],
             "llm_placeholders": remaining,

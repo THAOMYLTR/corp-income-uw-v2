@@ -84,6 +84,8 @@ _COMPANY_FORM_TOKENS = (
     "cong ty", "trach nhiem huu han", "tnhh", "co phan", "cp", "mot thanh vien",
     "hai thanh vien tro len", "mtv", "doanh nghiep tu nhan", "dntn", "hop danh",
     "jsc", "joint stock company", "company limited", "co ltd", "ltd", "company",
+    # [Sửa 29/10] viết tắt: "CT"/"Cty" = Công ty, "CTCP" = Công ty cổ phần → không báo lệch tên
+    "ct", "cty", "ctcp",
 )
 _PERSON_TITLE_TOKENS = ("ong", "ba", "mr", "mrs", "ms")
 
@@ -145,6 +147,27 @@ def _strip_tokens(text: str, tokens: Iterable[str]) -> str:
     for token in sorted(tokens, key=len, reverse=True):
         padded = padded.replace(f" {token} ", " ")
     return " ".join(padded.split())
+
+
+def _dates_conflict(values: Iterable[Any]) -> bool:
+    """[Sửa 29/10] Ngày thành lập lệch giữa các nguồn?
+
+    Hai nguồn đủ ngày/tháng/năm → so cả ngày. Một nguồn chỉ ghi năm (vd "2025") và nguồn kia
+    ghi "06/02/2025" → chỉ so năm: cùng năm là khớp, không cảnh báo.
+    """
+
+    full, years = set(), set()
+    for value in values:
+        text = str(value or "").strip()
+        when = parse_date(text)
+        if when is None:
+            if text:
+                full.add(normalize_text(text))      # unreadable: compared as written, as before
+            continue
+        years.add(when.year)
+        if re.search(r"\d{1,2}[/.-]\d{1,2}[/.-]\d{4}|\d{4}[/.-]\d{1,2}[/.-]\d{1,2}", text):
+            full.add(when.isoformat())
+    return len(years) > 1 or len(full) > 1
 
 
 def norm_company(name: Any) -> str:
@@ -307,7 +330,7 @@ def check_legal_basic(records, as_of: date, watchlist) -> dict[str, Any]:
             [e for v in addresses.values() for e in v])
 
     founded = _distinct(recs, "establishment_date", lambda v: str(parse_date(v) or v))
-    if len(founded) > 1:
+    if len(founded) > 1 and _dates_conflict(r["data"].get("establishment_date") for r in recs):
         add("establishment_mismatch", "warning", "Ngày thành lập không khớp giữa các nguồn",
             [e for v in founded.values() for e in v])
 

@@ -351,7 +351,9 @@ class FinanceTablesTest(unittest.TestCase):
         f = fm.compute([fin([dict(Y2025, non_current_assets=60 * M), Y2024])], AS_OF)
         remarks = fm.structure_remarks(f, "thuong_mai")
         self.assertTrue(any("thương mại có tài sản dài hạn" in r for r in remarks))
-        self.assertTrue(any("Vốn lưu động ròng năm 2025 = 30" in r for r in remarks))     # 60 − 30
+        self.assertFalse(any("Vốn lưu động ròng" in r for r in remarks))     # [Sửa 29/10] replaced by:
+        self.assertEqual(fm.current_ratio_remark(f), "Hệ số thanh toán hiện hành năm 2025 = 2,00 > 1 — "
+                         "KH đủ năng lực thanh toán các nghĩa vụ ngắn hạn đến hạn")             # 60 / 30
 
 
 class CicTableTest(unittest.TestCase):

@@ -23,6 +23,9 @@ ngắn (dưới 25 từ), không ghi tên file / thư mục / nguồn:
 - sản phẩm dịch vụ, ngành nghề, địa chỉ không khớp giữa báo cáo thực địa và tài liệu đối chiếu (ghi "<A> ≠ <B>");
 - ngành nghề theo dữ liệu nội bộ TCB khác báo cáo thực địa → "rủi ro cao, đề nghị đánh giá lại".
 Không có cảnh báo nào thì ghi đúng "—" (hệ thống tự ẩn dòng).
+[Sửa 29/10] KHÔNG lặp lại cảnh báo đã có trong ô CanhBaoPhapLy (mục 1b, xem "gia_tri_da_dien"),
+nhất là các chỗ không khớp giữa nguồn (tên, MST, địa chỉ, ngày thành lập, người đại diện…).
+Chỉ ghi cảnh báo RIÊNG của hoạt động kinh doanh; còn lại không có gì thì ghi "—".
 
 ## NhaXuong
 Địa chỉ nhà xưởng + "(đi thuê / sở hữu của … / chưa xác định)". Hồ sơ không có nhà xưởng thì ghi đúng "—" (hệ thống tự ẩn dòng).

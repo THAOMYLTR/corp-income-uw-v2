@@ -436,8 +436,10 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
         total = fig.get("total_assets")
         return fm.pct(value / total) if value is not None and total else "—"
 
-    lines = [("Tổng tài sản", "total_assets")] + fm.asset_lines(financials, (n2, n1))
-    remarks = [f"⚠ {w}" for w in financials["bs_warnings"] if w in financials["material_warnings"]]
+    lines = [("Tổng tài sản/Tổng nguồn vốn", "total_assets")] + fm.asset_lines(financials, (n2, n1))
+    # [Sửa 29/10] hệ số thanh toán hiện hành first (replaces the net-working-capital remark)
+    remarks = [x for x in [fm.current_ratio_remark(financials)] if x]
+    remarks += [f"⚠ {w}" for w in financials["bs_warnings"] if w in financials["material_warnings"]]
     remarks += [w for w in financials["bs_warnings"] if w not in financials["material_warnings"]]
     remarks += fm.structure_remarks(financials, business_type(records)[0])
     derived = {f for fig in financials["years"].values() for f in fig.get("_derived", [])}
@@ -464,7 +466,9 @@ def build_appendix_context(result: dict[str, Any], records: list[dict[str, Any]]
          _ratio_text("current_ratio", r1.get("current_ratio")), ""],
     ]
     remarks = [f"⚠ {w}" for w in financials["pl_warnings"] if w in financials["material_warnings"]]
-    remarks += [w for w in financials["pl_warnings"] if w not in financials["material_warnings"]]
+    # [Sửa 29/10] no "bất thường" remarks in 3b (display only — the Bad finance rule is unchanged)
+    remarks += [w for w in financials["pl_warnings"]
+                if w not in financials["material_warnings"] and "bất thường" not in w.lower()]
     interest = fm.interest_vs_cic(financials, cic.get("avg_balance_12m"))
     if interest:
         remarks.append(f"⚠ {interest}")
@@ -527,8 +531,10 @@ def debt_table(cic: dict[str, Any]) -> str:
     body.append("<tr>" + _html_cells(["Tổng giá trị TSBĐ theo CIC (**)"] + collateral
                                      + [fm.fmt(cic["rows"]["Total"]["collateral"]) if cic.get("has_r20") else "—"])
                 + "</tr>")
-    notes = ["(*) Không cộng vào Tổng dư nợ. (**) Theo bản tin R20.", f"Bản tin: {cic.get('query_dates') or '—'}"]
-    notes += [f"⚠ {w}" for w in cic.get("warnings") or []]
+    # [Sửa 29/10] footnote + ONE line on whether the CIC used is valid (no repeated CIC warnings)
+    validity = cic.get("validity") or ""
+    notes = ["(*) Không cộng vào Tổng dư nợ. (**) Theo bản tin R20."]
+    notes += [("⚠ " if "chưa hợp lệ" in validity else "") + validity] if validity else []
     return ("<table>" + head + "".join(body) + "</table>"
             + "".join(f"<br><i>{html.escape(n)}</i>" for n in notes))
 
@@ -639,6 +645,28 @@ _EMPTY = ("", "—", "-", "không có", "không có thông tin", "chưa có thô
 def is_empty(value: Any) -> bool:
     text = str(value or "").strip().rstrip(".").lower()
     return text in _EMPTY or text.startswith(("chưa có thông tin", "không có thông tin"))
+
+
+# [Sửa 29/10] Topics of the source-mismatch warnings of 1b (unaccented). A 2b warning line on the
+# same topic that also says "không khớp / ≠ / khác" is a repeat → dropped.
+MISMATCH_TOPICS = ("ten doanh nghiep", "ma so thue", "mst", "dia chi", "ngay thanh lap", "nguoi dai dien")
+MISMATCH_WORDS = ("khong khop", "khac nhau", "ghi khac")
+
+
+def drop_repeated_warnings(hdkd: str, legal: str) -> str:
+    """[Sửa 29/10] Cảnh báo HĐKD (2b) without the source mismatches already listed in 1b."""
+
+    def mismatch_topics(text: str) -> set[str]:
+        plain = normalize_text(text)                   # drops accents and "≠"
+        if "≠" not in text and not any(w in plain for w in MISMATCH_WORDS):
+            return set()
+        return {t for t in MISMATCH_TOPICS if f" {t} " in f" {plain} "}
+
+    shown = set().union(*(mismatch_topics(line) for line in str(legal or "").splitlines()))
+    if not shown or not hdkd:
+        return hdkd
+    kept = [line for line in re.split(r"<br>|\n", hdkd) if line.strip() and not (mismatch_topics(line) & shown)]
+    return "<br>".join(kept) or "—"
 
 
 def apply_output_conditions(markdown: str, ctx: dict[str, str]) -> str:
