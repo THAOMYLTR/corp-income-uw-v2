@@ -19,9 +19,14 @@ from src.utils.common import normalize_text
 
 # Ô upload chứa giấy tờ vay của KH (ho_so_vay_von) và tờ trình nội bộ (ho_so_soan_thao_noi_bo).
 LOAN_GROUPS = ("ho_so_vay_von", "ho_so_soan_thao_noi_bo")
-# [BRD 29/10] Labels of the customer's representative in a site-visit report (unaccented).
-REPRESENTATIVE_LABELS = ("dai dien khach hang", "dai dien kh", "dai dien ben vay", "nguoi dai dien lam viec",
-                         "dai dien lam viec", "nguoi lam viec voi", "khach hang vay")
+# [BRD 29/10] Labels, in a site-visit report, of the person who stands for the borrower (unaccented).
+# The name RIGHT AFTER the label is taken — one person per label — so
+# "Đại diện khách hàng: Bà Nguyễn Huệ Chi (vợ ông Vũ Hoàng Nguyên)" gives Nguyễn Huệ Chi only.
+REPRESENTATIVE_LABELS = ("dai dien khach hang", "dai dien kh", "dai dien ben vay", "dai dien lam viec",
+                         "ho ten khach hang", "ten khach hang", "khach hang vay von", "nguoi vay")
+# A label right after one of these words is about someone else ("chồng khách hàng vay …").
+RELATION_WORDS = {"chong", "vo", "con", "bo", "me", "cha", "anh", "chi", "em", "cua"}
+NAME_WINDOW = 60       # characters after the label where the name must start
 
 
 def _candidates(records: list[dict[str, Any]]) -> dict[str, str]:
@@ -44,40 +49,51 @@ def _candidates(records: list[dict[str, Any]]) -> dict[str, str]:
     return names
 
 
+def _name_after_label(line: str, candidates: dict[str, str]) -> str:
+    """The candidate named right after a representative label on ``line``; '' if none."""
+
+    text = " " + normalize_text(line) + " "
+    for label in REPRESENTATIVE_LABELS:
+        start = text.find(f" {label} ")
+        while start >= 0:
+            before = text[:start].split()[-1:]                  # the word just before the label
+            if not (before and before[0] in RELATION_WORDS):
+                after = text[start + len(label) + 1:]
+                hits = [(after.find(f" {key} "), shown) for key, shown in candidates.items()
+                        if 0 <= after.find(f" {key} ") <= NAME_WINDOW]
+                if hits:
+                    return min(hits)[1]                          # the first name after the label
+            start = text.find(f" {label} ", start + 1)
+    return ""
+
+
 def _from_site_visit(documents: list[Any], records: list[dict[str, Any]],
                      candidates: dict[str, str]) -> tuple[list[str], list[str]]:
-    """[BRD 29/10] The customer's representative named by the site-visit report."""
+    """[BRD 29/10] The customer's representative named by the site-visit report.
 
-    found: list[str] = []
-    files: list[str] = []
+    Order: (1) the "Đại diện khách hàng: …" line in the report text (code, exact);
+    (2) the LLM field customer_representative; (3) people the report marks "KH vay".
+    """
 
-    def add(name: str, file: str) -> None:
-        if name and norm_person(name) not in {norm_person(f) for f in found}:
-            found.append(candidates.get(norm_person(name), name))
-        if file and file not in files:
-            files.append(file)
-
-    for record in records:                                      # a. LLM field; c. "KH vay" in the table
-        if record.get("source") != "field" or record.get("pass") != "shareholders":
+    for doc in documents:                                       # 1. the labelled line
+        if getattr(doc, "source", "") != "field" or not getattr(doc, "content", ""):
             continue
-        data = record.get("data") or {}
-        if len(norm_person(data.get("customer_representative")).split()) >= 2:
-            add(str(data["customer_representative"]).strip(), record.get("document", ""))
-        for person in data.get("people") or []:
+        for line in doc.content.splitlines():
+            name = _name_after_label(line, candidates)
+            if name:
+                return [name], [f"{doc.filename} (dòng: {' '.join(line.split())[:80]})"]
+    field = [r for r in records if r.get("source") == "field" and r.get("pass") == "shareholders"]
+    for record in field:                                        # 2. LLM field
+        name = str((record.get("data") or {}).get("customer_representative") or "").strip()
+        if len(norm_person(name).split()) >= 2:
+            return [candidates.get(norm_person(name), name)], [f"{record.get('document', '')} (đại diện KH)"]
+    for record in field:                                        # 3. "KH vay" in the people list
+        for person in (record.get("data") or {}).get("people") or []:
             if isinstance(person, dict) and normalize_text(person.get("relation_to_borrower") or "") in (
-                    "kh vay", "khach hang vay", "kh vay von", "nguoi vay"):
-                add(str(person.get("name") or "").strip(), record.get("document", ""))
-    if not found:                                               # b. the line in the report text
-        for doc in documents:
-            if getattr(doc, "source", "") != "field" or not getattr(doc, "content", ""):
-                continue
-            for line in doc.content.splitlines():
-                text = " " + normalize_text(line) + " "
-                if any(label in text for label in REPRESENTATIVE_LABELS):
-                    for key, shown in candidates.items():
-                        if f" {key} " in text:
-                            add(shown, doc.filename)
-    return found, files
+                    "kh vay", "khach hang vay", "kh vay von", "nguoi vay", "nguoi dung ra vay"):
+                name = str(person.get("name") or "").strip()
+                return [candidates.get(norm_person(name), name)], [f"{record.get('document', '')} (KH vay)"]
+    return [], []
 
 
 def detect_borrowers(documents: list[Any], records: list[dict[str, Any]]) -> tuple[list[str], list[str]]:
@@ -95,7 +111,8 @@ def detect_borrowers(documents: list[Any], records: list[dict[str, Any]]) -> tup
             if getattr(doc, "declared_group", "") != group or not getattr(doc, "content", ""):
                 continue
             text = " " + normalize_text(doc.content) + " "
-            hits = [shown for key, shown in candidates.items() if f" {key} " in text]
+            hits = [shown for _, shown in sorted((text.find(f" {key} "), shown) for key, shown in candidates.items()
+                                                 if f" {key} " in text)]
             found += [name for name in hits if name not in found]
             if hits:
                 files.append(doc.filename)

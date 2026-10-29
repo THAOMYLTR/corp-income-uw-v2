@@ -192,18 +192,33 @@ class BorrowerFromSiteVisitTest(unittest.TestCase):
     def test_llm_field_customer_representative(self):
         field = {"pass": "shareholders", "source": "field", "document": "BCTD.pdf",
                  "data": {"customer_representative": "Bà Nguyễn Huệ Chi"}}
-        self.assertEqual(self.detect([self.loan], [self.MEMBERS, field]), (["Nguyễn Huệ Chi"], ["BCTD.pdf"]))
+        self.assertEqual(self.detect([self.loan], [self.MEMBERS, field]),
+                         (["Nguyễn Huệ Chi"], ["BCTD.pdf (đại diện KH)"]))
+
+    def report(self, text):
+        return self.Doc(declared_group="ho_so_soan_thao_noi_bo", source="field", filename="BCTD.pdf",
+                        content="BÁO CÁO KHẢO SÁT THỰC ĐỊA\n" + text)
 
     def test_representative_line_in_the_report_text(self):
-        report = self.Doc(declared_group="ho_so_soan_thao_noi_bo", source="field", filename="BCTD.pdf",
-                          content="BÁO CÁO KHẢO SÁT THỰC ĐỊA\nĐại diện khách hàng: Bà Nguyễn Huệ Chi - Phó giám đốc\n"
-                                  "Thành viên góp vốn: Vũ Hoàng Nguyên, Nguyễn Huệ Chi")
-        self.assertEqual(self.detect([report, self.loan], [self.MEMBERS]), (["Nguyễn Huệ Chi"], ["BCTD.pdf"]))
+        names, files = self.detect([self.report("Đại diện khách hàng: Bà Nguyễn Huệ Chi - Phó giám đốc\n"
+                                                "Thành viên góp vốn: Vũ Hoàng Nguyên, Nguyễn Huệ Chi"),
+                                    self.loan], [self.MEMBERS])
+        self.assertEqual(names, ["Nguyễn Huệ Chi"])
+        self.assertTrue(files[0].startswith("BCTD.pdf (dòng: Đại diện khách hàng"))
+
+    def test_only_the_name_right_after_the_label(self):
+        """The mix-up seen in a real run: the husband named on the same line was taken too."""
+        doc = self.report("Đại diện KH: Bà Nguyễn Huệ Chi (vợ ông Vũ Hoàng Nguyên, người quyết định chính)")
+        self.assertEqual(self.detect([doc], [self.MEMBERS])[0], ["Nguyễn Huệ Chi"])
+
+    def test_label_after_a_relation_word_is_ignored(self):
+        doc = self.report("Chồng khách hàng vay vốn là ông Vũ Hoàng Nguyên\nTên khách hàng: Nguyễn Huệ Chi")
+        self.assertEqual(self.detect([doc], [self.MEMBERS])[0], ["Nguyễn Huệ Chi"])
 
     def test_people_marked_kh_vay(self):
         field = {"pass": "shareholders", "source": "field", "document": "BCTD.pdf",
-                 "data": {"people": [{"name": "Nguyễn Huệ Chi", "relation_to_borrower": "KH vay"},
-                                     {"name": "Vũ Hoàng Nguyên", "relation_to_borrower": "Chồng KH vay"}]}}
+                 "data": {"people": [{"name": "Vũ Hoàng Nguyên", "relation_to_borrower": "Chồng KH vay"},
+                                     {"name": "Nguyễn Huệ Chi", "relation_to_borrower": "KH vay"}]}}
         self.assertEqual(self.detect([], [self.MEMBERS, field])[0], ["Nguyễn Huệ Chi"])
 
     def test_falls_back_to_the_loan_request(self):

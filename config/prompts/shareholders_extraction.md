@@ -39,8 +39,10 @@ QUY TẮC RIÊNG:
   "Con KH vay", "KH vay" nếu chính là người vay); "influence" mức độ ảnh hưởng tới hoạt động
   công ty như báo cáo ghi (vd "Cao. Quyết định chính…"); "assessment" đánh giá năng lực, uy tín,
   kinh nghiệm như báo cáo ghi. Chép ngắn gọn đúng ý báo cáo, KHÔNG tự đánh giá; không có thì "".
-- [BRD 29/10] "customer_representative": CHỈ từ báo cáo khảo sát thực địa — họ tên người ĐẠI DIỆN
-  KHÁCH HÀNG làm việc với ĐVKD / người đứng ra đề nghị vay, như báo cáo ghi (bỏ "Ông/Bà"); không có thì "".
+- [BRD 29/10] "customer_representative": CHỈ từ báo cáo khảo sát thực địa — họ tên ghi tại mục
+  "Đại diện KH / Đại diện khách hàng / Tên khách hàng" (người cá nhân ĐỨNG RA VAY), bỏ "Ông/Bà".
+  KHÔNG lấy người đại diện theo pháp luật của công ty, người quyết định chính hay người thân của KH
+  (vợ/chồng/con…) nếu báo cáo không ghi họ là đại diện KH. Không có mục đó thì "".
 - "beneficial_owner_notes": CHỈ từ báo cáo thực địa/RBO — ai là chủ thực sự,
   người đứng tên hộ... ghi đúng như cán bộ ghi nhận.
 

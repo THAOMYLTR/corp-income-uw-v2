@@ -523,6 +523,9 @@ class Supervisor:
         for number, item in analysis["items"].items():
             steps.append(f"Mục {number}: {item['conclusion']}")
         meta = analysis["meta"]
+        # [BRD 29/10] who is taken as the borrower, and from where — check this line first
+        steps.append("KH vay: " + (", ".join(meta.get("borrower_names") or []) or "chưa xác định")
+                     + (f" — {meta['borrower_source']}" if meta.get("borrower_source") else ""))
         steps.append(
             f"Template: {len(meta['code_placeholders'])} ô điền từ hồ sơ/tính toán, "
             f"{len(meta['llm_placeholders'])} ô do LLM viết (nhận xét, HĐKD, CIC, kết luận)"
