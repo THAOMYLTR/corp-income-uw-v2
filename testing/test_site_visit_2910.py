@@ -83,7 +83,7 @@ class SiteVisitTest(unittest.TestCase):
         def records(n):
             return [{"pass": "business_model", "document_type": "so_chi_tiet_cong_no", "data": {
                 "suppliers": [{"name": f"NCC {i}", "value": i * 1e6} for i in range(1, n + 1)]}}]
-        self.assertIn("<i>(*) Hiển thị 5 đối tác tối đa.</i>", business_model.diagram("DN", records(6)))
+        self.assertIn('<i style="font-size:0.8em">(*) Hiển thị 5 đối tác tối đa.</i>', business_model.diagram("DN", records(6)))
         self.assertNotIn("(*)", business_model.diagram("DN", records(5)))
 
 

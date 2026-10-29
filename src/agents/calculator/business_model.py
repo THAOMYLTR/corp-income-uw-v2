@@ -253,5 +253,5 @@ def diagram(company: str, records: list[dict[str, Any]]) -> str:
     note = "" if with_share else "<br><i>Hồ sơ không có tỷ trọng — chỉ ghi tên đối tác và sản phẩm.</i>"
     # [Sửa 29/10] more than 5 partners on a side: % are over all of them, so the 5 shown add to < 100%
     if max(len(every_left), len(every_right)) > MAX_PARTNERS:
-        note += f"<br><i>(*) Hiển thị {MAX_PARTNERS} đối tác tối đa.</i>"
+        note += f'<br><i style="font-size:0.8em">(*) Hiển thị {MAX_PARTNERS} đối tác tối đa.</i>'   # small, italic
     return image + note
