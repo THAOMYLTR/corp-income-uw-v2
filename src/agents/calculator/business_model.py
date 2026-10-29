@@ -6,7 +6,8 @@ Input: records of pass "business_model" (one per document). The BRD rules:
     → sổ chi tiết TK 131 / 331 (→ sao kê, then internal data).
   - Đầu vào xếp theo giá trị mua lớn nhất, đầu ra theo giá trị bán lớn nhất;
     NHIỀU NHẤT 5 đối tác mỗi bên. Ít hơn 5 → chỉ những đối tác có thật.
-  - Không có tỷ trọng → bỏ tỷ trọng, giữ tên đối tác và sản phẩm.
+  - [Sửa 29/10] Tỷ trọng = giá trị đối tác / tổng giá trị các đối tác nhận diện được (cùng bên).
+    Không có giá trị nào → dùng tỷ trọng hồ sơ ghi; cũng không có → bỏ tỷ trọng.
   - Sơ đồ 5 tầng: sản phẩm đầu vào → đối tác đầu vào → doanh nghiệp → đối tác
     đầu ra → sản phẩm đầu ra. Nhà cung cấp luôn bên TRÁI, khách mua bên PHẢI.
     Đối tác không có mặt hàng → không có khối sản phẩm (ô trống, không "không rõ").
@@ -64,6 +65,13 @@ def partners(records: list[dict[str, Any]], side: str) -> list[dict[str, Any]]:
             if row["share_pct"] is None:
                 row["share_pct"] = _num(p.get("share_pct"))
     rows = list(merged.values())
+    # [Sửa 29/10] Tỷ trọng tính trong code: giá trị hợp đồng của đối tác / tổng giá trị hợp đồng
+    # của mọi đối tác nhận diện được cùng bên (đầu vào hoặc đầu ra). Vd Dược Hậu Giang 135tr,
+    # Nam Phùng 45tr → 75% và 25%. Không có giá trị nào thì giữ tỷ trọng hồ sơ ghi (nếu có).
+    total = sum(r["value"] for r in rows if r["value"])
+    if total:
+        for r in rows:
+            r["share_pct"] = round(r["value"] / total * 100, 1) if r["value"] else None
     # Largest value first; partners without a value keep their document order after them.
     rows.sort(key=lambda r: -(r["value"] if r["value"] is not None else -1))
     return rows[:MAX_PARTNERS]

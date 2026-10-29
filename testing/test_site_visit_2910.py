@@ -71,6 +71,14 @@ class SiteVisitTest(unittest.TestCase):
                     "data": {"product_service": "Dịch vụ Y tế và hoạt động hỗ trợ y tế"}}]
         self.assertEqual(business_model.product_service(records), "Dịch vụ Y tế và hoạt động hỗ trợ y tế")
 
+    def test_share_is_value_over_total_of_identified_partners(self):
+        records = [{"pass": "business_model", "document_type": "hop_dong_dau_vao_dau_ra", "data": {
+            "suppliers": [{"name": "Dược Hậu Giang", "value": 135e6, "share_pct": 90},
+                          {"name": "Nam Phùng", "value": 45e6},
+                          {"name": "Không rõ giá trị", "value": None}]}}]
+        rows = {p["name"]: p["share_pct"] for p in business_model.partners(records, "suppliers")}
+        self.assertEqual(rows, {"Dược Hậu Giang": 75.0, "Nam Phùng": 25.0, "Không rõ giá trị": None})
+
 
 if __name__ == "__main__":
     unittest.main()

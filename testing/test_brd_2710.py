@@ -91,7 +91,7 @@ class BusinessModelTest(unittest.TestCase):
                                     {"name": "Khách Z", "product": "Gạch", "value": 3 * M}])]
         html = business_model.diagram("CÔNG TY ABC", records)
         self.assertNotIn("\n", html)                               # fits one table cell
-        self.assertIn("không có tỷ trọng", html)
+        self.assertNotIn("không có tỷ trọng", html)                # [Sửa 29/10] % computed from values
         svg = base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)", html).group(1)).decode("utf-8")
         x = {t: float(re.search(r'<tspan x="([\d.]+)"[^>]*>' + re.escape(t), svg).group(1))
              for t in ("Xi măng", "Nhà cung cấp X", "CÔNG TY ABC", "Gạch", "Khách Z", "Khách Y")}
@@ -101,7 +101,7 @@ class BusinessModelTest(unittest.TestCase):
         self.assertLess(x["CÔNG TY ABC"], x["Gạch"])
         self.assertLess(x["Gạch"], x["Khách Z"])
         self.assertEqual(x["Khách Y"], x["Khách Z"])                # no product → no product box
-        self.assertEqual(svg.count("<rect x"), 6)                    # 2 left + 3 right (Y has no product) + DN
+        self.assertEqual(svg.count('width="150"'), 6)               # 2 left + 3 right (Y has no product) + DN
         self.assertNotIn("không rõ", svg)
         self.assertNotIn("khác", svg.lower().replace("khách", ""))
 
@@ -119,13 +119,20 @@ class BusinessModelTest(unittest.TestCase):
         self.assertEqual([business_model._money(v) for v in (135 * M, 950 * M, 1.5e9, 180e9, 2_345e9)],
                          ["135tr", "950tr", "1,5tỷ", "180tỷ", "2.345tỷ"])
 
-    def test_share_labels_only_when_given(self):
+    def test_share_computed_from_values_else_as_given(self):
         import base64, re
-        records = [model("bao_cao_thuc_dia", "BCTD.pdf",
-                         suppliers=[{"name": "A", "product": "", "value": 1 * M, "share_pct": 45}])]
-        svg = base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)",
-                                         business_model.diagram("DN", records)).group(1)).decode("utf-8")
-        self.assertIn(">45%<", svg)
+        svg = lambda recs: base64.b64decode(re.search(r"base64,([A-Za-z0-9+/=]+)",
+                                                      business_model.diagram("DN", recs)).group(1)).decode("utf-8")
+        # [Sửa 29/10] 135tr / (135tr + 45tr) = 75% — the document's own 45% is not used
+        with_values = [model("hop_dong_dau_vao_dau_ra", "HD.pdf",
+                             suppliers=[{"name": "Dược Hậu Giang", "value": 135 * M, "share_pct": 45},
+                                        {"name": "Nam Phùng", "value": 45 * M}])]
+        self.assertIn(">75%<", svg(with_values))
+        self.assertIn(">25%<", svg(with_values))
+        # no value at all → the share the document writes
+        no_values = [model("bao_cao_thuc_dia", "BCTD.pdf",
+                           suppliers=[{"name": "A", "product": "", "value": None, "share_pct": 45}])]
+        self.assertIn(">45%<", svg(no_values))
 
     def test_no_partner_no_diagram(self):
         self.assertEqual(business_model.diagram("ABC", []), "")
