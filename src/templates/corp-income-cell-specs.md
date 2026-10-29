@@ -13,6 +13,7 @@ Ghi chú trong khối này không gửi cho LLM.
 Loại hình: <sản xuất / thương mại / dịch vụ> (<tỷ trọng nếu đa loại hình>)
 Tên ngành: <tên theo bảng ngành TCB, hoặc như hồ sơ + "chưa đối chiếu bảng ngành TCB">
 Diễn giải: <sản phẩm chính, quy mô — dưới 25 từ; không có thì "—">
+Có "san_pham_dich_vu_bao_cao_thuc_dia" thì dòng Diễn giải bắt đầu ĐÚNG bằng câu đó (báo cáo thực địa được ưu tiên).
 
 ## NhanXetHDKD
 [BRD 29/10] Dòng "Cảnh báo HĐKD" dưới bảng mục 2 — CHỈ liệt kê cảnh báo, mỗi cảnh báo một gạch đầu dòng

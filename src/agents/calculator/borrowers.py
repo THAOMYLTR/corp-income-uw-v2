@@ -49,9 +49,39 @@ def _candidates(records: list[dict[str, Any]]) -> dict[str, str]:
     return names
 
 
+def _name_in_next_cell(line: str, candidates: dict[str, str]) -> str:
+    """[Sửa 29/10] Excel form row (mẫu MB): label cell "Đại diện KH", value in a later cell.
+
+    The label cell must be the label itself (so "Đại diện TCB" never matches). The value is
+    taken even when it is not a candidate (ĐKKD not read): it is what the report says.
+    """
+
+    cells: list[str] = []
+    for cell in line.split("\t"):                     # merged cells repeat — keep each once
+        cell = cell.strip()
+        if cell and (not cells or cells[-1] != cell):
+            cells.append(cell)
+    for i, cell in enumerate(cells[:-1]):
+        if normalize_text(cell).rstrip(" :") not in REPRESENTATIVE_LABELS:
+            continue
+        value = cells[i + 1].strip(" :")
+        key = norm_person(value)                      # also drops "Ông/Bà"
+        if any(ch.isdigit() for ch in value) or not 2 <= len(key.split()) <= 5:
+            return ""
+        if key in candidates:
+            return candidates[key]
+        words = value.split()
+        return " ".join(words[-len(key.split()):])      # drop "Ông/Bà"
+    return ""
+
+
 def _name_after_label(line: str, candidates: dict[str, str]) -> str:
     """The candidate named right after a representative label on ``line``; '' if none."""
 
+    if "\t" in line:
+        name = _name_in_next_cell(line, candidates)
+        if name:
+            return name
     text = " " + normalize_text(line) + " "
     for label in REPRESENTATIVE_LABELS:
         start = text.find(f" {label} ")

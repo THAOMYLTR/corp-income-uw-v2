@@ -39,8 +39,20 @@ QUY TẮC RIÊNG:
   "Con KH vay", "KH vay" nếu chính là người vay); "influence" mức độ ảnh hưởng tới hoạt động
   công ty như báo cáo ghi (vd "Cao. Quyết định chính…"); "assessment" đánh giá năng lực, uy tín,
   kinh nghiệm như báo cáo ghi. Chép ngắn gọn đúng ý báo cáo, KHÔNG tự đánh giá; không có thì "".
+  [Sửa 29/10] Mẫu "Báo cáo khảo sát thực địa" của MB: bảng "Thành viên góp vốn" có cột
+  "Họ và tên | Mối quan hệ | Tỷ lệ góp vốn | Thông tin CIC… | Ghi chú":
+    · cột "Mối quan hệ" (Vợ / Chồng / Con / Không có mối quan hệ) là quan hệ trong gia đình, tính
+      theo người ĐẠI DIỆN KH. Đổi sang quan hệ với KH vay: dòng của chính đại diện KH → "KH vay";
+      người khác giữ đúng chữ báo cáo + " KH vay" (vd "Chồng KH vay", "Con KH vay");
+      "Không có mối quan hệ" → "Không có quan hệ với KH vay".
+    · "influence" và "assessment" đều nằm trong cột "Ghi chú": phần nói về vai trò / quyền quyết
+      định / có tham gia điều hành hay không → "influence"; phần nói về học vấn, nghề nghiệp, kinh
+      nghiệm, uy tín → "assessment". Chép ngắn, giữ số năm kinh nghiệm, nơi từng làm.
+    · Chức vụ ghi trong "Ghi chú" (vd "Giám đốc kiêm người đại diện theo pháp luật") → "position".
 - [BRD 29/10] "customer_representative": CHỈ từ báo cáo khảo sát thực địa — họ tên ghi tại mục
   "Đại diện KH / Đại diện khách hàng / Tên khách hàng" (người cá nhân ĐỨNG RA VAY), bỏ "Ông/Bà".
+  Nhãn và giá trị có thể ở hai ô khác nhau trên cùng dòng ("Đại diện KH<TAB>Nguyễn Văn A").
+  KHÔNG lấy "Đại diện TCB" (cán bộ ngân hàng) hay "Người đại diện theo PL".
   KHÔNG lấy người đại diện theo pháp luật của công ty, người quyết định chính hay người thân của KH
   (vợ/chồng/con…) nếu báo cáo không ghi họ là đại diện KH. Không có mục đó thì "".
 - "beneficial_owner_notes": CHỈ từ báo cáo thực địa/RBO — ai là chủ thực sự,

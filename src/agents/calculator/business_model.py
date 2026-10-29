@@ -81,6 +81,20 @@ def industry(records: list[dict[str, Any]], segment: str = "") -> dict[str, Any]
     return None
 
 
+def product_service(records: list[dict[str, Any]]) -> str:
+    """[Sửa 29/10] "Sản phẩm/ dịch vụ" as the site-visit report writes it ('' if none).
+
+    Read by the business_model pass over the WHOLE report — the writer LLM only sees the first
+    6.000 characters of it, and in the MB form this row comes after the long checklist (mục A).
+    """
+
+    for record in _records(records):
+        text = " ".join(str(record["data"].get("product_service") or "").split())
+        if text:
+            return text
+    return ""
+
+
 def _cell(text: str) -> str:
     # The diagram sits inside a Markdown table cell: one line, no "|".
     return html.escape(" ".join(str(text or "").split())).replace("|", "/")

@@ -23,6 +23,9 @@ QUY TẮC BẮT BUỘC:
 - Không gộp phần còn lại thành "khác" nếu văn bản không ghi như vậy.
 - "source_unit": đơn vị của các giá trị ("dong" | "nghin dong" | "trieu dong" | "ty dong").
 - Hợp đồng nguyên tắc không nêu mặt hàng thì "product" = "".
+- [Sửa 29/10] "product_service": CHỈ từ báo cáo khảo sát thực địa — chép NGUYÊN VĂN ô bên cạnh nhãn
+  "Sản phẩm/ dịch vụ" (mục Hoạt động kinh doanh), vd "Dịch vụ Y tế và hoạt động hỗ trợ y tế".
+  Văn bản khác hoặc không có nhãn này thì "".
 
 DANH SÁCH NGÀNH (bảng ngành tại TCB):
 {{industry_list}}
@@ -31,6 +34,7 @@ Trả về CHÍNH XÁC JSON sau, không thêm text:
 {
   "industry": "",
   "industry_sector": "",
+  "product_service": "",
   "source_unit": "dong",
   "suppliers": [{"name": "", "product": "", "value": null, "share_pct": null}],
   "customers": [{"name": "", "product": "", "value": null, "share_pct": null}],

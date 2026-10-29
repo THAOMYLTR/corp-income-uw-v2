@@ -267,6 +267,35 @@ def _grid_to_tsv(
     return "\n".join(lines)
 
 
+# [Sửa 29/10] Line breaks typed inside one cell (Alt+Enter). Báo cáo khảo sát thực địa (mẫu MB)
+# keeps a form block in two cells: "Thời gian khảo sát / Địa điểm / Thành phần / Đại diện KH /
+# Đại diện TCB" in one cell and the five values in the cell beside it. Written raw, every line
+# break cut the TSV row, so "Đại diện KH" landed far from "Nguyễn Huệ Chi".
+FORM_LINES_MIN = 3
+
+
+def _split_form_cells(grid: list[list[str]]) -> list[list[str]]:
+    """Cells with line breaks, made readable row by row.
+
+    - Two or more cells of a row with the same number (≥ FORM_LINES_MIN) of lines are a form
+      block: the row becomes one row per line, so each label sits beside its value.
+    - Any other line break inside a cell becomes a space (a long "Ghi chú" stays on its row).
+    """
+
+    out: list[list[str]] = []
+    for row in grid:
+        lines = [[part.strip() for part in cell.splitlines() if part.strip()] for cell in row]
+        counts = [len(parts) for parts in lines]
+        block = max((n for n in counts if n >= FORM_LINES_MIN and counts.count(n) >= 2), default=0)
+        if not block:
+            out.append([" ".join(cell.split()) for cell in row])
+            continue
+        for i in range(block):
+            out.append([parts[i] if len(parts) == block else (" ".join(parts) if i == 0 else "")
+                        for parts in lines])
+    return out
+
+
 @dataclass(frozen=True)
 class SheetText:
     """One sheet of a spreadsheet, already cleaned, de-duplicated and capped."""
@@ -285,7 +314,7 @@ def _sheet_text(
 ) -> SheetText:
     """One engine's grid, cleaned, de-duplicated and rendered as TSV."""
 
-    cleaned, kept_columns = _clean_grid(grid)
+    cleaned, kept_columns = _clean_grid(_split_form_cells(grid))
     if not cleaned:
         return SheetText(title, "", 0, 0, 0)
     cleaned, duplicates = _dedup_rows(cleaned)

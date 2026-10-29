@@ -20,3 +20,13 @@ Only the presentation changed; the 27/10 rules and the document matrix stay
 | 5b | Đề xuất: unchanged logic (Bad corp → không sử dụng; projection formulas as 27/10) | `financial_metrics.income_estimate`, `appendix_context.income_block` |
 | — | "Phân nhóm (POC)" tables removed; `CORP_INCOME_SHOW_GROUPS` no longer used. Groups still drive 5b | template, `appendix_context.py` |
 | — | The legal / finance comments are no longer rewritten by the LLM (short code lines in the tables); diagram and chart images are not sent to the LLM | `specialist.py` (`POLISH_CELLS = ()`) |
+
+## Sửa 29/10 — Báo cáo khảo sát thực địa (mẫu MB, file Excel)
+
+| Lỗi | Nguyên nhân | Sửa ở |
+|---|---|---|
+| KH vay nhận nhầm | Nhãn "Thời gian / Địa điểm / Thành phần / Đại diện KH / Đại diện TCB" xếp chồng trong MỘT ô (Alt+Enter), giá trị ở ô bên cạnh → khi đọc ra văn bản, nhãn và tên bị tách xa nhau | `src/utils/reading/extractors.py` (`_split_form_cells`): ô xếp chồng → mỗi dòng một hàng "Đại diện KH ⇥ Nguyễn Huệ Chi"; `src/agents/calculator/borrowers.py` (`_name_in_next_cell`): lấy ô ngay sau nhãn, không bao giờ lấy "Đại diện TCB" |
+| Mức độ ảnh hưởng / Đánh giá năng lực trống | Báo cáo không có hai cột này — cả hai nằm trong cột "Ghi chú"; cột "Mối quan hệ" là Vợ/Chồng/Con theo đại diện KH | `config/prompts/shareholders_extraction.md`: tách "Ghi chú" → influence / assessment, đổi quan hệ thành "Chồng KH vay", "Con KH vay"… |
+| Sản phẩm/dịch vụ sai | Dòng "Sản phẩm/ dịch vụ" ở mục B.2, sau checklist dài; LLM viết báo cáo chỉ đọc 6.000 ký tự đầu | `config/prompts/business_model_extraction.md` (trường `product_service`, đọc cả file) → `business_model.product_service` → `specialist.py` → `corp-income-cell-specs.md` (dòng Diễn giải) |
+
+Test: `testing/test_site_visit_2910.py`.
