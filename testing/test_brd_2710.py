@@ -330,6 +330,16 @@ class FinanceTablesTest(unittest.TestCase):
         self.assertIn("ngoài khoảng 6%–14%", fm.interest_vs_cic(f, 100 * M))      # 1%/năm
         self.assertEqual(fm.interest_vs_cic(f, 10 * M), "")                         # 10%/năm
 
+    def test_remarks_keep_numbers_but_no_file_names(self):
+        a = fin([dict(Y2025, total_assets=101 * M), Y2024]); a["document"] = "BCTC_2025.pdf"
+        b = fin([year(2025, total_assets=120)]); b["document"] = "BCTC_2026.pdf"
+        a["data"]["unusual_items"] = ["Thu nhập khác lớn từ thanh lý TSCĐ"]
+        f = fm.compute([a, b], AS_OF)
+        text = " ".join(f["bs_warnings"] + f["pl_warnings"] + f["status_remarks"])
+        self.assertNotIn(".pdf", text)
+        self.assertIn("101 ≠ 120", text)                                     # the numbers stay
+        self.assertIn("Doanh thu thuần năm 2025 đạt 1.000 triệu đồng", text)
+
     def test_structure_remarks(self):
         f = fm.compute([fin([dict(Y2025, non_current_assets=60 * M), Y2024])], AS_OF)
         remarks = fm.structure_remarks(f, "thuong_mai")

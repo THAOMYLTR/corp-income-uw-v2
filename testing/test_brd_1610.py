@@ -66,7 +66,7 @@ class FinancialRulesTest(unittest.TestCase):
                     interest_expense=60 * M)
         r = fm.compute([fin("BCTC_2025.pdf", [weak, GOOD_2024])], AS_OF)
         text = " ".join(r["status_remarks"])
-        self.assertIn("Phân khúc SME", text)                   # 900 triệu < 200 tỷ
+        self.assertIn("phân khúc SME", text)                   # 900 triệu < 200 tỷ
         self.assertIn("(Thu nhập khác + DT tài chính) / LNTT", text)
         self.assertIn("Chi phí lãi vay / LN gộp", text)
 
@@ -77,7 +77,7 @@ class FinancialRulesTest(unittest.TestCase):
                    {"pass": "vat", "document": "VAT.pdf", "data": {"returns": vat_rows}}]
         r = fm.compute(records, AS_OF)
         self.assertEqual(r["vat"]["current_year"], 2026)
-        self.assertIn("đến T09/2026: 900 tr = 100,0% DT 2025", r["vat"]["text"])
+        self.assertIn("đến tháng 09/2026 là 900 triệu đồng, bằng 100,0% doanh thu năm 2025", r["vat"]["text"])
         # 2025: VAT 400 vs BCTC 900 → -55,6% → material
         self.assertTrue(any("tờ khai VAT cùng kỳ" in w for w in r["material_warnings"]))
 
@@ -93,7 +93,7 @@ class FinancialRulesTest(unittest.TestCase):
     def test_segments_by_revenue(self):
         for revenue_ty, segment in ((2500, "Large corp"), (700, "MM"), (300, "USME"), (50, "SME")):
             r = fm.compute([fin("B.pdf", [year(2025, net_revenue=revenue_ty * 1000)])], AS_OF)
-            self.assertIn(f"Phân khúc {segment}", r["status_remarks"][0])
+            self.assertIn(f"phân khúc {segment}", r["status_remarks"][0])
 
 
 class CicRulesTest(unittest.TestCase):
@@ -227,7 +227,7 @@ class RevenueGrowthGuardTest(unittest.TestCase):
         from src.agents.calculator import financial_metrics as fm
         result = fm.compute(self._records(12))
         self.assertAlmostEqual(result["ratios"]["2024"]["revenue_growth"], 3.909, places=3)
-        self.assertTrue(any("bất thường — kiểm tra lại" in w for w in result["other_warnings"]))
+        self.assertTrue(any("bất thường, kiểm tra lại" in w for w in result["other_warnings"]))
         self.assertFalse(any("≠ LN gộp" in w for w in result["other_warnings"]))
 
 
