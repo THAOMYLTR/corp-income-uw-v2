@@ -118,7 +118,7 @@ def _cell(text: str) -> str:
 # --------------------------------------------------------------------------- #
 BOX_W, BOX_H, COL_GAP, ROW_GAP, MARGIN = 150, 58, 90, 22, 16
 FILL, STROKE, TEXT, LINE = "#dcdcf5", "#8f8fcf", "#1f1f3d", "#555555"
-FONT = "'Times New Roman', Times, 'Liberation Serif', serif"   # [Sửa 29/10] same font as the report
+FONT = "Arial, Helvetica, sans-serif"
 CHARS_PER_LINE, MAX_LINES = 22, 3
 WIDTH = 2 * MARGIN + 5 * BOX_W + 4 * COL_GAP
 

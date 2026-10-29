@@ -17,7 +17,7 @@ WIDTH, HEIGHT = 380, 230
 PAD_LEFT, PAD_RIGHT, PAD_TOP, PAD_BOTTOM = 46, 12, 30, 34
 BAR = "#4f6bb0"            # the one series colour
 INK, MUTED, GRID = "#1f1f3d", "#6b6b80", "#e3e3ea"
-FONT = "'Times New Roman', Times, 'Liberation Serif', serif"   # [Sửa 29/10] same font as the report
+FONT = "Arial, Helvetica, sans-serif"
 
 
 def _million(value: float) -> str:
